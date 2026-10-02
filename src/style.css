@@ -14,6 +14,11 @@
   --moon-silver: #e8ebef;
   --silver-line: #d8dde3;
   --subtle-gold: #b49a63;
+  --element-wood: #3f7774;
+  --element-fire: #b2635e;
+  --element-earth: #96763f;
+  --element-metal: #627b91;
+  --element-water: #304b6b;
 }
 
 * {
@@ -207,8 +212,7 @@ button:hover {
   box-shadow: 0 2px 8px rgb(29 43 66 / 4%);
 }
 
-.basic-chart__heading,
-.basic-chart__actions {
+.basic-chart__heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -229,8 +233,7 @@ button:hover {
   font-size: 0.8rem;
 }
 
-.basic-chart__heading button:hover,
-.basic-chart__actions button:first-child:hover {
+.basic-chart__heading button:hover {
   background: var(--moon-silver);
 }
 
@@ -325,60 +328,6 @@ button:hover {
   overflow-wrap: anywhere;
 }
 
-.basic-chart__actions {
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  margin-top: 0.85rem;
-}
-
-.basic-chart__actions button:first-child {
-  background: transparent;
-  color: var(--deep-navy);
-}
-
-.basic-chart__actions button:last-child {
-  border-color: var(--deep-navy);
-  background: var(--deep-navy);
-}
-
-.basic-chart__spouse-details {
-  position: relative;
-  display: grid;
-  gap: 0.1rem;
-  margin-top: 1rem;
-  padding-left: 1rem;
-}
-
-.basic-chart__spouse-details dl {
-  position: relative;
-  margin: 0;
-  padding: 0.55rem 0 0.65rem 0.9rem;
-  border-left: 1px solid var(--silver-line);
-}
-
-.basic-chart__spouse-details dl::before {
-  position: absolute;
-  top: 0.85rem;
-  left: -0.22rem;
-  width: 0.38rem;
-  height: 0.38rem;
-  border-radius: 50%;
-  background: var(--subtle-gold);
-  content: "";
-}
-
-.basic-chart__spouse-details dt {
-  color: var(--muted-navy);
-  font-size: 0.76rem;
-}
-
-.basic-chart__spouse-details dd {
-  margin: 0.3rem 0 0;
-  font-size: 1rem;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
 @media (min-width: 700px) {
   main {
     padding: 2.5rem 2rem 4rem;
@@ -455,33 +404,40 @@ button:hover {
 
 .result-screen .basic-chart {
   margin-top: 0;
-  padding: 0.85rem;
-  border-radius: 12px;
+  padding: 0.75rem;
+  border-radius: 10px;
   box-shadow: none;
 }
 
 .basic-chart__heading {
-  align-items: end;
-}
-
-.basic-chart__eyebrow {
-  margin: 0 0 0.18rem;
-  color: var(--muted-navy);
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  align-items: center;
+  min-height: 2.5rem;
 }
 
 .basic-chart__heading h2 {
-  font-size: 1.08rem;
+  font-size: 1.12rem;
+  letter-spacing: 0.03em;
 }
 
 .basic-chart__heading button {
-  max-width: 10.5rem;
+  max-width: 11rem;
   min-height: 2.4rem;
-  padding-inline: 0.5rem;
+  padding: 0.35rem 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-navy);
   line-height: 1.3;
   text-align: right;
+  text-decoration: underline;
+  text-decoration-color: var(--silver-line);
+  text-underline-offset: 3px;
+}
+
+.basic-chart__heading button:hover {
+  background: transparent;
+  color: var(--deep-navy);
+  text-decoration-color: var(--muted-navy);
 }
 
 .basic-chart__table-wrap {
@@ -489,115 +445,291 @@ button:hover {
 }
 
 .basic-chart__table {
+  width: 100%;
+  table-layout: fixed;
   border-radius: 7px;
+  border-color: var(--silver-line);
   background: var(--paper);
 }
 
 .basic-chart__table th,
 .basic-chart__table td {
-  padding: 0.62rem 0.12rem;
+  padding: 0.68rem 0.12rem;
+  border-color: var(--silver-line);
 }
 
 .basic-chart__table thead th {
-  background: #f5f4ef;
-  font-size: 0.73rem;
+  background: var(--paper);
+  color: var(--deep-navy);
+  font-size: 0.74rem;
   white-space: nowrap;
 }
 
 .basic-chart__table thead th:first-child,
 .basic-chart__table tbody th {
-  width: 3.55rem;
-  padding-left: 0.35rem;
-  font-size: 0.64rem;
+  width: 3.8rem;
+  padding-left: 0.28rem;
+  color: var(--muted-navy);
+  font-size: 0.6rem;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .basic-chart__day-column {
-  background: #f0f1f2;
+  background: #f4f5f6;
   box-shadow: none;
 }
 
 .basic-chart__table thead .basic-chart__day-column {
-  background: #e9ebee;
+  background: #eef0f2;
+  box-shadow: inset 0 1px 0 var(--subtle-gold);
+}
+
+.basic-chart__symbol-value {
+  display: inline-grid;
+  justify-items: center;
+  gap: 0.12rem;
+  vertical-align: middle;
 }
 
 .basic-chart__symbol {
-  font-size: clamp(1.55rem, 7vw, 1.85rem);
+  color: var(--deep-navy);
+  font-size: clamp(1.65rem, 7.2vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.basic-chart__element {
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.basic-chart__element--wood {
+  color: var(--element-wood);
+}
+
+.basic-chart__element--fire {
+  color: var(--element-fire);
+}
+
+.basic-chart__element--earth {
+  color: var(--element-earth);
+}
+
+.basic-chart__element--metal {
+  color: var(--element-metal);
+}
+
+.basic-chart__element--water {
+  color: var(--element-water);
 }
 
 .basic-chart__ten-god {
   display: inline-block;
-  font-size: 0.66rem;
+  color: var(--muted-navy);
+  font-size: 0.68rem;
   line-height: 1.25;
   white-space: nowrap;
 }
 
 .basic-chart__hidden-symbol {
-  font-size: 0.95rem;
+  font-size: 0.98rem;
 }
 
 .basic-chart__hidden-meta {
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   line-height: 1.2;
 }
 
-.basic-chart__branch-focus {
-  position: relative;
-  background: #f6f3e9;
-  box-shadow: inset 0 0 0 1px rgb(180 154 99 / 65%);
+.basic-chart__columns {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--silver-line);
+  border-radius: 8px;
+  background: var(--paper);
 }
 
-.basic-chart__actions {
-  justify-content: flex-start;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+.basic-chart__columns--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.basic-chart__actions button {
-  min-height: 2.35rem;
-  padding: 0.42rem 0.65rem;
-  font-size: 0.74rem;
+.basic-chart__pillar {
+  min-width: 0;
+  padding: 0.75rem 0.38rem 0.7rem;
+  text-align: center;
 }
 
-.basic-chart__actions button:first-child {
+.basic-chart__pillar + .basic-chart__pillar {
+  border-left: 1px solid var(--moon-silver);
+}
+
+.basic-chart__pillar--day {
+  background: #f2f4f5;
+  box-shadow: inset 0 2px 0 var(--subtle-gold);
+}
+
+.basic-chart__pillar h3 {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.basic-chart__pillar-data {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.basic-chart__pillar-data--stem {
+  min-height: 5.35rem;
+  padding: 0.7rem 0 0.82rem;
+}
+
+.basic-chart__pillar-data--branch {
+  min-height: 5.6rem;
+  padding: 0.72rem 0 0.78rem;
+  border-top: 1px solid #edf0f2;
+}
+
+.basic-chart__symbol-value {
+  display: inline-grid;
+  justify-items: center;
+  gap: 0.08rem;
+  line-height: 1;
+}
+
+.basic-chart__symbol {
+  color: var(--deep-navy);
+  font-size: clamp(1.7rem, 7.4vw, 2rem);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.basic-chart__symbol--wood {
+  color: var(--element-wood);
+}
+
+.basic-chart__symbol--fire {
+  color: var(--element-fire);
+}
+
+.basic-chart__symbol--earth {
+  color: var(--element-earth);
+}
+
+.basic-chart__symbol--metal {
+  color: var(--element-metal);
+}
+
+.basic-chart__symbol--water {
+  color: var(--element-water);
+}
+
+.basic-chart__element {
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.basic-chart__element--wood {
+  color: var(--element-wood);
+}
+
+.basic-chart__element--fire {
+  color: var(--element-fire);
+}
+
+.basic-chart__element--earth {
+  color: var(--element-earth);
+}
+
+.basic-chart__element--metal {
+  color: var(--element-metal);
+}
+
+.basic-chart__element--water {
+  color: var(--element-water);
+}
+
+.basic-chart__ten-god {
+  color: var(--muted-navy);
+  font-size: 0.66rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.basic-chart__hidden-stems {
+  display: grid;
+  justify-items: center;
+  gap: 0.27rem;
+  min-height: 3.8rem;
+  padding-top: 0.58rem;
+  border-top: 1px solid #edf0f2;
+}
+
+.basic-chart__hidden-label {
+  color: var(--muted-navy);
+  font-size: 0.6rem;
+  line-height: 1.1;
+}
+
+.basic-chart__hidden-symbol {
+  color: var(--deep-navy);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.basic-chart__hidden-list {
+  gap: 0.32rem;
+  width: 100%;
+}
+
+.basic-chart__hidden-list li {
+  display: grid;
+  justify-items: center;
+  gap: 0.08rem;
+}
+
+.basic-chart__hidden-meta {
+  color: var(--muted-navy);
+  font-size: 0.54rem;
+  line-height: 1.2;
+}
+
+.basic-chart__expand-link {
+  display: block;
+  min-height: 2.25rem;
+  margin: 0.28rem 0 0 auto;
+  padding: 0.35rem 0.1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-navy);
+  font-size: 0.72rem;
+  text-decoration: underline;
+  text-decoration-color: var(--silver-line);
+  text-underline-offset: 3px;
+}
+
+.basic-chart__expand-link:hover {
   background: transparent;
   color: var(--deep-navy);
 }
 
-.basic-chart__actions button:first-child:hover {
-  background: var(--moon-silver);
-}
+@media (max-width: 370px) {
+  .basic-chart__pillar {
+    padding-inline: 0.24rem;
+  }
 
-.basic-chart__symbol:focus {
-  outline: 2px solid var(--subtle-gold);
-  outline-offset: 3px;
-  border-radius: 2px;
-}
-
-.basic-chart__spouse-details {
-  margin-top: 1.1rem;
-  padding: 0.75rem 0 0.1rem 0.75rem;
-  border-top: 1px solid var(--silver-line);
-}
-
-.basic-chart__spouse-details h3 {
-  margin: 0 0 0.35rem;
-  font-size: 0.9rem;
-}
-
-.basic-chart__spouse-details dl {
-  padding-top: 0.42rem;
-  padding-bottom: 0.48rem;
-  border-color: #aab2bd;
-}
-
-.basic-chart__spouse-details dl::before {
-  width: 0.32rem;
-  height: 0.32rem;
-}
-
-.basic-chart__spouse-details dd {
-  font-size: 0.95rem;
+  .basic-chart__ten-god {
+    font-size: 0.6rem;
+  }
 }
 
 @media (min-width: 700px) {
@@ -606,24 +738,21 @@ button:hover {
   }
 
   .result-screen .basic-chart {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 }
 
 @media (max-width: 370px) {
   .result-screen .basic-chart {
-    padding: 0.65rem;
+    padding: 0.6rem;
   }
 
   .basic-chart__table thead th:first-child,
   .basic-chart__table tbody th {
-    width: 3.2rem;
     padding-left: 0.2rem;
-    font-size: 0.6rem;
   }
 
   .basic-chart__ten-god {
     font-size: 0.6rem;
   }
-
 }
