@@ -134,26 +134,40 @@ function App() {
 
       {error && <p role="alert">{error}</p>}
       {pillars && (
-        <table>
-          <tbody>
-            <tr>
-              <th scope="row">年柱</th>
-              <td>{pillars.year}</td>
-            </tr>
-            <tr>
-              <th scope="row">月柱</th>
-              <td>{pillars.month}</td>
-            </tr>
-            <tr>
-              <th scope="row">日柱</th>
-              <td>{pillars.day}</td>
-            </tr>
-            <tr>
-              <th scope="row">時柱</th>
-              <td>{pillars.time}</td>
-            </tr>
-          </tbody>
-        </table>
+        <>
+          <table>
+            <tbody>
+              <tr>
+                <th scope="row">年柱</th>
+                <td>{pillars.year}</td>
+              </tr>
+              <tr>
+                <th scope="row">月柱</th>
+                <td>{pillars.month}</td>
+              </tr>
+              <tr>
+                <th scope="row">日柱</th>
+                <td>{pillars.day}</td>
+              </tr>
+              <tr>
+                <th scope="row">時柱</th>
+                <td>{pillars.time}</td>
+              </tr>
+            </tbody>
+          </table>
+          <section>
+            <h2>日干</h2>
+            <p>{pillars.dayRelationships.dayStem}</p>
+            <h2>日支</h2>
+            <p>{pillars.dayRelationships.dayBranch}</p>
+            <h2>日支の蔵干</h2>
+            <p>{pillars.dayRelationships.hiddenStems.map(({ stem }) => stem).join(' / ')}</p>
+            <h2>本気</h2>
+            <p>{pillars.dayRelationships.mainHiddenStem}</p>
+            <h2>本気の十神</h2>
+            <p>{pillars.dayRelationships.mainHiddenTenGod}</p>
+          </section>
+        </>
       )}
     </main>
   )

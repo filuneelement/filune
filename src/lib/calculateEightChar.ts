@@ -1,5 +1,6 @@
 import { Solar } from 'lunar-typescript'
 import { calculateSolarTermPillars } from './solarTermPillars'
+import { calculateDayRelationships, type DayRelationships } from './dayRelationships'
 
 export type BirthDateTime = {
   year: number
@@ -14,6 +15,7 @@ export type FourPillars = {
   month: string
   day: string
   time: string
+  dayRelationships: DayRelationships
 }
 
 export function calculateEightChar({ year, month, day, hour, minute }: BirthDateTime): FourPillars {
@@ -21,11 +23,17 @@ export function calculateEightChar({ year, month, day, hour, minute }: BirthDate
   const lunar = solar.getLunar()
   const eightChar = lunar.getEightChar()
   const solarTermPillars = calculateSolarTermPillars({ year, month, day, hour, minute })
+  const dayRelationships = calculateDayRelationships(
+    eightChar.getDayGan(),
+    eightChar.getDayZhi(),
+    eightChar.getDayHideGan(),
+  )
 
   return {
     year: solarTermPillars.year,
     month: solarTermPillars.month,
     day: eightChar.getDay(),
     time: eightChar.getTime(),
+    dayRelationships,
   }
 }

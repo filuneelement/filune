@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "verify:solar-terms": "node scripts/verify-solar-term-pillars.mjs",
+    "verify:ten-gods": "node scripts/verify-ten-gods.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
