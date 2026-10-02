@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { calculateEightChar, type FourPillars } from './lib/calculateEightChar'
+import BasicChartResult from './components/BasicChartResult'
+import { calculateEightChar, calculateEightCharWithoutBirthTime, type FourPillars, type ThreePillars } from './lib/calculateEightChar'
+import { createBasicChartViewModel } from './lib/basicChartViewModel'
 
 function App() {
   const [year, setYear] = useState('')
@@ -7,8 +9,10 @@ function App() {
   const [day, setDay] = useState('')
   const [hour, setHour] = useState('')
   const [minute, setMinute] = useState('')
-  const [pillars, setPillars] = useState<FourPillars | null>(null)
+  const [timeUnknown, setTimeUnknown] = useState(false)
+  const [pillars, setPillars] = useState<FourPillars | ThreePillars | null>(null)
   const [error, setError] = useState('')
+  const chart = pillars ? createBasicChartViewModel(pillars) : null
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -36,23 +40,27 @@ function App() {
       setError('入力した年月に有効な日付を入力してください。')
       return
     }
-    if (!/^\d{1,2}$/.test(hour) || Number(hour) < 0 || Number(hour) > 23) {
-      setError('時は0から23までの数字で入力してください。')
-      return
-    }
-    if (!/^\d{1,2}$/.test(minute) || Number(minute) < 0 || Number(minute) > 59) {
-      setError('分は0から59までの数字で入力してください。')
-      return
+    if (!timeUnknown) {
+      if (!/^\d{1,2}$/.test(hour) || Number(hour) < 0 || Number(hour) > 23) {
+        setError('時は0から23までの数字で入力してください。')
+        return
+      }
+      if (!/^\d{1,2}$/.test(minute) || Number(minute) < 0 || Number(minute) > 59) {
+        setError('分は0から59までの数字で入力してください。')
+        return
+      }
     }
 
     try {
-      setPillars(calculateEightChar({
-        year: numericYear,
-        month: numericMonth,
-        day: numericDay,
-        hour: Number(hour),
-        minute: Number(minute),
-      }))
+      setPillars(timeUnknown
+        ? calculateEightCharWithoutBirthTime({ year: numericYear, month: numericMonth, day: numericDay })
+        : calculateEightChar({
+            year: numericYear,
+            month: numericMonth,
+            day: numericDay,
+            hour: Number(hour),
+            minute: Number(minute),
+          }))
       setError('')
     } catch {
       setError('入力した日時を計算できませんでした。')
@@ -61,113 +69,115 @@ function App() {
 
   return (
     <main>
-      <h1>四柱計算</h1>
-      <form noValidate onSubmit={handleSubmit}>
-        <fieldset>
-          <legend>生年月日</legend>
-          <label>
-            年{' '}
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              aria-label="年"
-              maxLength={4}
-              value={year}
-              onChange={(event) => setYear(event.target.value.replace(/\D/g, '').slice(0, 4))}
-            />
-          </label>{' '}
-          <label>
-            月{' '}
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              aria-label="月"
-              maxLength={2}
-              value={month}
-              onChange={(event) => setMonth(event.target.value.replace(/\D/g, '').slice(0, 2))}
-            />
-          </label>{' '}
-          <label>
-            日{' '}
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              aria-label="日"
-              maxLength={2}
-              value={day}
-              onChange={(event) => setDay(event.target.value.replace(/\D/g, '').slice(0, 2))}
-            />
-          </label>
-        </fieldset>
-        <fieldset>
-          <legend>出生時刻</legend>
-          <label>
-            時{' '}
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              aria-label="時"
-              maxLength={2}
-              value={hour}
-              onChange={(event) => setHour(event.target.value.replace(/\D/g, '').slice(0, 2))}
-            />
-          </label>{' '}
-          <label>
-            分{' '}
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              aria-label="分"
-              maxLength={2}
-              value={minute}
-              onChange={(event) => setMinute(event.target.value.replace(/\D/g, '').slice(0, 2))}
-            />
-          </label>
-        </fieldset>
-        <button type="submit">計算</button>
-      </form>
-
-      {error && <p role="alert">{error}</p>}
-      {pillars && (
-        <>
-          <table>
-            <tbody>
-              <tr>
-                <th scope="row">年柱</th>
-                <td>{pillars.year}</td>
-              </tr>
-              <tr>
-                <th scope="row">月柱</th>
-                <td>{pillars.month}</td>
-              </tr>
-              <tr>
-                <th scope="row">日柱</th>
-                <td>{pillars.day}</td>
-              </tr>
-              <tr>
-                <th scope="row">時柱</th>
-                <td>{pillars.time}</td>
-              </tr>
-            </tbody>
-          </table>
-          <section>
-            <h2>日干</h2>
-            <p>{pillars.dayRelationships.dayStem}</p>
-            <h2>日支</h2>
-            <p>{pillars.dayRelationships.dayBranch}</p>
-            <h2>日支の蔵干</h2>
-            <p>{pillars.dayRelationships.hiddenStems.map(({ stem }) => stem).join(' / ')}</p>
-            <h2>本気</h2>
-            <p>{pillars.dayRelationships.mainHiddenStem}</p>
-            <h2>本気の十神</h2>
-            <p>{pillars.dayRelationships.mainHiddenTenGod}</p>
+      <div className="entry-screen">
+        <p className="entry-screen__brand">FILUNE</p>
+        <h1>あなたの命式</h1>
+        <form className="entry-form" noValidate onSubmit={handleSubmit}>
+          <section className="entry-form__section" aria-labelledby="birth-date-title">
+            <h2 id="birth-date-title">生年月日</h2>
+            <div className="entry-form__fields">
+              <label>
+                <input
+                  className="entry-form__year"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-label="年"
+                  placeholder="2000"
+                  maxLength={4}
+                  value={year}
+                  onChange={(event) => setYear(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                />
+                <span>年</span>
+              </label>
+              <label>
+                <input
+                  className="entry-form__short-number"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-label="月"
+                  placeholder="01"
+                  maxLength={2}
+                  value={month}
+                  onChange={(event) => setMonth(event.target.value.replace(/\D/g, '').slice(0, 2))}
+                />
+                <span>月</span>
+              </label>
+              <label>
+                <input
+                  className="entry-form__short-number"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-label="日"
+                  placeholder="01"
+                  maxLength={2}
+                  value={day}
+                  onChange={(event) => setDay(event.target.value.replace(/\D/g, '').slice(0, 2))}
+                />
+                <span>日</span>
+              </label>
+            </div>
           </section>
-        </>
+          <section className="entry-form__section" aria-labelledby="birth-time-title">
+            <h2 id="birth-time-title">出生時刻</h2>
+            <div className="entry-form__fields">
+              <label>
+                <input
+                  className="entry-form__short-number"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-label="時"
+                  placeholder="12"
+                  maxLength={2}
+                  value={hour}
+                  disabled={timeUnknown}
+                  onChange={(event) => setHour(event.target.value.replace(/\D/g, '').slice(0, 2))}
+                />
+                <span>時</span>
+              </label>
+              <label>
+                <input
+                  className="entry-form__short-number"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-label="分"
+                  placeholder="00"
+                  maxLength={2}
+                  value={minute}
+                  disabled={timeUnknown}
+                  onChange={(event) => setMinute(event.target.value.replace(/\D/g, '').slice(0, 2))}
+                />
+                <span>分</span>
+              </label>
+            </div>
+            <label className="entry-form__unknown-time">
+              <input
+                type="checkbox"
+                checked={timeUnknown}
+                onChange={(event) => {
+                  const checked = event.target.checked
+                  setTimeUnknown(checked)
+                  if (checked && (error.startsWith('時は') || error.startsWith('分は'))) setError('')
+                }}
+              />
+              <span>出生時刻がわからない</span>
+            </label>
+          </section>
+          <button className="entry-form__submit" type="submit">命式を見る</button>
+          {error && <p role="alert">{error}</p>}
+        </form>
+      </div>
+
+      {pillars && chart && (
+        <BasicChartResult
+          chart={chart}
+          birthDateTime={`${year}.${month.padStart(2, '0')}.${day.padStart(2, '0')}${pillars.timeKnown === false ? ' / 出生時刻不明' : ` / ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`}`}
+          showSolarTermAmbiguity={pillars.timeKnown === false ? pillars.solarTermAmbiguous : false}
+        />
       )}
     </main>
   )

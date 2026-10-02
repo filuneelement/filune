@@ -70,3 +70,9 @@ export function calculateSolarTermPillars(birthDateTime: BirthDateTime): SolarTe
     month: HEAVENLY_STEMS[monthStemIndex] + MONTH_BRANCHES_FROM_YIN[jieIndex],
   }
 }
+
+export function isSolarTermAmbiguousOnJstDate({ year, month, day }: Pick<BirthDateTime, 'year' | 'month' | 'day'>): boolean {
+  const start = calculateSolarTermPillars({ year, month, day, hour: 0, minute: 0 })
+  const end = calculateSolarTermPillars({ year, month, day, hour: 23, minute: 59 })
+  return start.year !== end.year || start.month !== end.month
+}

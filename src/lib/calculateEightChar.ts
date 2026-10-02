@@ -1,5 +1,5 @@
 import { Solar } from 'lunar-typescript'
-import { calculateSolarTermPillars } from './solarTermPillars'
+import { calculateSolarTermPillars, isSolarTermAmbiguousOnJstDate } from './solarTermPillars'
 import { calculateDayRelationships, type DayRelationships } from './dayRelationships'
 
 export type BirthDateTime = {
@@ -15,6 +15,16 @@ export type FourPillars = {
   month: string
   day: string
   time: string
+  timeKnown?: true
+  dayRelationships: DayRelationships
+}
+
+export type ThreePillars = {
+  year: string
+  month: string
+  day: string
+  timeKnown: false
+  solarTermAmbiguous: boolean
   dayRelationships: DayRelationships
 }
 
@@ -34,6 +44,28 @@ export function calculateEightChar({ year, month, day, hour, minute }: BirthDate
     month: solarTermPillars.month,
     day: eightChar.getDay(),
     time: eightChar.getTime(),
+    timeKnown: true,
+    dayRelationships,
+  }
+}
+
+export function calculateEightCharWithoutBirthTime({ year, month, day }: Pick<BirthDateTime, 'year' | 'month' | 'day'>): ThreePillars {
+  // Noon is an internal reference only: it stabilizes the local day's day-pillar
+  // lookup and is never exposed or used to produce a time pillar.
+  const eightChar = Solar.fromYmdHms(year, month, day, 12, 0, 0).getLunar().getEightChar()
+  const solarTermPillars = calculateSolarTermPillars({ year, month, day, hour: 12, minute: 0 })
+  const dayRelationships = calculateDayRelationships(
+    eightChar.getDayGan(),
+    eightChar.getDayZhi(),
+    eightChar.getDayHideGan(),
+  )
+
+  return {
+    year: solarTermPillars.year,
+    month: solarTermPillars.month,
+    day: eightChar.getDay(),
+    timeKnown: false,
+    solarTermAmbiguous: isSolarTermAmbiguousOnJstDate({ year, month, day }),
     dayRelationships,
   }
 }
