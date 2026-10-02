@@ -138,6 +138,64 @@ label {
   cursor: not-allowed;
 }
 
+.entry-form__name-field {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+  width: 100%;
+  margin: 0;
+  color: var(--deep-navy);
+  font-size: 0.88rem;
+}
+
+.entry-form__name-field input {
+  width: 100%;
+  height: 50px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--silver-line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--deep-navy);
+  font: inherit;
+}
+
+.entry-form__gender {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: var(--deep-navy);
+  font-size: 0.88rem;
+}
+
+.entry-form__gender > span {
+  margin-right: 0.25rem;
+}
+
+.entry-form__gender label {
+  min-height: 42px;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--silver-line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--muted-navy);
+  cursor: pointer;
+}
+
+.entry-form__gender input {
+  width: 1rem;
+  height: 1rem;
+  min-height: 1rem;
+  margin: 0 0.35rem 0 0;
+  accent-color: var(--deep-navy);
+}
+
+.entry-form__gender input:checked + span {
+  color: var(--deep-navy);
+  font-weight: 600;
+}
+
 .entry-form__year {
   width: 5.6ch;
 }
@@ -373,6 +431,22 @@ button:hover {
   padding: 0 0.15rem;
 }
 
+.result-screen__back {
+  min-height: 2.25rem;
+  margin: 0 0 0.8rem -0.1rem;
+  padding: 0.3rem 0.1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-navy);
+  font-size: 0.78rem;
+}
+
+.result-screen__back:hover {
+  background: transparent;
+  color: var(--deep-navy);
+}
+
 .result-screen__brand {
   margin: 0 0 0.55rem;
   color: var(--muted-navy);
@@ -392,6 +466,14 @@ button:hover {
   font-size: 0.84rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.035em;
+}
+
+.result-screen__profile {
+  margin: 0.8rem 0 0;
+  color: var(--deep-navy);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .result-screen__notice {
@@ -541,6 +623,16 @@ button:hover {
   line-height: 1.2;
 }
 
+.basic-chart__twelve-stage {
+  display: grid;
+  justify-items: center;
+  gap: 0.24rem;
+  width: 100%;
+  margin-top: 0.2rem;
+  padding-top: 0.48rem;
+  border-top: 1px solid #edf0f2;
+}
+
 .basic-chart__columns {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -565,11 +657,6 @@ button:hover {
   border-left: 1px solid var(--moon-silver);
 }
 
-.basic-chart__pillar--day {
-  background: #f2f4f5;
-  box-shadow: inset 0 2px 0 var(--subtle-gold);
-}
-
 .basic-chart__pillar h3 {
   margin: 0;
   font-size: 0.76rem;
@@ -586,13 +673,13 @@ button:hover {
 }
 
 .basic-chart__pillar-data--stem {
-  min-height: 5.35rem;
-  padding: 0.7rem 0 0.82rem;
+  min-height: 4.95rem;
+  padding: 0.58rem 0 0.7rem;
 }
 
 .basic-chart__pillar-data--branch {
-  min-height: 5.6rem;
-  padding: 0.72rem 0 0.78rem;
+  min-height: 5rem;
+  padding: 0.62rem 0 0.68rem;
   border-top: 1px solid #edf0f2;
 }
 
@@ -702,6 +789,26 @@ button:hover {
   line-height: 1.2;
 }
 
+.basic-chart__hidden-symbol--wood {
+  color: var(--element-wood);
+}
+
+.basic-chart__hidden-symbol--fire {
+  color: var(--element-fire);
+}
+
+.basic-chart__hidden-symbol--earth {
+  color: var(--element-earth);
+}
+
+.basic-chart__hidden-symbol--metal {
+  color: var(--element-metal);
+}
+
+.basic-chart__hidden-symbol--water {
+  color: var(--element-water);
+}
+
 .basic-chart__expand-link {
   display: block;
   min-height: 2.25rem;
@@ -720,6 +827,380 @@ button:hover {
 .basic-chart__expand-link:hover {
   background: transparent;
   color: var(--deep-navy);
+}
+
+.great-luck {
+  margin-top: 1.5rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--silver-line);
+}
+
+.great-luck__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.great-luck__heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+}
+
+.great-luck__direction {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--silver-line);
+  border-radius: 99px;
+  color: var(--muted-navy);
+  font-size: 0.7rem;
+}
+
+.great-luck__start-age,
+.great-luck__notice {
+  margin: 0.55rem 0 0.75rem;
+  color: var(--muted-navy);
+  font-size: 0.77rem;
+  line-height: 1.5;
+}
+
+.great-luck__cards {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  margin-inline: -0.75rem;
+  padding: 0.12rem 0.75rem 0.65rem;
+  scrollbar-width: thin;
+  scrollbar-color: #d9dee2 #f7f7f4;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0.75rem;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.great-luck__cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.great-luck__cards::-webkit-scrollbar-track {
+  border-radius: 99px;
+  background: #f7f7f4;
+}
+
+.great-luck__cards::-webkit-scrollbar-thumb {
+  border: 1px solid #f7f7f4;
+  border-radius: 99px;
+  background: #d9dee2;
+}
+
+.great-luck__card {
+  display: grid;
+  flex: 0 0 7.75rem;
+  justify-items: center;
+  align-content: start;
+  gap: 0.48rem;
+  min-height: 7.9rem;
+  padding: 0.7rem 0.45rem;
+  border: 1px solid var(--silver-line);
+  border-radius: 8px;
+  background: var(--paper);
+  scroll-snap-align: center;
+}
+
+.great-luck__card--current {
+  border-color: #c6ad78;
+  background: #f7f5ef;
+  box-shadow: inset 0 2px 0 #c6ad78;
+}
+
+.great-luck__card-age {
+  color: var(--muted-navy);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.great-luck__card-pillar {
+  display: flex;
+  gap: 0.18rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.great-luck__symbol--wood {
+  color: var(--element-wood);
+}
+
+.great-luck__symbol--fire {
+  color: var(--element-fire);
+}
+
+.great-luck__symbol--earth {
+  color: var(--element-earth);
+}
+
+.great-luck__symbol--metal {
+  color: var(--element-metal);
+}
+
+.great-luck__symbol--water {
+  color: var(--element-water);
+}
+
+.great-luck__card-meta {
+  color: var(--muted-navy);
+  font-size: 0.56rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.luck-card__twelve-stage {
+  color: var(--muted-navy);
+  font-size: 0.57rem;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.yearly-luck {
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--silver-line);
+}
+
+.yearly-luck__heading h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+}
+
+.yearly-luck__cards {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  margin: 0.7rem -0.75rem 0;
+  padding: 0.12rem 0.75rem 0.65rem;
+  scrollbar-width: thin;
+  scrollbar-color: #d9dee2 #f7f7f4;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0.75rem;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.yearly-luck__cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.yearly-luck__cards::-webkit-scrollbar-track {
+  border-radius: 99px;
+  background: #f7f7f4;
+}
+
+.yearly-luck__cards::-webkit-scrollbar-thumb {
+  border: 1px solid #f7f7f4;
+  border-radius: 99px;
+  background: #d9dee2;
+}
+
+.yearly-luck__card {
+  display: grid;
+  flex: 0 0 6.85rem;
+  justify-items: center;
+  align-content: start;
+  gap: 0.34rem;
+  min-height: 8.1rem;
+  padding: 0.55rem 0.38rem;
+  border: 1px solid var(--silver-line);
+  border-radius: 8px;
+  background: var(--paper);
+  scroll-snap-align: center;
+}
+
+.yearly-luck__card--current {
+  border-color: #c6ad78;
+  background: #f7f5ef;
+  box-shadow: inset 0 2px 0 #c6ad78;
+}
+
+.yearly-luck__year {
+  color: var(--muted-navy);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.yearly-luck__pillar {
+  display: flex;
+  gap: 0.1rem;
+  font-size: 1.38rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.yearly-luck__symbol--wood {
+  color: var(--element-wood);
+}
+
+.yearly-luck__symbol--fire {
+  color: var(--element-fire);
+}
+
+.yearly-luck__symbol--earth {
+  color: var(--element-earth);
+}
+
+.yearly-luck__symbol--metal {
+  color: var(--element-metal);
+}
+
+.yearly-luck__symbol--water {
+  color: var(--element-water);
+}
+
+.yearly-luck__god {
+  color: var(--muted-navy);
+  font-size: 0.57rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.monthly-luck {
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--silver-line);
+}
+
+.monthly-luck__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.monthly-luck__heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+}
+
+.monthly-luck__year-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-navy);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.monthly-luck__year-switcher button {
+  width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 1px solid var(--silver-line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--deep-navy);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.monthly-luck__cards {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  margin: 0.7rem -0.75rem 0;
+  padding: 0.12rem 0.75rem 0.65rem;
+  scrollbar-width: thin;
+  scrollbar-color: #d9dee2 #f7f7f4;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0.75rem;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.monthly-luck__cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.monthly-luck__cards::-webkit-scrollbar-track {
+  border-radius: 99px;
+  background: #f7f7f4;
+}
+
+.monthly-luck__cards::-webkit-scrollbar-thumb {
+  border: 1px solid #f7f7f4;
+  border-radius: 99px;
+  background: #d9dee2;
+}
+
+.monthly-luck__card {
+  display: grid;
+  flex: 0 0 6.5rem;
+  justify-items: center;
+  align-content: start;
+  gap: 0.35rem;
+  min-height: 7.3rem;
+  padding: 0.55rem 0.35rem;
+  border: 1px solid var(--silver-line);
+  border-radius: 8px;
+  background: var(--paper);
+  scroll-snap-align: center;
+}
+
+.monthly-luck__card--current {
+  border-color: #c6ad78;
+  background: #f7f5ef;
+  box-shadow: inset 0 2px 0 #c6ad78;
+}
+
+.monthly-luck__month {
+  color: var(--deep-navy);
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.monthly-luck__date {
+  color: var(--muted-navy);
+  font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.monthly-luck__pillar {
+  display: flex;
+  gap: 0.1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.monthly-luck__symbol--wood {
+  color: var(--element-wood);
+}
+
+.monthly-luck__symbol--fire {
+  color: var(--element-fire);
+}
+
+.monthly-luck__symbol--earth {
+  color: var(--element-earth);
+}
+
+.monthly-luck__symbol--metal {
+  color: var(--element-metal);
+}
+
+.monthly-luck__symbol--water {
+  color: var(--element-water);
+}
+
+.monthly-luck__gods {
+  color: var(--muted-navy);
+  font-size: 0.54rem;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
 }
 
 @media (max-width: 370px) {

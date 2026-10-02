@@ -1,47 +1,41 @@
 import { useState } from 'react'
 import type { createBasicChartViewModel } from '../lib/basicChartViewModel'
+import type { GreatLuckResult } from '../lib/calculateGreatLuck'
+import GreatLuckSection from './GreatLuckSection'
+import MonthlyLuckSection from './MonthlyLuckSection'
+import YearlyLuckSection from './YearlyLuckSection'
+import { FIVE_ELEMENTS } from './fiveElementDisplay'
 
 type BasicChart = ReturnType<typeof createBasicChartViewModel>
 
 type BasicChartResultProps = {
   chart: BasicChart
+  profileSummary: string
   birthDateTime: string
   showSolarTermAmbiguity: boolean
+  onBack: () => void
+  greatLuck: GreatLuckResult | null
+  greatLuckMessage?: string
 }
 
-const FIVE_ELEMENTS: Record<string, { label: string; className: string; polarity?: '＋' | '−' }> = {
-  甲: { label: '木', className: 'wood', polarity: '＋' },
-  乙: { label: '木', className: 'wood', polarity: '−' },
-  寅: { label: '木', className: 'wood' },
-  卯: { label: '木', className: 'wood' },
-  丙: { label: '火', className: 'fire', polarity: '＋' },
-  丁: { label: '火', className: 'fire', polarity: '−' },
-  巳: { label: '火', className: 'fire' },
-  午: { label: '火', className: 'fire' },
-  戊: { label: '土', className: 'earth', polarity: '＋' },
-  己: { label: '土', className: 'earth', polarity: '−' },
-  辰: { label: '土', className: 'earth' },
-  戌: { label: '土', className: 'earth' },
-  丑: { label: '土', className: 'earth' },
-  未: { label: '土', className: 'earth' },
-  庚: { label: '金', className: 'metal', polarity: '＋' },
-  辛: { label: '金', className: 'metal', polarity: '−' },
-  申: { label: '金', className: 'metal' },
-  酉: { label: '金', className: 'metal' },
-  壬: { label: '水', className: 'water', polarity: '＋' },
-  癸: { label: '水', className: 'water', polarity: '−' },
-  子: { label: '水', className: 'water' },
-  亥: { label: '水', className: 'water' },
-}
-
-function BasicChartResult({ chart, birthDateTime, showSolarTermAmbiguity }: BasicChartResultProps) {
+function BasicChartResult({
+  chart,
+  profileSummary,
+  birthDateTime,
+  showSolarTermAmbiguity,
+  onBack,
+  greatLuck,
+  greatLuckMessage,
+}: BasicChartResultProps) {
   const [showHiddenStems, setShowHiddenStems] = useState(false)
 
   return (
     <section className="result-screen" aria-labelledby="result-title">
       <header className="result-screen__header">
+        <button className="result-screen__back" type="button" onClick={onBack}>‹ 入力画面へ戻る</button>
         <p className="result-screen__brand">FILUNE</p>
         <h1 id="result-title">あなたの命式</h1>
+        <p className="result-screen__profile">{profileSummary}</p>
         <p className="result-screen__birth-data">{birthDateTime}</p>
         {showSolarTermAmbiguity && (
           <p className="result-screen__notice">
@@ -60,13 +54,12 @@ function BasicChartResult({ chart, birthDateTime, showSolarTermAmbiguity }: Basi
           className={`basic-chart__columns basic-chart__columns--${chart.columns.length}`}
         >
           {chart.columns.map((column, index) => {
-            const mainHiddenStem = column.hiddenStems.find(({ role }) => role === 'main')
             const stemElement = FIVE_ELEMENTS[column.stem]
             const branchElement = FIVE_ELEMENTS[column.branch]
 
             return (
               <article
-                className={`basic-chart__pillar${index === 2 ? ' basic-chart__pillar--day' : ''}`}
+                className="basic-chart__pillar"
                 key={column.name}
                 aria-label={column.name}
               >
@@ -99,23 +92,26 @@ function BasicChartResult({ chart, birthDateTime, showSolarTermAmbiguity }: Basi
                   <span className="basic-chart__ten-god">{column.branchTenGod}</span>
                 </div>
 
-                <div className="basic-chart__hidden-stems">
-                  <span className="basic-chart__hidden-label">蔵干</span>
-                  {showHiddenStems ? (
+                {showHiddenStems && (
+                  <div className="basic-chart__hidden-stems">
+                    <span className="basic-chart__hidden-label">蔵干</span>
                     <ul className="basic-chart__hidden-list">
                       {column.hiddenStems.map(({ stem, role, tenGod }) => (
                         <li key={stem}>
-                          <span className="basic-chart__hidden-symbol">{stem}</span>
+                          <span className={`basic-chart__hidden-symbol${FIVE_ELEMENTS[stem] ? ` basic-chart__hidden-symbol--${FIVE_ELEMENTS[stem].className}` : ''}`}>
+                            {stem}
+                          </span>
                           <span className="basic-chart__hidden-meta">
                             {role === 'main' ? '本気' : role === 'middle' ? '中気' : '余気'}・{tenGod}
                           </span>
                         </li>
                       ))}
                     </ul>
-                  ) : (
-                    <span className="basic-chart__hidden-symbol">{mainHiddenStem?.stem ?? '—'}</span>
-                  )}
-                </div>
+                    <div className="basic-chart__twelve-stage">
+                      <span className="basic-chart__hidden-symbol">{column.twelveStage}</span>
+                    </div>
+                  </div>
+                )}
               </article>
             )
           })}
@@ -131,6 +127,10 @@ function BasicChartResult({ chart, birthDateTime, showSolarTermAmbiguity }: Basi
           {showHiddenStems ? '簡略表示' : '蔵干を詳しく見る'}
         </button>
       </section>
+
+      <GreatLuckSection result={greatLuck} message={greatLuckMessage} dayStem={chart.dayStem} />
+      <YearlyLuckSection dayStem={chart.dayStem} greatLuckPeriods={greatLuck?.cards ?? []} />
+      <MonthlyLuckSection dayStem={chart.dayStem} />
     </section>
   )
 }
