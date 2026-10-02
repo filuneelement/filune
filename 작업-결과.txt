@@ -1,0 +1,8 @@
+React + Vite + TypeScript 기본 앱을 저장소 루트에 구성했습니다.
+lunar-typescript는 설치하지 않았습니다.
+
+변경 파일: .gitignore, README.md, index.html, package.json, package-lock.json,
+vite.config.ts, tsconfig.json, tsconfig.app.json, tsconfig.node.json,
+src/App.tsx, src/main.tsx, src/style.css
+
+npm run build: 성공 (TypeScript 검사 및 Vite 프로덕션 빌드 완료)
