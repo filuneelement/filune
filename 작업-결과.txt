@@ -1,8 +1,7 @@
-React + Vite + TypeScript 기본 앱을 저장소 루트에 구성했습니다.
-lunar-typescript는 설치하지 않았습니다.
+lunar-typescript 설치 및 최소 四柱 계산 화면 구현 완료
 
-변경 파일: .gitignore, README.md, index.html, package.json, package-lock.json,
-vite.config.ts, tsconfig.json, tsconfig.app.json, tsconfig.node.json,
-src/App.tsx, src/main.tsx, src/style.css
-
-npm run build: 성공 (TypeScript 검사 및 Vite 프로덕션 빌드 완료)
+변경 파일: package.json, package-lock.json, src/App.tsx, src/lib/calculateEightChar.ts
+사용 API: Solar.fromYmdHms(...) → getLunar() → getEightChar()
+설치 버전: lunar-typescript 1.8.6
+23시 경계: 라이브러리 기본값 sect=2 사용. 日柱는 자정에 변경.
+npm run build: 성공 (오류 없음, 번들 크기 경고 있음)
