@@ -143,7 +143,7 @@ label {
   justify-items: start;
   gap: 0.45rem;
   width: 100%;
-  margin: 0;
+  margin: 0 0 22px;
   color: var(--deep-navy);
   font-size: 0.88rem;
 }
@@ -1235,5 +1235,153 @@ button:hover {
 
   .basic-chart__ten-god {
     font-size: 0.6rem;
+  }
+}
+
+body {
+  overflow-x: clip;
+}
+
+.result-screen {
+  min-width: 0;
+}
+
+.result-screen__header {
+  margin-bottom: 1rem;
+}
+
+.result-screen__brand {
+  margin-bottom: 0.3rem;
+}
+
+.result-screen__header h1 {
+  margin: 0 0 0.45rem;
+  font-size: 1.45rem;
+}
+
+.result-screen__profile {
+  margin-top: 0.45rem;
+}
+
+.result-screen__birth-data {
+  margin-top: 0.18rem;
+}
+
+.result-screen .basic-chart {
+  padding: 1rem;
+  border-color: #cbd2da;
+  box-shadow: 0 2px 9px rgb(29 43 66 / 5%);
+}
+
+.fortune-flow {
+  min-width: 0;
+  margin-top: 1.8rem;
+}
+
+.fortune-flow__title {
+  margin: 0;
+  font-size: 1.18rem;
+  letter-spacing: 0.03em;
+}
+
+.fortune-flow .great-luck,
+.fortune-flow .yearly-luck,
+.fortune-flow .monthly-luck {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--silver-line);
+}
+
+.fortune-flow .great-luck__cards,
+.fortune-flow .yearly-luck__cards,
+.fortune-flow .monthly-luck__cards {
+  min-width: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+}
+
+.fortune-flow .great-luck__cards::-webkit-scrollbar,
+.fortune-flow .yearly-luck__cards::-webkit-scrollbar,
+.fortune-flow .monthly-luck__cards::-webkit-scrollbar {
+  display: none;
+}
+
+.fortune-flow .great-luck__card,
+.fortune-flow .yearly-luck__card,
+.fortune-flow .monthly-luck__card {
+  flex-basis: 7.1rem;
+  border-radius: 8px;
+  scroll-snap-align: center;
+}
+
+.fortune-flow .great-luck__card--current {
+  border-color: #c1a66f;
+  background: #f5f1e7;
+  box-shadow: inset 0 2px 0 #c1a66f;
+}
+
+.fortune-flow .yearly-luck__card--current {
+  border-color: #d0c19e;
+  background: #f8f6f0;
+  box-shadow: inset 0 1.5px 0 #cabb98;
+}
+
+.fortune-flow .monthly-luck__card--current {
+  border-color: #dbd2bd;
+  background: #fbfaf6;
+  box-shadow: inset 0 1px 0 #d6c9a9;
+}
+
+.result-screen__back,
+.basic-chart__expand-link {
+  min-height: 44px;
+}
+
+.entry-form__name-field input {
+  font-size: 1rem;
+}
+
+.entry-form__gender label {
+  min-height: 44px;
+}
+
+.monthly-luck__year-switcher button {
+  width: 44px;
+  min-height: 44px;
+}
+
+.basic-chart__hidden-label,
+.basic-chart__hidden-meta {
+  font-size: 0.62rem;
+}
+
+.great-luck__card-meta,
+.luck-card__twelve-stage,
+.yearly-luck__god,
+.monthly-luck__date,
+.monthly-luck__gods {
+  font-size: 0.62rem;
+}
+
+.fortune-flow .great-luck__card,
+.fortune-flow .yearly-luck__card,
+.fortune-flow .monthly-luck__card {
+  min-height: 8rem;
+  padding: 0.65rem 0.4rem;
+  gap: 0.4rem;
+}
+
+@media (max-width: 370px) {
+  .result-screen .basic-chart {
+    padding: 0.65rem;
+  }
+
+  .basic-chart__pillar {
+    padding-inline: 0.2rem;
+  }
+
+  .basic-chart__ten-god {
+    font-size: 0.62rem;
   }
 }

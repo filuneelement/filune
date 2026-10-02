@@ -34,9 +34,9 @@ function BasicChartResult({
       <header className="result-screen__header">
         <button className="result-screen__back" type="button" onClick={onBack}>‹ 入力画面へ戻る</button>
         <p className="result-screen__brand">FILUNE</p>
-        <h1 id="result-title">あなたの命式</h1>
         <p className="result-screen__profile">{profileSummary}</p>
         <p className="result-screen__birth-data">{birthDateTime}</p>
+        <h1 id="result-title">あなたの命式</h1>
         {showSolarTermAmbiguity && (
           <p className="result-screen__notice">
             この日は節入り日にあたるため、出生時刻によって年柱・月柱が異なる場合があります。
@@ -128,9 +128,12 @@ function BasicChartResult({
         </button>
       </section>
 
-      <GreatLuckSection result={greatLuck} message={greatLuckMessage} dayStem={chart.dayStem} />
-      <YearlyLuckSection dayStem={chart.dayStem} greatLuckPeriods={greatLuck?.cards ?? []} />
-      <MonthlyLuckSection dayStem={chart.dayStem} />
+      <section className="fortune-flow" aria-labelledby="fortune-flow-title">
+        <h2 id="fortune-flow-title" className="fortune-flow__title">運の流れ</h2>
+        <GreatLuckSection result={greatLuck} message={greatLuckMessage} dayStem={chart.dayStem} />
+        <YearlyLuckSection dayStem={chart.dayStem} greatLuckPeriods={greatLuck?.cards ?? []} />
+        <MonthlyLuckSection dayStem={chart.dayStem} />
+      </section>
     </section>
   )
 }
