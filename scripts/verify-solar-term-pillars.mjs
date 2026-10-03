@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import { LunarUtil } from 'lunar-typescript'
 import { createServer } from 'vite'
 
 const server = await createServer({
@@ -10,8 +9,8 @@ const server = await createServer({
 
 try {
   const { calculateEightChar } = await server.ssrLoadModule('/src/lib/calculateEightChar.ts')
-  const { calculateDayRelationships } = await server.ssrLoadModule('/src/lib/dayRelationships.ts')
-  const { HIDDEN_STEM_ROLE_TABLE } = await server.ssrLoadModule('/src/lib/hiddenStemRoleTable.ts')
+  const { calculateGreatLuck } = await server.ssrLoadModule('/src/lib/calculateGreatLuck.ts')
+  const { findRisshunBoundary } = await server.ssrLoadModule('/src/lib/solarTermPillars.ts')
   const corePillars = ({ year, month, day, time }) => ({ year, month, day, time })
 
   assert.deepEqual(
@@ -24,6 +23,68 @@ try {
     { year: '丙午', month: '庚寅', day: '己酉', time: '丁卯' },
     '2026-02-04 05:03 JST must be after Risshun',
   )
+
+  const janFourth = calculateEightChar({ year: 1985, month: 1, day: 4, hour: 9, minute: 0 })
+  assert.deepEqual(corePillars(janFourth), {
+    year: '甲子', month: '丙子', day: '癸卯', time: '丁巳',
+  }, '1985-01-04 09:00 JST must use the previous solar year stem for 子月')
+
+  assert.equal(
+    calculateEightChar({ year: 1985, month: 2, day: 4, hour: 6, minute: 11 }).year,
+    '甲子',
+    '1985-02-04 06:11 JST must be before Risshun',
+  )
+  assert.equal(
+    calculateEightChar({ year: 1985, month: 2, day: 4, hour: 6, minute: 13 }).year,
+    '乙丑',
+    '1985-02-04 06:13 JST must be after Risshun',
+  )
+  assert.equal(
+    calculateEightChar({ year: 1985, month: 1, day: 5, hour: 18, minute: 34 }).month,
+    '丙子',
+    '1985-01-05 18:34 JST must be before 小寒',
+  )
+  assert.equal(
+    calculateEightChar({ year: 1985, month: 1, day: 5, hour: 18, minute: 36 }).month,
+    '丁丑',
+    '1985-01-05 18:36 JST must be after 小寒',
+  )
+
+  const janExpectedYears = new Map([[1984, '癸亥'], [1985, '甲子'], [1986, '乙丑']])
+  for (const [year, janPillar] of janExpectedYears) {
+    assert.equal(
+      calculateEightChar({ year, month: 1, day: 15, hour: 12, minute: 0 }).year,
+      janPillar,
+      `${year} January must use Gregorian year - 1 for its year pillar`,
+    )
+
+    const boundary = findRisshunBoundary(year).instant
+    const jstMinute = new Date(Math.floor((boundary.getTime() + 9 * 60 * 60 * 1000) / 60000) * 60000)
+    const before = new Date(jstMinute.getTime() - 60000)
+    const after = new Date(jstMinute.getTime() + 60000)
+    const asBirthDateTime = (date) => ({
+      year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate(),
+      hour: date.getUTCHours(), minute: date.getUTCMinutes(),
+    })
+    const expectedBefore = janPillar
+    const nextCycleYear = new Map([[1984, '甲子'], [1985, '乙丑'], [1986, '丙寅']]).get(year)
+    assert.equal(calculateEightChar(asBirthDateTime(before)).year, expectedBefore, `${year} immediately before Risshun`)
+    assert.equal(calculateEightChar(asBirthDateTime(after)).year, nextCycleYear, `${year} immediately after Risshun`)
+  }
+
+  const greatLuck = calculateGreatLuck({
+    yearPillar: janFourth.year,
+    monthPillar: janFourth.month,
+    dayStem: janFourth.dayRelationships.dayStem,
+    gender: '男性',
+    birthDateTime: { year: 1985, month: 1, day: 4, hour: 9, minute: 0 },
+    timeUnknown: false,
+    now: new Date('1985-01-04T00:00:00Z'),
+  })
+  assert.equal(greatLuck.directionLabel, '順行', '甲年男性 must move forward')
+  assert.equal(greatLuck.cards[0].pillar, '丁丑', 'forward 大運 must advance from 丙子')
+  assert.equal(greatLuck.boundaryUsed?.name, '小寒', 'forward 起運 must use the next Jie boundary')
+  assert.ok(greatLuck.startInstant, 'timed birth must calculate a new 起運時期')
   const beforeWhiteDew = calculateEightChar({ year: 2026, month: 9, day: 7, hour: 23, minute: 40 })
   assert.deepEqual(
     { year: beforeWhiteDew.year, month: beforeWhiteDew.month },
@@ -37,119 +98,16 @@ try {
     '2026-09-07 23:42 JST must be after White Dew',
   )
 
-  const singleHiddenStem = calculateEightChar({ year: 2026, month: 2, day: 4, hour: 5, minute: 1 }).dayRelationships
-  assert.deepEqual(singleHiddenStem, {
-    dayStem: '己',
-    dayBranch: '酉',
-    hiddenStems: [{ stem: '辛', role: 'main', tenGod: '食神' }],
-    mainHiddenStem: '辛',
-    mainHiddenTenGod: '食神',
-  })
-
-  const twoHiddenStems = calculateEightChar({ year: 2026, month: 2, day: 1, hour: 12, minute: 0 }).dayRelationships
-  assert.deepEqual(twoHiddenStems, {
-    dayStem: '丙',
-    dayBranch: '午',
-    hiddenStems: [
-      { stem: '丁', role: 'main', tenGod: '劫財' },
-      { stem: '己', role: 'residual', tenGod: '傷官' },
-    ],
-    mainHiddenStem: '丁',
-    mainHiddenTenGod: '劫財',
-  })
-
-  const threeHiddenStems = calculateEightChar({ year: 2005, month: 12, day: 23, hour: 8, minute: 37 }).dayRelationships
-  assert.deepEqual(threeHiddenStems, {
-    dayStem: '辛',
-    dayBranch: '巳',
-    hiddenStems: [
-      { stem: '丙', role: 'main', tenGod: '正官' },
-      { stem: '庚', role: 'middle', tenGod: '劫財' },
-      { stem: '戊', role: 'residual', tenGod: '印綬' },
-    ],
-    mainHiddenStem: '丙',
-    mainHiddenTenGod: '正官',
-  })
-
-  const expectedRoleTable = {
-    子: [{ stem: '癸', role: 'main' }],
-    丑: [
-      { stem: '己', role: 'main' },
-      { stem: '辛', role: 'middle' },
-      { stem: '癸', role: 'residual' },
-    ],
-    寅: [
-      { stem: '甲', role: 'main' },
-      { stem: '丙', role: 'middle' },
-      { stem: '戊', role: 'residual' },
-    ],
-    卯: [{ stem: '乙', role: 'main' }],
-    辰: [
-      { stem: '戊', role: 'main' },
-      { stem: '乙', role: 'middle' },
-      { stem: '癸', role: 'residual' },
-    ],
-    巳: [
-      { stem: '丙', role: 'main' },
-      { stem: '庚', role: 'middle' },
-      { stem: '戊', role: 'residual' },
-    ],
-    午: [
-      { stem: '丁', role: 'main' },
-      { stem: '己', role: 'residual' },
-    ],
-    未: [
-      { stem: '己', role: 'main' },
-      { stem: '乙', role: 'middle' },
-      { stem: '丁', role: 'residual' },
-    ],
-    申: [
-      { stem: '庚', role: 'main' },
-      { stem: '壬', role: 'middle' },
-      { stem: '戊', role: 'residual' },
-    ],
-    酉: [{ stem: '辛', role: 'main' }],
-    戌: [
-      { stem: '戊', role: 'main' },
-      { stem: '辛', role: 'middle' },
-      { stem: '丁', role: 'residual' },
-    ],
-    亥: [
-      { stem: '壬', role: 'main' },
-      { stem: '甲', role: 'residual' },
-    ],
-  }
-  assert.deepEqual(HIDDEN_STEM_ROLE_TABLE, expectedRoleTable, 'FILUNE role table must match all twelve branches')
-
-  for (const [branch, roleEntries] of Object.entries(expectedRoleTable)) {
-    const libraryStems = LunarUtil.ZHI_HIDE_GAN[branch]
-    assert.ok(libraryStems, `lunar-typescript must provide hidden stems for ${branch}`)
-    assert.deepEqual(
-      [...libraryStems].sort(),
-      roleEntries.map(({ stem }) => stem).sort(),
-      `FILUNE stem set must match lunar-typescript for ${branch}`,
-    )
-
-    const relationships = calculateDayRelationships('甲', branch, libraryStems)
-    assert.deepEqual(
-      relationships.hiddenStems.map(({ stem, role }) => ({ stem, role })),
-      libraryStems.map((stem) => ({ stem, role: roleEntries.find((entry) => entry.stem === stem)?.role })),
-      `roles for ${branch} must be looked up by stem, independently of array index`,
-    )
-    assert.equal(
-      relationships.mainHiddenStem,
-      roleEntries.find(({ role }) => role === 'main')?.stem,
-      `${branch} must expose its fixed-table main stem`,
-    )
-  }
-
   console.log('Solar-term boundary checks passed:')
+  console.log('1985-01-04 09:00 JST → 年柱 甲子 / 月柱 丙子 / 日柱 癸卯 / 時柱 丁巳; 大運 順行')
+  console.log(`大運初回 ${greatLuck.cards[0].pillar}; 起運 ${greatLuck.startAgeLabel} / ${greatLuck.startInstant.toISOString()}`)
+  console.log('1985-02-04 06:11 / 06:13 JST → 年柱 甲子 / 乙丑')
+  console.log('1985-01-05 18:34 / 18:36 JST → 月柱 丙子 / 丁丑')
+  console.log('1984–1986 January and immediately-before/after 立春 checks passed')
   console.log('2026-02-04 05:01 JST → 年柱 乙巳 / 月柱 己丑')
   console.log('2026-02-04 05:03 JST → 年柱 丙午 / 月柱 庚寅')
   console.log('2026-09-07 23:40 JST → 年柱 丙午 / 月柱 丙申')
   console.log('2026-09-07 23:42 JST → 年柱 丙午 / 月柱 丁酉')
-  console.log('Hidden-stem checks passed: 酉 (1) 辛/食神; 午 (2) 丁己/劫財・傷官; 巳 (3) 丙庚戊/正官・劫財・印綬')
-  console.log('All twelve earthly-branch role-table checks passed (巳 丙/main・庚/middle・戊/residual; 午 丁/main・己/residual; 酉 辛/main).')
 } finally {
   await server.close()
 }

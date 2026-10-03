@@ -67,16 +67,15 @@ export function calculateTenGod(dayStem: string, hiddenStem: string): TenGod {
 export function calculateDayRelationships(
   dayStem: string,
   dayBranch: string,
-  hiddenStemsInLibraryOrder: string[],
 ): DayRelationships {
   const roleEntries = HIDDEN_STEM_ROLE_TABLE[dayBranch as keyof typeof HIDDEN_STEM_ROLE_TABLE]
   if (!roleEntries) throw new Error(`Unknown earthly branch: ${dayBranch}`)
 
-  const hiddenStems = hiddenStemsInLibraryOrder.map((stem) => {
-    const roleEntry = roleEntries.find((entry) => entry.stem === stem)
-    if (!roleEntry) throw new Error(`No hidden-stem role for ${dayBranch}/${stem}`)
-    return { stem, role: roleEntry.role, tenGod: calculateTenGod(dayStem, stem) }
-  })
+  const hiddenStems = roleEntries.map(({ stem, role }) => ({
+    stem,
+    role,
+    tenGod: calculateTenGod(dayStem, stem),
+  }))
   const mainHiddenStem = hiddenStems.find(({ role }) => role === 'main')
   if (!mainHiddenStem) throw new Error(`No main hidden stem for ${dayBranch}`)
 

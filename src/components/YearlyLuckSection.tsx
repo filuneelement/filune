@@ -2,13 +2,16 @@ import { useEffect, useMemo, useRef } from 'react'
 import type { GreatLuckCard } from '../lib/calculateGreatLuck'
 import { calculateYearlyLuck } from '../lib/calculateYearlyLuck'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
+import type { Messages, Locale } from '../i18n'
 
 type YearlyLuckSectionProps = {
   dayStem: string
   greatLuckPeriods: GreatLuckCard[]
+  messages: Messages
+  locale: Locale
 }
 
-function YearlyLuckSection({ dayStem, greatLuckPeriods }: YearlyLuckSectionProps) {
+function YearlyLuckSection({ dayStem, greatLuckPeriods, messages: t }: YearlyLuckSectionProps) {
   const cardsRef = useRef<HTMLDivElement>(null)
   const result = useMemo(
     () => calculateYearlyLuck(dayStem, new Date(), greatLuckPeriods),
@@ -30,9 +33,9 @@ function YearlyLuckSection({ dayStem, greatLuckPeriods }: YearlyLuckSectionProps
   return (
     <section className="yearly-luck" aria-labelledby="yearly-luck-title">
       <div className="yearly-luck__heading">
-        <h2 id="yearly-luck-title">年運（歳運）</h2>
+        <h2 id="yearly-luck-title">{t.yearlyLuck}</h2>
       </div>
-      <div className="yearly-luck__cards" aria-label="年運の一覧" ref={cardsRef}>
+      <div className="yearly-luck__cards" aria-label={t.yearlyLuckList} ref={cardsRef}>
         {result.cards.map((card, index) => {
           const stemElement = FIVE_ELEMENTS[card.pillar[0]]
           const branchElement = FIVE_ELEMENTS[card.pillar[1]]
@@ -49,9 +52,9 @@ function YearlyLuckSection({ dayStem, greatLuckPeriods }: YearlyLuckSectionProps
                 <span className={stemElement ? `yearly-luck__symbol yearly-luck__symbol--${stemElement.className}` : 'yearly-luck__symbol'}>{card.pillar[0]}</span>
                 <span className={branchElement ? `yearly-luck__symbol yearly-luck__symbol--${branchElement.className}` : 'yearly-luck__symbol'}>{card.pillar[1]}</span>
               </span>
-              <span className="yearly-luck__god">{card.stemTenGod}</span>
-              <span className="yearly-luck__god">{card.branchTenGod}</span>
-              <span className="luck-card__twelve-stage">{card.twelveStage}</span>
+              <span className="yearly-luck__god">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod}</span>
+              <span className="yearly-luck__god">{t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
+              <span className="luck-card__twelve-stage">{t.stages[card.twelveStage as keyof typeof t.stages] ?? card.twelveStage}</span>
             </article>
           )
         })}

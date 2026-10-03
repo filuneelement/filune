@@ -1,6 +1,5 @@
 import type { FourPillars, ThreePillars } from './calculateEightChar'
 import { calculateDayRelationships, calculateTenGod } from './dayRelationships'
-import { HIDDEN_STEM_ROLE_TABLE } from './hiddenStemRoleTable'
 import { calculateTwelveStage, type EarthlyBranch, type HeavenlyStem } from './twelveStages'
 
 const PILLAR_NAMES = ['年柱', '月柱', '日柱', '時柱'] as const
@@ -25,7 +24,6 @@ export function createBasicChartViewModel(pillars: FourPillars | ThreePillars) {
         : calculateDayRelationships(
             dayStem,
             branch,
-            HIDDEN_STEM_ROLE_TABLE[branch as keyof typeof HIDDEN_STEM_ROLE_TABLE].map(({ stem: hiddenStem }) => hiddenStem),
           )
 
     return {

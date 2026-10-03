@@ -2,14 +2,18 @@ import { useEffect, useRef } from 'react'
 import type { GreatLuckResult } from '../lib/calculateGreatLuck'
 import { calculateTwelveStage, type EarthlyBranch, type HeavenlyStem } from '../lib/twelveStages'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
+import type { Messages, Locale } from '../i18n'
+import { formatAgeLabel } from '../i18n'
 
 type GreatLuckSectionProps = {
   result: GreatLuckResult | null
   message?: string
   dayStem: string
+  messages: Messages
+  locale: Locale
 }
 
-function GreatLuckSection({ result, message, dayStem }: GreatLuckSectionProps) {
+function GreatLuckSection({ result, message, dayStem, messages: t, locale }: GreatLuckSectionProps) {
   const cardsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -29,8 +33,8 @@ function GreatLuckSection({ result, message, dayStem }: GreatLuckSectionProps) {
   return (
     <section className="great-luck" aria-labelledby="great-luck-title">
       <div className="great-luck__heading">
-        <h2 id="great-luck-title">大運</h2>
-        {result && <span className="great-luck__direction">{result.directionLabel}</span>}
+        <h2 id="great-luck-title">{t.greatLuck}</h2>
+        {result && <span className="great-luck__direction">{t.direction[result.directionLabel as keyof typeof t.direction] ?? result.directionLabel}</span>}
       </div>
 
       {message ? (
@@ -38,9 +42,9 @@ function GreatLuckSection({ result, message, dayStem }: GreatLuckSectionProps) {
       ) : result ? (
         <>
           <p className="great-luck__start-age">
-            {result.startAgeLabel ? `起運 ${result.startAgeLabel}` : '出生時刻が不明のため、起運時期は目安です'}
+            {result.startAgeLabel ? `${t.startAge} ${formatAgeLabel(result.startAgeLabel, locale)}` : t.unknownStartAge}
           </p>
-          <div className="great-luck__cards" aria-label="大運の一覧" ref={cardsRef}>
+          <div className="great-luck__cards" aria-label={t.greatLuckList} ref={cardsRef}>
             {result.cards.map((card, index) => {
               const stemElement = FIVE_ELEMENTS[card.stem]
               const branchElement = FIVE_ELEMENTS[card.branch]
@@ -51,7 +55,7 @@ function GreatLuckSection({ result, message, dayStem }: GreatLuckSectionProps) {
                   key={`${card.pillar}-${index}`}
                   aria-current={current ? 'true' : undefined}
                 >
-                  {card.startAgeLabel && <span className="great-luck__card-age">{card.startAgeLabel}</span>}
+                  {card.startAgeLabel && <span className="great-luck__card-age">{formatAgeLabel(card.startAgeLabel, locale)}</span>}
                   <span className="great-luck__card-pillar" aria-label={card.pillar}>
                     <span className={stemElement ? `great-luck__symbol great-luck__symbol--${stemElement.className}` : 'great-luck__symbol'}>
                       {card.stem}
@@ -60,8 +64,8 @@ function GreatLuckSection({ result, message, dayStem }: GreatLuckSectionProps) {
                       {card.branch}
                     </span>
                   </span>
-                  <span className="great-luck__card-meta">{card.stemTenGod}・{card.branchTenGod}</span>
-                  <span className="luck-card__twelve-stage">{calculateTwelveStage(dayStem as HeavenlyStem, card.branch as EarthlyBranch)}</span>
+                  <span className="great-luck__card-meta">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod}・{t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
+                  <span className="luck-card__twelve-stage">{t.stages[calculateTwelveStage(dayStem as HeavenlyStem, card.branch as EarthlyBranch) as keyof typeof t.stages]}</span>
                 </article>
               )
             })}

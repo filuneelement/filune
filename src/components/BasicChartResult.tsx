@@ -5,6 +5,7 @@ import GreatLuckSection from './GreatLuckSection'
 import MonthlyLuckSection from './MonthlyLuckSection'
 import YearlyLuckSection from './YearlyLuckSection'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
+import type { Messages, Locale } from '../i18n'
 
 type BasicChart = ReturnType<typeof createBasicChartViewModel>
 
@@ -12,48 +13,56 @@ type BasicChartResultProps = {
   chart: BasicChart
   profileSummary: string
   birthDateTime: string
+  timeCorrectionSummary?: string
   showSolarTermAmbiguity: boolean
   onBack: () => void
   greatLuck: GreatLuckResult | null
   greatLuckMessage?: string
+  messages: Messages
+  locale: Locale
 }
 
 function BasicChartResult({
   chart,
   profileSummary,
   birthDateTime,
+  timeCorrectionSummary,
   showSolarTermAmbiguity,
   onBack,
   greatLuck,
   greatLuckMessage,
+  messages: t,
+  locale,
 }: BasicChartResultProps) {
   const [showHiddenStems, setShowHiddenStems] = useState(false)
 
   return (
     <section className="result-screen" aria-labelledby="result-title">
       <header className="result-screen__header">
-        <button className="result-screen__back" type="button" onClick={onBack}>‹ 入力画面へ戻る</button>
+        <button className="result-screen__back" type="button" onClick={onBack}>‹ {t.back}</button>
         <p className="result-screen__brand">FILUNE</p>
         <p className="result-screen__profile">{profileSummary}</p>
         <p className="result-screen__birth-data">{birthDateTime}</p>
-        <h1 id="result-title">あなたの命式</h1>
+        {timeCorrectionSummary && <p className="result-screen__time-correction">{timeCorrectionSummary}</p>}
+        <h1 id="result-title">{t.resultTitle}</h1>
         {showSolarTermAmbiguity && (
           <p className="result-screen__notice">
-            この日は節入り日にあたるため、出生時刻によって年柱・月柱が異なる場合があります。
+            {t.solarNotice}
           </p>
         )}
       </header>
 
       <section className="basic-chart" aria-labelledby="basic-chart-title">
         <div className="basic-chart__heading">
-          <h2 id="basic-chart-title">基本命式</h2>
+          <h2 id="basic-chart-title">{t.basicChart}</h2>
         </div>
 
         <div
           id="basic-chart-columns"
+          dir="ltr"
           className={`basic-chart__columns basic-chart__columns--${chart.columns.length}`}
         >
-          {chart.columns.map((column, index) => {
+          {[...chart.columns].reverse().map((column) => {
             const stemElement = FIVE_ELEMENTS[column.stem]
             const branchElement = FIVE_ELEMENTS[column.branch]
 
@@ -61,9 +70,9 @@ function BasicChartResult({
               <article
                 className="basic-chart__pillar"
                 key={column.name}
-                aria-label={column.name}
+                aria-label={t.pillars[column.name as keyof typeof t.pillars]}
               >
-                <h3>{column.name}</h3>
+                <h3>{t.pillars[column.name as keyof typeof t.pillars]}</h3>
                 <div className="basic-chart__pillar-data basic-chart__pillar-data--stem">
                   <span className="basic-chart__symbol-value">
                     <span className={`basic-chart__symbol basic-chart__symbol--${stemElement?.className ?? 'unknown'}`}>
@@ -71,11 +80,11 @@ function BasicChartResult({
                     </span>
                     {stemElement && (
                       <span className={`basic-chart__element basic-chart__element--${stemElement.className}`}>
-                        {stemElement.polarity}{stemElement.label}
+                        {stemElement.polarity}{t.elements[stemElement.label as keyof typeof t.elements]}
                       </span>
                     )}
                   </span>
-                  <span className="basic-chart__ten-god">{index === 2 ? '日干' : column.stemTenGod}</span>
+                  <span className="basic-chart__ten-god">{column.name === '日柱' ? t.dayMaster : t.tenGods[column.stemTenGod as keyof typeof t.tenGods] ?? column.stemTenGod}</span>
                 </div>
 
                 <div className="basic-chart__pillar-data basic-chart__pillar-data--branch">
@@ -85,16 +94,16 @@ function BasicChartResult({
                     </span>
                     {branchElement && (
                       <span className={`basic-chart__element basic-chart__element--${branchElement.className}`}>
-                        {branchElement.label}
+                        {t.elements[branchElement.label as keyof typeof t.elements]}
                       </span>
                     )}
                   </span>
-                  <span className="basic-chart__ten-god">{column.branchTenGod}</span>
+                  <span className="basic-chart__ten-god">{t.tenGods[column.branchTenGod as keyof typeof t.tenGods] ?? column.branchTenGod}</span>
                 </div>
 
                 {showHiddenStems && (
                   <div className="basic-chart__hidden-stems">
-                    <span className="basic-chart__hidden-label">蔵干</span>
+                    <span className="basic-chart__hidden-label">{t.hiddenStems}</span>
                     <ul className="basic-chart__hidden-list">
                       {column.hiddenStems.map(({ stem, role, tenGod }) => (
                         <li key={stem}>
@@ -102,13 +111,13 @@ function BasicChartResult({
                             {stem}
                           </span>
                           <span className="basic-chart__hidden-meta">
-                            {role === 'main' ? '本気' : role === 'middle' ? '中気' : '余気'}・{tenGod}
+                            {t.roles[role]}・{t.tenGods[tenGod as keyof typeof t.tenGods] ?? tenGod}
                           </span>
                         </li>
                       ))}
                     </ul>
                     <div className="basic-chart__twelve-stage">
-                      <span className="basic-chart__hidden-symbol">{column.twelveStage}</span>
+                      <span className="basic-chart__hidden-symbol">{t.stages[column.twelveStage as keyof typeof t.stages] ?? column.twelveStage}</span>
                     </div>
                   </div>
                 )}
@@ -124,15 +133,15 @@ function BasicChartResult({
           aria-expanded={showHiddenStems}
           onClick={() => setShowHiddenStems((visible) => !visible)}
         >
-          {showHiddenStems ? '簡略表示' : '蔵干を詳しく見る'}
+          {showHiddenStems ? t.collapseHidden : t.expandHidden}
         </button>
       </section>
 
       <section className="fortune-flow" aria-labelledby="fortune-flow-title">
-        <h2 id="fortune-flow-title" className="fortune-flow__title">運の流れ</h2>
-        <GreatLuckSection result={greatLuck} message={greatLuckMessage} dayStem={chart.dayStem} />
-        <YearlyLuckSection dayStem={chart.dayStem} greatLuckPeriods={greatLuck?.cards ?? []} />
-        <MonthlyLuckSection dayStem={chart.dayStem} />
+        <h2 id="fortune-flow-title" className="fortune-flow__title">{t.fortuneFlow}</h2>
+        <GreatLuckSection result={greatLuck} message={greatLuckMessage} dayStem={chart.dayStem} messages={t} locale={locale} />
+        <YearlyLuckSection dayStem={chart.dayStem} greatLuckPeriods={greatLuck?.cards ?? []} messages={t} locale={locale} />
+        <MonthlyLuckSection dayStem={chart.dayStem} messages={t} locale={locale} />
       </section>
     </section>
   )

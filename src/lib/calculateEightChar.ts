@@ -1,6 +1,7 @@
 import { Solar } from 'lunar-typescript'
 import { calculateSolarTermPillars, isSolarTermAmbiguousOnJstDate } from './solarTermPillars'
 import { calculateDayRelationships, type DayRelationships } from './dayRelationships'
+import { calculateTimeCorrection, calculateTimePillarFromCorrectedTime, type Birthplace, type TimeCorrectionMode, type TimeCorrection } from './timeCorrection'
 
 export type BirthDateTime = {
   year: number
@@ -15,6 +16,7 @@ export type FourPillars = {
   month: string
   day: string
   time: string
+  timeCorrection?: TimeCorrection
   timeKnown?: true
   dayRelationships: DayRelationships
 }
@@ -28,7 +30,10 @@ export type ThreePillars = {
   dayRelationships: DayRelationships
 }
 
-export function calculateEightChar({ year, month, day, hour, minute }: BirthDateTime): FourPillars {
+export function calculateEightChar(
+  { year, month, day, hour, minute }: BirthDateTime,
+  timeCorrectionOptions?: { mode: TimeCorrectionMode; birthplace?: Birthplace },
+): FourPillars {
   const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0)
   const lunar = solar.getLunar()
   const eightChar = lunar.getEightChar()
@@ -36,14 +41,20 @@ export function calculateEightChar({ year, month, day, hour, minute }: BirthDate
   const dayRelationships = calculateDayRelationships(
     eightChar.getDayGan(),
     eightChar.getDayZhi(),
-    eightChar.getDayHideGan(),
   )
+  const timeCorrection = timeCorrectionOptions
+    ? calculateTimeCorrection(hour, minute, timeCorrectionOptions.mode, timeCorrectionOptions.birthplace)
+    : undefined
+  const correctedTimePillar = timeCorrection?.mode === 'longitude'
+    ? calculateTimePillarFromCorrectedTime(eightChar.getDayGan(), timeCorrection.calculationTime)
+    : undefined
 
   return {
     year: solarTermPillars.year,
     month: solarTermPillars.month,
     day: eightChar.getDay(),
-    time: eightChar.getTime(),
+    time: correctedTimePillar ?? eightChar.getTime(),
+    timeCorrection,
     timeKnown: true,
     dayRelationships,
   }
@@ -57,7 +68,6 @@ export function calculateEightCharWithoutBirthTime({ year, month, day }: Pick<Bi
   const dayRelationships = calculateDayRelationships(
     eightChar.getDayGan(),
     eightChar.getDayZhi(),
-    eightChar.getDayHideGan(),
   )
 
   return {

@@ -68,7 +68,10 @@ export function calculateSolarTermPillars(birthDateTime: BirthDateTime): SolarTe
   const instant = toJstInstant(birthDateTime)
   const solarLongitude = SunPosition(instant).elon
   const jieIndex = findCurrentJieIndex(instant, solarLongitude)
-  const solarYear = jieIndex === 11 ? birthDateTime.year - 1 : birthDateTime.year
+  const risshun = findRisshunBoundary(birthDateTime.year)
+  const solarYear = instant.getTime() < risshun.instant.getTime()
+    ? birthDateTime.year - 1
+    : birthDateTime.year
   const yearPillar = sexagenaryYearPillar(solarYear)
   const yearStemIndex = positiveModulo(solarYear - 1984, 60) % 10
   const yinMonthStemIndex = positiveModulo((yearStemIndex % 5) * 2 + 2, 10)
