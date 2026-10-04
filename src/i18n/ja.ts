@@ -1,9 +1,9 @@
 const ja = {
   language: '言語', country: '出生国', countryNames: { JP: '日本', KR: '韓国' },
-  entryTitle: 'あなたの命式', profile: 'プロフィール', name: '名前', gender: '性別', female: '女性', male: '男性',
-  birthDate: '生年月日', year: '年', month: '月', day: '日', birthTime: '出生時刻', hour: '時', minute: '分', unknownTime: '出生時刻がわからない',
+  entryTitle: '万年暦', profile: 'プロフィール', name: '名前', gender: '性別', female: '女性', male: '男性',
+  birthDate: '生年月日', birthDateTime: '生年月日時', year: '年', month: '月', day: '日', birthTime: '出生時刻', hour: '時', minute: '分', unknownTime: '出生時刻がわからない',
   birthplace: '出生地', searchLocation: '都市を検索', locationAria: '出生地を検索', locationPlaceholder: { JP: '例: 東京、新宿、横浜', KR: '例: 서울、강남、수원' },
-  candidates: '出生地の候補', noCandidates: '候補がありません', selectedLocation: '確定した出生地', useCorrection: '地域時補正を使用する', submit: '命式を見る',
+  candidates: '出生地の候補', noCandidates: '候補がありません', selectedLocation: '確定した出生地', useCorrection: '地域時補正を使用する', submit: '万年暦を見る',
   errors: { year: '年は西暦4桁の数字で入力してください。', month: '月は1から12までの数字で入力してください。', day: '日を数字で入力してください。', date: '入力した年月に有効な日付を入力してください。', hour: '時は0から23までの数字で入力してください。', minute: '分は0から59までの数字で入力してください。', calculate: '入力した日時を計算できませんでした。' },
   back: '入力画面へ戻る', resultTitle: 'あなたの命式', birthTimeUnknown: '出生時刻不明', correctionOriginal: '出生時刻', correction: '地域時補正', calculationTime: '計算時刻',
   solarNotice: 'この日は節入り日にあたるため、出生時刻によって年柱・月柱が異なる場合があります。', basicChart: '基本命式',

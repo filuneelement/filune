@@ -207,45 +207,47 @@ function App() {
 
   return (
     <main>
-      <div className="language-picker">
-        <label htmlFor="ui-language">{t.language}</label>
-        <select id="ui-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}>
-          <option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option>
-        </select>
+      <div className={`page-topbar${isResultPage ? ' page-topbar--result' : ''}`}>
+        {!isResultPage && <div className="page-topbar__brand">
+          <img className="entry-screen__guide page-topbar__guide" src={luneImage} alt="" />
+          <div className="page-topbar__title">FILUNE {t.entryTitle}</div>
+        </div>}
+        <div className="language-picker">
+          <label htmlFor="ui-language">Language</label>
+          <select id="ui-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}>
+            <option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option>
+          </select>
+        </div>
       </div>
       {!isResultPage && <div className="entry-screen">
-        <p className="entry-screen__brand">FILUNE</p>
-        <div className="entry-screen__heading">
-          <h1>{t.entryTitle}</h1>
-          <img className="entry-screen__guide" src={luneImage} alt="" />
-        </div>
         <form className="entry-form" noValidate onSubmit={handleSubmit}>
-          <section className="entry-form__section" aria-labelledby="profile-title">
-            <h2 id="profile-title">{t.profile}</h2>
-            <label className="entry-form__name-field">
-              {t.name}
-              <input
-                type="text"
-                autoComplete="name"
-                maxLength={40}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
-            <div className="entry-form__gender" role="group" aria-labelledby="gender-title">
-              <span id="gender-title">{t.gender}</span>
-              <label>
-                <input type="radio" name="gender" value="女性" checked={gender === '女性'} onChange={() => setGender('女性')} />
-                <span>{t.female}</span>
+          <section className="entry-form__section entry-form__profile" aria-label={`${t.name} / ${t.gender}`}>
+            <div className="entry-form__profile-fields">
+              <label className="entry-form__name-field">
+                {t.name}
+                <input
+                  type="text"
+                  autoComplete="name"
+                  maxLength={40}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
               </label>
-              <label>
-                <input type="radio" name="gender" value="男性" checked={gender === '男性'} onChange={() => setGender('男性')} />
-                <span>{t.male}</span>
-              </label>
+              <div className="entry-form__gender" role="group" aria-labelledby="gender-title">
+                <span id="gender-title">{t.gender}</span>
+                <label>
+                  <input type="radio" name="gender" value="女性" checked={gender === '女性'} onChange={() => setGender('女性')} />
+                  <span>{t.female}</span>
+                </label>
+                <label>
+                  <input type="radio" name="gender" value="男性" checked={gender === '男性'} onChange={() => setGender('男性')} />
+                  <span>{t.male}</span>
+                </label>
+              </div>
             </div>
           </section>
-          <section className="entry-form__section" aria-labelledby="birth-date-title">
-            <h2 id="birth-date-title">{t.birthDate}</h2>
+          <section className="entry-form__section entry-form__birth-datetime" aria-labelledby="birth-datetime-title">
+            <h2 id="birth-datetime-title">{t.birthDateTime}</h2>
             <div className="entry-form__fields">
               <label>
                 <input
@@ -289,11 +291,6 @@ function App() {
                 />
                 <span>{t.day}</span>
               </label>
-            </div>
-          </section>
-          <section className="entry-form__section" aria-labelledby="birth-time-title">
-            <h2 id="birth-time-title">{t.birthTime}</h2>
-            <div className="entry-form__fields">
               <label>
                 <input
                   className="entry-form__short-number"
@@ -338,8 +335,7 @@ function App() {
               <span>{t.unknownTime}</span>
             </label>
           </section>
-          <section className="entry-form__section" aria-labelledby="birthplace-title">
-            <h2 id="birthplace-title">{t.birthplace}</h2>
+          <section className="entry-form__section entry-form__birthplace" aria-label={t.country}>
             <label className="entry-form__name-field entry-form__birthplace-field" htmlFor="birth-country">{t.country}</label>
             <select id="birth-country" className="entry-form__birthplace-input" value={countryCode} onChange={(event) => {
               const value = event.target.value as 'JP' | 'KR'
