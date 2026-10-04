@@ -43,7 +43,7 @@ export function calculateEightChar(
     eightChar.getDayZhi(),
   )
   const timeCorrection = timeCorrectionOptions
-    ? calculateTimeCorrection(hour, minute, timeCorrectionOptions.mode, timeCorrectionOptions.birthplace)
+    ? calculateTimeCorrection(hour, minute, timeCorrectionOptions.mode, timeCorrectionOptions.birthplace, { year, month, day })
     : undefined
   const correctedTimePillar = timeCorrection?.mode === 'longitude'
     ? calculateTimePillarFromCorrectedTime(eightChar.getDayGan(), timeCorrection.calculationTime)

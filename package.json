@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "verify:solar-terms": "node scripts/verify-solar-term-pillars.mjs",
     "verify:time-correction": "node scripts/verify-time-correction.mjs",
+    "verify:country-selection-us": "node scripts/verify-country-selection-us.mjs",
     "verify:japan-municipalities": "node scripts/verify-japan-municipalities.mjs",
     "verify:hidden-stems": "node scripts/verify-hidden-stems.mjs",
     "verify:ten-gods": "node scripts/verify-ten-gods.mjs",

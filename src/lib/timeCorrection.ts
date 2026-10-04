@@ -1,4 +1,7 @@
+import { calculateUsLongitudeCorrectionMinutes } from './usTimeCorrection'
+
 export type TimeCorrectionMode = 'none' | 'longitude' | 'trueSolarTime'
+export type BirthDateParts = { year: number; month: number; day: number }
 
 export type Birthplace = {
   code: string
@@ -37,6 +40,7 @@ export function calculateTimeCorrection(
   minute: number,
   mode: TimeCorrectionMode,
   birthplace?: Birthplace,
+  birthDate?: BirthDateParts,
 ): TimeCorrection {
   if (mode === 'trueSolarTime') {
     throw new Error('True solar time correction is not implemented.')
@@ -48,9 +52,20 @@ export function calculateTimeCorrection(
   if (mode === 'longitude' && birthplace && standardMeridian === undefined) {
     throw new Error(`No standard meridian configured for timezone ${birthplace.timezone}.`)
   }
-  const correctionMinutes = mode === 'longitude' && birthplace && standardMeridian !== undefined
-    ? Math.round((birthplace.longitude - standardMeridian) * 4)
-    : 0
+  let correctionMinutes = 0
+  if (mode === 'longitude' && birthplace && standardMeridian !== undefined) {
+    if (birthplace.countryCode === 'US') {
+      if (!birthDate) throw new Error('A birth date is required for US timezone correction.')
+      correctionMinutes = calculateUsLongitudeCorrectionMinutes(
+        { ...birthDate, hour, minute },
+        birthplace.timezone,
+        birthplace.longitude,
+        standardMeridian,
+      )
+    } else {
+      correctionMinutes = Math.round((birthplace.longitude - standardMeridian) * 4)
+    }
+  }
   const recordedMinutes = hour * 60 + minute
   const correctedMinutes = recordedMinutes + correctionMinutes
 

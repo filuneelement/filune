@@ -1,15 +1,25 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import BasicChartResult from './components/BasicChartResult'
-import { calculateGreatLuck } from './lib/calculateGreatLuck'
-import type { GreatLuckGender } from './lib/calculateGreatLuck'
-import { calculateFullAge } from './lib/calculateFullAge'
-import { calculateEightChar, calculateEightCharWithoutBirthTime, type FourPillars, type ThreePillars } from './lib/calculateEightChar'
-import { createBasicChartViewModel } from './lib/basicChartViewModel'
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
+import type { createBasicChartViewModel } from './lib/basicChartViewModel'
+import type { GreatLuckGender, GreatLuckResult } from './lib/calculateGreatLuck'
+import type { FourPillars, ThreePillars } from './lib/calculateEightChar'
 import luneImage from './assets/images/lune.png'
 import type { Birthplace } from './lib/timeCorrection'
-import { getSavedCountry, getSavedLocale, messages, type Locale } from './i18n'
+import {
+  getDefaultCountryForLocale,
+  getSavedCountry,
+  getSavedCountrySelectionSource,
+  getSavedLocale,
+  messages,
+  resolveCountryForLocale,
+  type CountryCode,
+  type CountrySelectionSource,
+  type Locale,
+} from './i18n'
 
 type PillarResult = FourPillars | ThreePillars
+type ChartViewModel = ReturnType<typeof createBasicChartViewModel>
+
+const BasicChartResult = lazy(() => import('./components/BasicChartResult'))
 
 type ResultRouteData = {
   pillars: PillarResult
@@ -39,7 +49,14 @@ function readResultHistoryState(): ResultRouteData | null {
 function App() {
   const [initialResult] = useState(() => window.location.pathname === '/result' ? readResultHistoryState() : null)
   const [locale, setLocale] = useState<Locale>(getSavedLocale)
-  const [countryCode, setCountryCode] = useState<'JP' | 'KR'>(() => initialResult?.birthplace?.countryCode === 'KR' ? 'KR' : getSavedCountry())
+  const [countrySelectionSource, setCountrySelectionSource] = useState<CountrySelectionSource>(getSavedCountrySelectionSource)
+  const [countryCode, setCountryCode] = useState<CountryCode>(() => {
+    const savedCountry = getSavedCountry(getDefaultCountryForLocale(locale))
+    const resultCountry = initialResult?.birthplace?.countryCode
+    return resultCountry === 'JP' || resultCountry === 'KR' || resultCountry === 'US'
+      ? resultCountry
+      : countrySelectionSource === 'manual' ? savedCountry : getDefaultCountryForLocale(locale)
+  })
   const t = messages[locale]
   const [isResultPage, setIsResultPage] = useState(() => initialResult !== null)
   const [name, setName] = useState(initialResult?.name ?? '')
@@ -56,8 +73,10 @@ function App() {
   const [birthplaceMatches, setBirthplaceMatches] = useState<Birthplace[]>([])
   const [timeCorrectionEnabled, setTimeCorrectionEnabled] = useState(initialResult?.timeCorrectionEnabled ?? true)
   const [pillars, setPillars] = useState<PillarResult | null>(initialResult?.pillars ?? null)
+  const [chart, setChart] = useState<ChartViewModel | null>(null)
+  const [greatLuck, setGreatLuck] = useState<GreatLuckResult | null>(null)
+  const [fullAge, setFullAge] = useState<number | null>(null)
   const [error, setError] = useState('')
-  const chart = pillars ? createBasicChartViewModel(pillars) : null
   const selectedGender: GreatLuckGender | null = gender === '女性' || gender === '男性' ? gender : null
   const greatLuckAmbiguous = pillars?.timeKnown === false && pillars.solarTermAmbiguous
   const greatLuckMessage = greatLuckAmbiguous
@@ -68,8 +87,51 @@ function App() {
 
   useEffect(() => { localStorage.setItem('filune:locale', locale) }, [locale])
   useEffect(() => { localStorage.setItem('filune:birthCountry', countryCode) }, [countryCode])
-  const greatLuck = isResultPage && pillars && chart && selectedGender && !greatLuckAmbiguous
-    ? calculateGreatLuck({
+  useEffect(() => {
+    localStorage.setItem('filune:birthCountrySource', countrySelectionSource)
+    if (countrySelectionSource === 'manual' || isResultPage) return
+
+    const nextCountry = resolveCountryForLocale(locale, countryCode, countrySelectionSource)
+    if (nextCountry === countryCode) return
+    setCountryCode(nextCountry)
+    setBirthplace(undefined)
+    setBirthplaceQuery('')
+    setBirthplaceMatches([])
+    setBirthplaceOptionsOpen(false)
+  }, [locale, countryCode, countrySelectionSource, isResultPage])
+  useEffect(() => {
+    let active = true
+    if (!pillars) {
+      setChart(null)
+      return () => { active = false }
+    }
+    import('./lib/basicChartViewModel').then(({ createBasicChartViewModel }) => {
+      if (active) setChart(createBasicChartViewModel(pillars))
+    })
+    return () => { active = false }
+  }, [pillars])
+
+  useEffect(() => {
+    let active = true
+    if (!isResultPage) {
+      setFullAge(null)
+      return () => { active = false }
+    }
+    import('./lib/calculateFullAge').then(({ calculateFullAge }) => {
+      if (active) setFullAge(calculateFullAge(Number(year), Number(month), Number(day)))
+    })
+    return () => { active = false }
+  }, [isResultPage, year, month, day])
+
+  useEffect(() => {
+    let active = true
+    if (!isResultPage || !pillars || !chart || !selectedGender || greatLuckAmbiguous) {
+      setGreatLuck(null)
+      return () => { active = false }
+    }
+    import('./lib/calculateGreatLuck').then(({ calculateGreatLuck }) => {
+      if (!active) return
+      setGreatLuck(calculateGreatLuck({
         yearPillar: pillars.year,
         monthPillar: pillars.month,
         dayStem: pillars.dayRelationships.dayStem,
@@ -82,8 +144,10 @@ function App() {
           hour: Number(hour),
           minute: Number(minute),
         },
-      })
-    : null
+      }))
+    })
+    return () => { active = false }
+  }, [isResultPage, pillars, chart, selectedGender, greatLuckAmbiguous, year, month, day, hour, minute])
 
   useEffect(() => {
     function restoreHistoryPage() {
@@ -125,7 +189,9 @@ function App() {
     let active = true
     const search = countryCode === 'JP'
       ? import('./lib/japanMunicipalitySearch').then(({ searchJapanMunicipalities }) => searchJapanMunicipalities(birthplaceQuery, 10))
-      : import('./lib/koreaLocationSearch').then(({ searchKoreaLocations }) => searchKoreaLocations(birthplaceQuery, 10))
+      : countryCode === 'KR'
+        ? import('./lib/koreaLocationSearch').then(({ searchKoreaLocations }) => searchKoreaLocations(birthplaceQuery, 10))
+        : import('./lib/usCitySearch').then(({ searchUSCities }) => searchUSCities(birthplaceQuery, 10))
     search.then((matches) => { if (active) setBirthplaceMatches(matches) })
 
     return () => {
@@ -133,7 +199,7 @@ function App() {
     }
   }, [birthplaceOptionsOpen, birthplaceQuery, countryCode])
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setPillars(null)
 
@@ -171,6 +237,7 @@ function App() {
     }
 
     try {
+      const { calculateEightChar, calculateEightCharWithoutBirthTime } = await import('./lib/calculateEightChar')
       const calculatedPillars = timeUnknown
         ? calculateEightCharWithoutBirthTime({ year: numericYear, month: numericMonth, day: numericDay })
         : calculateEightChar({
@@ -338,14 +405,15 @@ function App() {
           <section className="entry-form__section entry-form__birthplace" aria-label={t.country}>
             <label className="entry-form__name-field entry-form__birthplace-field" htmlFor="birth-country">{t.country}</label>
             <select id="birth-country" className="entry-form__birthplace-input" value={countryCode} onChange={(event) => {
-              const value = event.target.value as 'JP' | 'KR'
+              const value = event.target.value as CountryCode
+              setCountrySelectionSource('manual')
               setCountryCode(value)
               setBirthplace(undefined)
               setBirthplaceQuery('')
               setBirthplaceMatches([])
               setBirthplaceOptionsOpen(false)
             }}>
-              <option value="JP">{t.countryNames.JP}</option><option value="KR">{t.countryNames.KR}</option>
+              <option value="JP">{t.countryNames.JP}</option><option value="KR">{t.countryNames.KR}</option><option value="US">{t.countryNames.US}</option>
             </select>
             <div className="entry-form__birthplace-picker">
               <label className="entry-form__name-field entry-form__birthplace-field" htmlFor="birthplace-search">
@@ -411,21 +479,23 @@ function App() {
         </form>
       </div>}
 
-      {isResultPage && pillars && chart && (
-        <BasicChartResult
-          chart={chart}
-          messages={t}
-          locale={locale}
-          profileSummary={`${name.trim() ? `${name.trim()}${locale === 'en' ? ' (' : '（'}` : ''}${calculateFullAge(Number(year), Number(month), Number(day))}${t.yearsSuffix}${gender ? `${t.ageSeparator}${gender === '女性' ? t.female : t.male}` : ''}${name.trim() ? (locale === 'en' ? ')' : '）') : ''}`}
-          birthDateTime={`${year}.${month.padStart(2, '0')}.${day.padStart(2, '0')}${pillars.timeKnown === false ? `　${t.birthTimeUnknown}` : ` ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`}`}
-          timeCorrectionSummary={pillars.timeKnown !== false && pillars.timeCorrection && birthplace
-            ? `${t.correctionOriginal} ${pillars.timeCorrection.originalTime}　${t.correction} ${pillars.timeCorrection.correctionMinutes > 0 ? '+' : ''}${pillars.timeCorrection.correctionMinutes}${t.minuteUnit}　${t.calculationTime} ${pillars.timeCorrection.calculationTime}`
-            : undefined}
-          showSolarTermAmbiguity={pillars.timeKnown === false ? pillars.solarTermAmbiguous : false}
-          onBack={() => window.history.back()}
-          greatLuck={greatLuck}
-          greatLuckMessage={greatLuckMessage}
-        />
+      {isResultPage && pillars && chart && fullAge !== null && (
+        <Suspense fallback={null}>
+          <BasicChartResult
+            chart={chart}
+            messages={t}
+            locale={locale}
+            profileSummary={`${name.trim() ? `${name.trim()}${locale === 'en' ? ' (' : '（'}` : ''}${fullAge}${t.yearsSuffix}${gender ? `${t.ageSeparator}${gender === '女性' ? t.female : t.male}` : ''}${name.trim() ? (locale === 'en' ? ')' : '）') : ''}`}
+            birthDateTime={`${year}.${month.padStart(2, '0')}.${day.padStart(2, '0')}${pillars.timeKnown === false ? `　${t.birthTimeUnknown}` : ` ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`}`}
+            timeCorrectionSummary={pillars.timeKnown !== false && pillars.timeCorrection && birthplace
+              ? `${t.correctionOriginal} ${pillars.timeCorrection.originalTime}　${t.correction} ${pillars.timeCorrection.correctionMinutes > 0 ? '+' : ''}${pillars.timeCorrection.correctionMinutes}${t.minuteUnit}　${t.calculationTime} ${pillars.timeCorrection.calculationTime}`
+              : undefined}
+            showSolarTermAmbiguity={pillars.timeKnown === false ? pillars.solarTermAmbiguous : false}
+            onBack={() => window.history.back()}
+            greatLuck={greatLuck}
+            greatLuckMessage={greatLuckMessage}
+          />
+        </Suspense>
       )}
     </main>
   )
