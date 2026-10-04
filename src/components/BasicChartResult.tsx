@@ -94,7 +94,7 @@ function BasicChartResult({
                     </span>
                     {branchElement && (
                       <span className={`basic-chart__element basic-chart__element--${branchElement.className}`}>
-                        {t.elements[branchElement.label as keyof typeof t.elements]}
+                        {branchElement.polarity}{t.elements[branchElement.label as keyof typeof t.elements]}
                       </span>
                     )}
                   </span>

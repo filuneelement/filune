@@ -7,7 +7,6 @@ const HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', 
 const EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'] as const
 const YANG_STEMS = new Set(['甲', '丙', '戊', '庚', '壬'])
 const JIE_TO_AGE_DAY_MS = 12 * 60 * 1000 // 2 solar hours correspond to 10 age-days.
-const DAY_MS = 24 * 60 * 60 * 1000
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000
 const SEXAGENARY_CYCLE = Array.from({ length: 60 }, (_, index) => (
   HEAVENLY_STEMS[index % 10] + EARTHLY_BRANCHES[index % 12]
@@ -22,7 +21,7 @@ export type GreatLuckCard = {
   branch: string
   stemTenGod: string
   branchTenGod: string
-  startAgeLabel?: string
+  startDateLabel?: string
   startInstant?: Date
   endInstant?: Date
 }
@@ -68,34 +67,53 @@ function formatAge(ageDays: number): string {
   return `${years}歳${months}か月${days > 0 ? `${days}日` : ''}`
 }
 
+function formatStartDate(instant: Date): string {
+  const date = toJstPseudoDate(instant)
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  return `${year}.${month}.${day}~`
+}
+
 function toJstPseudoDate(instant: Date): Date {
   return new Date(instant.getTime() + JST_OFFSET_MS)
 }
 
-function fromJstPseudoDate(localDate: Date): Date {
-  return new Date(localDate.getTime() - JST_OFFSET_MS)
+function lastDayOfMonth(year: number, month: number): number {
+  const date = new Date(0)
+  date.setUTCFullYear(year, month, 0)
+  return date.getUTCDate()
 }
 
-function addAgeDuration(birthInstant: Date, ageDays: number): Date {
-  const { years, months, days, remainderDays } = splitAgeDays(ageDays)
-  const localBirth = toJstPseudoDate(birthInstant)
-  const birthYear = localBirth.getUTCFullYear()
-  const birthMonth = localBirth.getUTCMonth()
-  const birthDay = localBirth.getUTCDate()
-  const targetMonthIndex = birthMonth + years * 12 + months
-  const targetYear = birthYear + Math.floor(targetMonthIndex / 12)
-  const targetMonth = targetMonthIndex % 12
-  const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate()
-  const localStart = new Date(Date.UTC(
-    targetYear,
-    targetMonth,
-    Math.min(birthDay, lastDayOfTargetMonth) + days,
-    localBirth.getUTCHours(),
-    localBirth.getUTCMinutes(),
-    localBirth.getUTCSeconds(),
-    localBirth.getUTCMilliseconds(),
-  ) + remainderDays * DAY_MS)
-  return fromJstPseudoDate(localStart)
+/** Add each displayed age component in order, clamping at each calendar boundary. */
+export function addCalendarDuration(
+  birth: BirthDateTime,
+  duration: { years: number; months: number; days: number },
+): BirthDateTime {
+  let year = birth.year
+  let month = birth.month
+  let day = birth.day
+
+  year += duration.years
+  day = Math.min(day, lastDayOfMonth(year, month))
+
+  const monthIndex = month - 1 + duration.months
+  year += Math.floor(monthIndex / 12)
+  month = (monthIndex % 12) + 1
+  day = Math.min(day, lastDayOfMonth(year, month))
+
+  const date = new Date(0)
+  date.setUTCFullYear(year, month - 1, day)
+  date.setUTCHours(birth.hour, birth.minute, 0, 0)
+  date.setUTCDate(date.getUTCDate() + duration.days)
+
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+    hour: birth.hour,
+    minute: birth.minute,
+  }
 }
 
 function mainHiddenStem(branch: string): string {
@@ -145,18 +163,22 @@ export function calculateGreatLuck(args: {
     ? boundaryUsed.instant.getTime() - birthInstant.getTime()
     : birthInstant.getTime() - boundaryUsed.instant.getTime()
   const startAgeDays = differenceMs / JIE_TO_AGE_DAY_MS
-  const startInstant = addAgeDuration(birthInstant, startAgeDays)
+  const startAge = splitAgeDays(startAgeDays)
+  const firstStartBirthDateTime = addCalendarDuration(args.birthDateTime, startAge)
+  const startInstant = toJstInstant(firstStartBirthDateTime)
   const now = args.now ?? new Date()
   let currentIndex: number | null = null
+  let cardStartBirthDateTime = firstStartBirthDateTime
 
   cards.forEach((card, index) => {
-    const cardAgeDays = startAgeDays + index * 3600
-    card.startAgeLabel = formatAge(cardAgeDays)
-    const cardStart = addAgeDuration(birthInstant, cardAgeDays)
-    const cardEnd = addAgeDuration(birthInstant, cardAgeDays + 3600)
+    const cardEndBirthDateTime = addCalendarDuration(cardStartBirthDateTime, { years: 10, months: 0, days: 0 })
+    const cardStart = toJstInstant(cardStartBirthDateTime)
+    const cardEnd = toJstInstant(cardEndBirthDateTime)
     card.startInstant = cardStart
     card.endInstant = cardEnd
+    card.startDateLabel = formatStartDate(cardStart)
     if (now.getTime() >= cardStart.getTime() && now.getTime() < cardEnd.getTime()) currentIndex = index
+    cardStartBirthDateTime = cardEndBirthDateTime
   })
 
   return {

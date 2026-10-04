@@ -1184,6 +1184,13 @@ button:hover {
   white-space: nowrap;
 }
 
+.great-luck__card-date {
+  color: var(--muted-navy);
+  font-size: 0.48rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
 .luck-card__twelve-stage {
   color: var(--muted-navy);
   font-size: 0.57rem;

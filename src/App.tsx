@@ -274,18 +274,18 @@ function App() {
 
   return (
     <main>
-      <div className={`page-topbar${isResultPage ? ' page-topbar--result' : ''}`}>
-        {!isResultPage && <div className="page-topbar__brand">
+      {!isResultPage && <div className="page-topbar">
+        <div className="page-topbar__brand">
           <img className="entry-screen__guide page-topbar__guide" src={luneImage} alt="" />
           <div className="page-topbar__title">FILUNE {t.entryTitle}</div>
-        </div>}
+        </div>
         <div className="language-picker">
           <label htmlFor="ui-language">Language</label>
           <select id="ui-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}>
             <option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option>
           </select>
         </div>
-      </div>
+      </div>}
       {!isResultPage && <div className="entry-screen">
         <form className="entry-form" noValidate onSubmit={handleSubmit}>
           <section className="entry-form__section entry-form__profile" aria-label={`${t.name} / ${t.gender}`}>

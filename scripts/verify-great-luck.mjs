@@ -8,9 +8,30 @@ const server = await createServer({
 })
 
 try {
-  const { calculateGreatLuck } = await server.ssrLoadModule('/src/lib/calculateGreatLuck.ts')
+  const { addCalendarDuration, calculateGreatLuck } = await server.ssrLoadModule('/src/lib/calculateGreatLuck.ts')
   const { calculateFullAge } = await server.ssrLoadModule('/src/lib/calculateFullAge.ts')
   const { toJstInstant } = await server.ssrLoadModule('/src/lib/solarTermPillars.ts')
+  assert.deepEqual(addCalendarDuration(
+    { year: 1985, month: 1, day: 22, hour: 14, minute: 22 },
+    { years: 5, months: 7, days: 8 },
+  ), { year: 1990, month: 8, day: 30, hour: 14, minute: 22 }, '起運 must add calendar years, months, and days in order')
+  assert.deepEqual(addCalendarDuration(
+    { year: 1990, month: 8, day: 30, hour: 14, minute: 22 },
+    { years: 10, months: 0, days: 0 },
+  ), { year: 2000, month: 8, day: 30, hour: 14, minute: 22 }, 'later 大運 dates must advance by calendar decades')
+  const expectedDaewoonDates = ['1990-08-30', '2000-08-30', '2010-08-30', '2020-08-30', '2030-08-30']
+  let daewoonDate = { year: 1985, month: 1, day: 22, hour: 0, minute: 0 }
+  daewoonDate = addCalendarDuration(daewoonDate, { years: 5, months: 7, days: 8 })
+  const calculatedDaewoonDates = []
+  for (let index = 0; index < expectedDaewoonDates.length; index += 1) {
+    calculatedDaewoonDates.push(`${daewoonDate.year}-${String(daewoonDate.month).padStart(2, '0')}-${String(daewoonDate.day).padStart(2, '0')}`)
+    daewoonDate = addCalendarDuration(daewoonDate, { years: 10, months: 0, days: 0 })
+  }
+  assert.deepEqual(calculatedDaewoonDates, expectedDaewoonDates, 'all expected 大運 starts must use calendar decade arithmetic')
+  assert.ok('2026-01-01' >= calculatedDaewoonDates[3] && '2026-01-01' < calculatedDaewoonDates[4], '2026 must select the 大運 that starts in 2020')
+  assert.deepEqual(addCalendarDuration(
+    { year: 2020, month: 1, day: 31, hour: 0, minute: 0 }, { years: 0, months: 1, days: 0 },
+  ), { year: 2020, month: 2, day: 29, hour: 0, minute: 0 }, 'month addition must clamp safely at leap-month end')
   const cases = [
     { yearPillar: '甲子', gender: '男性', direction: 'forward' },
     { yearPillar: '乙丑', gender: '男性', direction: 'reverse' },

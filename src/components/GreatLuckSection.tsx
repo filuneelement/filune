@@ -47,7 +47,6 @@ function GreatLuckSection({ result, message, dayStem, messages: t, locale }: Gre
           <div className="great-luck__cards" aria-label={t.greatLuckList} ref={cardsRef}>
             {result.cards.map((card, index) => {
               const stemElement = FIVE_ELEMENTS[card.stem]
-              const branchElement = FIVE_ELEMENTS[card.branch]
               const current = result.currentIndex === index
               return (
                 <article
@@ -55,14 +54,12 @@ function GreatLuckSection({ result, message, dayStem, messages: t, locale }: Gre
                   key={`${card.pillar}-${index}`}
                   aria-current={current ? 'true' : undefined}
                 >
-                  {card.startAgeLabel && <span className="great-luck__card-age">{formatAgeLabel(card.startAgeLabel, locale)}</span>}
+                  {card.startDateLabel && <span className="great-luck__card-date">{card.startDateLabel}</span>}
                   <span className="great-luck__card-pillar" aria-label={card.pillar}>
                     <span className={stemElement ? `great-luck__symbol great-luck__symbol--${stemElement.className}` : 'great-luck__symbol'}>
                       {card.stem}
                     </span>
-                    <span className={branchElement ? `great-luck__symbol great-luck__symbol--${branchElement.className}` : 'great-luck__symbol'}>
-                      {card.branch}
-                    </span>
+                    <span className={FIVE_ELEMENTS[card.branch] ? `great-luck__symbol great-luck__symbol--${FIVE_ELEMENTS[card.branch].className}` : 'great-luck__symbol'}>{card.branch}</span>
                   </span>
                   <span className="great-luck__card-meta">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod}・{t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
                   <span className="luck-card__twelve-stage">{t.stages[calculateTwelveStage(dayStem as HeavenlyStem, card.branch as EarthlyBranch) as keyof typeof t.stages]}</span>

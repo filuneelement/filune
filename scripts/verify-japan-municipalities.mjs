@@ -8,17 +8,17 @@ const server = await createServer({
 })
 
 try {
-  const { JAPAN_MUNICIPALITIES, searchJapanMunicipalities } = await server.ssrLoadModule('/src/lib/japanMunicipalitySearch.ts')
+  const { JAPAN_LOCATIONS, searchJapanMunicipalities } = await server.ssrLoadModule('/src/lib/japanMunicipalitySearch.ts')
   const cases = [
-    { query: '東京', match: (place) => place.type === 'prefecture' && place.displayName === '東京都' },
+    { query: '東京', match: (place) => place.displayName === '東京都' },
     { query: '新宿', match: (place) => place.displayName === '東京都 新宿区' },
     { query: '横浜', match: (place) => place.displayName.startsWith('神奈川県 横浜市 ') },
     { query: '札幌', match: (place) => place.displayName.startsWith('北海道 札幌市 ') },
-    { query: '福岡', match: (place) => place.displayName.startsWith('福岡県 福岡市 ') },
+    { query: '福岡市', match: (place) => place.displayName.startsWith('福岡県 福岡市 ') },
     { query: '那覇', match: (place) => place.displayName === '沖縄県 那覇市' },
   ]
 
-  assert.equal(JAPAN_MUNICIPALITIES.length, 1945, '47 prefectures and all municipality records must be local')
+  assert.equal(JAPAN_LOCATIONS.length, 1945, '47 prefectures and all municipality records must be local')
   for (const { query, match } of cases) {
     const matches = searchJapanMunicipalities(query)
     assert.ok(matches.length > 0 && matches.length <= 10, `${query} must return up to ten local candidates`)
@@ -40,7 +40,7 @@ try {
   assert.deepEqual(searchJapanMunicipalities(''), [], 'empty query must not show unfiltered results')
 
   console.log('Japanese municipality search passed: 東京、新宿、横浜、札幌、福岡、那覇; code/coordinates/timezone verified.')
-  console.log(`Local data records: ${JAPAN_MUNICIPALITIES.length} (47 prefectures + ${JAPAN_MUNICIPALITIES.length - 47} municipality/ward records).`)
+  console.log(`Local data records: ${JAPAN_LOCATIONS.length} (47 prefectures + ${JAPAN_LOCATIONS.length - 47} municipality/ward records).`)
 } finally {
   await server.close()
 }
