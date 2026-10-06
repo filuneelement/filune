@@ -1,6 +1,6 @@
 :root {
-  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
-  color: #1d2b42;
+  font-family: "Noto Sans JP", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1b2d49;
   background: #fbf9f5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -9,11 +9,14 @@
   font-optical-sizing: auto;
   --ivory: #fbf9f5;
   --paper: #ffffff;
-  --deep-navy: #1d2b42;
-  --muted-navy: #657184;
+  --deep-navy: #1b2d49;
+  --form-label: #1b2d49;
+  --input-value: #1f304a;
+  --placeholder: #a6afbc;
+  --muted-navy: #6f7b8d;
   --moon-silver: #e8ebef;
-  --silver-line: #d8dde3;
-  --subtle-gold: #b49a63;
+  --silver-line: #d8dee8;
+  --subtle-gold: #c7a45a;
   --element-wood: #3f7774;
   --element-fire: #b2635e;
   --element-earth: #96763f;
@@ -157,13 +160,19 @@ label {
   gap: 0.3rem;
   margin: 0.25rem 0.45rem 0.25rem 0;
   font-size: 0.9rem;
+  color: var(--form-label);
+}
+
+input::placeholder {
+  color: var(--placeholder);
+  opacity: 1;
 }
 
 .entry-form__fields {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
 .entry-form__fields label {
@@ -180,16 +189,11 @@ label {
   border: 1px solid var(--silver-line);
   border-radius: 6px;
   background: var(--paper);
-  color: var(--deep-navy);
+  color: var(--input-value);
   font: inherit;
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
-}
-
-.entry-form__fields input::placeholder {
-  color: #a4acb7;
-  opacity: 1;
 }
 
 .entry-form__fields input:disabled {
@@ -201,10 +205,10 @@ label {
 .entry-form__name-field {
   display: grid;
   justify-items: start;
-  gap: 0.3rem;
+  gap: 0.4rem;
   width: 100%;
-  margin: 0 0 0.6rem;
-  color: var(--deep-navy);
+  margin: 0 0 0.45rem;
+  color: var(--form-label);
   font-size: 0.88rem;
 }
 
@@ -215,17 +219,17 @@ label {
   border: 1px solid var(--silver-line);
   border-radius: 6px;
   background: var(--paper);
-  color: var(--deep-navy);
+  color: var(--input-value);
   font: inherit;
 }
 
 .entry-form__birthplace-field {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .entry-form__birthplace-picker {
   position: relative;
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .entry-form__birthplace-input {
@@ -235,7 +239,7 @@ label {
   border: 1px solid var(--silver-line);
   border-radius: 6px;
   background: var(--paper);
-  color: var(--deep-navy);
+  color: var(--input-value);
   font: inherit;
 }
 
@@ -315,7 +319,7 @@ label {
   display: grid;
   grid-template-columns: max-content max-content;
   justify-content: start;
-  gap: 0.25rem 0.45rem;
+  gap: 0.25rem 9px;
 }
 
 .entry-form__profile .entry-form__gender > span {
@@ -325,6 +329,7 @@ label {
 .entry-form__profile .entry-form__gender label {
   justify-content: center;
   min-height: 42px;
+  height: 42px;
   padding: 0.35rem 0.6rem;
 }
 
@@ -334,6 +339,7 @@ label {
 
 .entry-form__gender label {
   min-height: 42px;
+  height: 42px;
   margin: 0;
   padding: 0.35rem 0.7rem;
   border: 1px solid var(--silver-line);
@@ -358,6 +364,10 @@ label {
 
 .entry-form__year {
   width: 5.1ch;
+}
+
+.entry-form__fields > label:nth-child(4) {
+  margin-left: 7px;
 }
 
 .entry-form__short-number {
@@ -385,7 +395,7 @@ label {
 
 input:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--subtle-gold);
+  outline: 2px solid var(--deep-navy);
   outline-offset: 2px;
 }
 
@@ -417,7 +427,7 @@ button:hover {
 }
 
 [role="alert"] {
-  color: #8b3440;
+  color: #b85a52;
 }
 
 .basic-chart {
