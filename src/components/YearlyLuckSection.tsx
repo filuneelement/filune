@@ -52,8 +52,7 @@ function YearlyLuckSection({ dayStem, greatLuckPeriods, messages: t }: YearlyLuc
                 <span className={stemElement ? `yearly-luck__symbol yearly-luck__symbol--${stemElement.className}` : 'yearly-luck__symbol'}>{card.pillar[0]}</span>
                 <span className={branchElement ? `yearly-luck__symbol yearly-luck__symbol--${branchElement.className}` : 'yearly-luck__symbol'}>{card.pillar[1]}</span>
               </span>
-              <span className="yearly-luck__god">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod}</span>
-              <span className="yearly-luck__god">{t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
+              <span className="yearly-luck__god">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod} · {t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
               <span className="luck-card__twelve-stage">{t.stages[card.twelveStage as keyof typeof t.stages] ?? card.twelveStage}</span>
             </article>
           )

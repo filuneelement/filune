@@ -51,7 +51,7 @@ function MonthlyLuckSection({ dayStem, messages: t, locale }: MonthlyLuckSection
                 <span className={stemElement ? `monthly-luck__symbol monthly-luck__symbol--${stemElement.className}` : 'monthly-luck__symbol'}>{card.pillar[0]}</span>
                 <span className={branchElement ? `monthly-luck__symbol monthly-luck__symbol--${branchElement.className}` : 'monthly-luck__symbol'}>{card.pillar[1]}</span>
               </span>
-              <span className="monthly-luck__gods">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod} / {t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
+              <span className="monthly-luck__gods">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod} · {t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
               <span className="luck-card__twelve-stage">{t.stages[card.twelveStage as keyof typeof t.stages] ?? card.twelveStage}</span>
             </article>
           )

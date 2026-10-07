@@ -6,6 +6,7 @@ import MonthlyLuckSection from './MonthlyLuckSection'
 import YearlyLuckSection from './YearlyLuckSection'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
 import type { Messages, Locale } from '../i18n'
+import luneImage from '../assets/images/lune.png'
 
 type BasicChart = ReturnType<typeof createBasicChartViewModel>
 
@@ -37,14 +38,18 @@ function BasicChartResult({
   const [showHiddenStems, setShowHiddenStems] = useState(false)
 
   return (
-    <section className="result-screen" aria-labelledby="result-title">
+    <section className="result-screen" aria-label={t.resultTitle}>
       <header className="result-screen__header">
-        <button className="result-screen__back" type="button" onClick={onBack}>‹ {t.back}</button>
-        <p className="result-screen__brand">FILUNE</p>
+        <div className="page-topbar page-topbar--result">
+          <button className="result-screen__back" type="button" aria-label={t.back} onClick={onBack}>&lt;</button>
+          <div className="page-topbar__brand">
+            <img className="entry-screen__guide page-topbar__guide" src={luneImage} alt="" />
+            <div className="page-topbar__title">FILUNE {t.entryTitle}</div>
+          </div>
+        </div>
         <p className="result-screen__profile">{profileSummary}</p>
         <p className="result-screen__birth-data">{birthDateTime}</p>
         {timeCorrectionSummary && <p className="result-screen__time-correction">{timeCorrectionSummary}</p>}
-        <h1 id="result-title">{t.resultTitle}</h1>
         {showSolarTermAmbiguity && (
           <p className="result-screen__notice">
             {t.solarNotice}
@@ -52,11 +57,7 @@ function BasicChartResult({
         )}
       </header>
 
-      <section className="basic-chart" aria-labelledby="basic-chart-title">
-        <div className="basic-chart__heading">
-          <h2 id="basic-chart-title">{t.basicChart}</h2>
-        </div>
-
+      <section className="basic-chart">
         <div
           id="basic-chart-columns"
           dir="ltr"
@@ -137,8 +138,7 @@ function BasicChartResult({
         </button>
       </section>
 
-      <section className="fortune-flow" aria-labelledby="fortune-flow-title">
-        <h2 id="fortune-flow-title" className="fortune-flow__title">{t.fortuneFlow}</h2>
+      <section className="fortune-flow">
         <GreatLuckSection result={greatLuck} message={greatLuckMessage} dayStem={chart.dayStem} messages={t} locale={locale} />
         <YearlyLuckSection dayStem={chart.dayStem} greatLuckPeriods={greatLuck?.cards ?? []} messages={t} locale={locale} />
         <MonthlyLuckSection dayStem={chart.dayStem} messages={t} locale={locale} />

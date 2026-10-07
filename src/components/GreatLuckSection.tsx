@@ -61,7 +61,7 @@ function GreatLuckSection({ result, message, dayStem, messages: t, locale }: Gre
                     </span>
                     <span className={FIVE_ELEMENTS[card.branch] ? `great-luck__symbol great-luck__symbol--${FIVE_ELEMENTS[card.branch].className}` : 'great-luck__symbol'}>{card.branch}</span>
                   </span>
-                  <span className="great-luck__card-meta">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod}・{t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
+                  <span className="great-luck__card-meta">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod} · {t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
                   <span className="luck-card__twelve-stage">{t.stages[calculateTwelveStage(dayStem as HeavenlyStem, card.branch as EarthlyBranch) as keyof typeof t.stages]}</span>
                 </article>
               )

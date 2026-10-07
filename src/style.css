@@ -91,8 +91,8 @@ main {
 }
 
 .page-topbar--result {
-  margin-bottom: 0.9rem;
-  min-height: 2.35rem;
+  margin-bottom: 0.25rem;
+  min-height: 4.25rem;
 }
 
 .language-picker select {
@@ -399,6 +399,14 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+.entry-form__name-field input:focus,
+.entry-form__birthplace-input:focus {
+  border-color: #22395b;
+  outline: 1px solid #22395b;
+  outline-offset: 0;
+  box-shadow: 0 0 0 2px #c7a45a;
+}
+
 button {
   min-height: 2.75rem;
   padding: 0.55rem 1rem;
@@ -664,19 +672,44 @@ button:hover {
 }
 
 .result-screen__back {
-  min-height: 2.25rem;
-  margin: 0 0 0.8rem -0.1rem;
-  padding: 0.3rem 0.1rem;
+  display: grid;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  margin: 0;
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--muted-navy);
-  font-size: 0.78rem;
+  color: var(--deep-navy);
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .result-screen__back:hover {
   background: transparent;
   color: var(--deep-navy);
+}
+
+.page-topbar--result {
+  max-width: none;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  margin: 0 0 0.25rem;
+}
+
+.page-topbar--result .page-topbar__brand {
+  flex: 0 0 auto;
+  transform: translateY(12px);
+}
+
+.result-screen__profile,
+.result-screen__birth-data,
+.result-screen__time-correction,
+.result-screen__notice {
+  margin-left: 76px;
 }
 
 .result-screen__brand {
@@ -725,8 +758,10 @@ button:hover {
 
 .result-screen .basic-chart {
   margin-top: 0;
-  padding: 0.75rem;
-  border-radius: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
 }
 
@@ -1343,12 +1378,17 @@ button:hover {
   width: 2rem;
   min-height: 2rem;
   padding: 0;
-  border: 1px solid var(--silver-line);
-  border-radius: 50%;
-  background: var(--paper);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--deep-navy);
   font-size: 1.2rem;
   line-height: 1;
+}
+
+.monthly-luck__year-switcher button:hover {
+  background: transparent;
+  color: var(--deep-navy);
 }
 
 .monthly-luck__cards {
@@ -1490,23 +1530,15 @@ body {
 
 .result-screen {
   min-width: 0;
+  margin-top: 0;
 }
 
 .result-screen__header {
   margin-bottom: 1rem;
 }
 
-.result-screen__brand {
-  margin-bottom: 0.3rem;
-}
-
-.result-screen__header h1 {
-  margin: 0 0 0.45rem;
-  font-size: 1.45rem;
-}
-
 .result-screen__profile {
-  margin-top: 0.45rem;
+  margin-top: 1.2rem;
 }
 
 .result-screen__birth-data {
@@ -1514,14 +1546,15 @@ body {
 }
 
 .result-screen .basic-chart {
-  padding: 1rem;
-  border-color: #cbd2da;
-  box-shadow: 0 2px 9px rgb(29 43 66 / 5%);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .fortune-flow {
   min-width: 0;
-  margin-top: 1.8rem;
+  margin-top: 0.6rem;
 }
 
 .fortune-flow__title {
@@ -1542,6 +1575,7 @@ body {
 .fortune-flow .yearly-luck__cards,
 .fortune-flow .monthly-luck__cards {
   min-width: 0;
+  gap: 0.35rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-snap-type: x mandatory;
@@ -1556,27 +1590,17 @@ body {
 .fortune-flow .great-luck__card,
 .fortune-flow .yearly-luck__card,
 .fortune-flow .monthly-luck__card {
-  flex-basis: 7.1rem;
+  flex-basis: 4.8rem;
   border-radius: 8px;
   scroll-snap-align: center;
 }
 
-.fortune-flow .great-luck__card--current {
-  border-color: #c1a66f;
-  background: #f5f1e7;
-  box-shadow: inset 0 2px 0 #c1a66f;
-}
-
-.fortune-flow .yearly-luck__card--current {
-  border-color: #d0c19e;
-  background: #f8f6f0;
-  box-shadow: inset 0 1.5px 0 #cabb98;
-}
-
+.fortune-flow .great-luck__card--current,
+.fortune-flow .yearly-luck__card--current,
 .fortune-flow .monthly-luck__card--current {
-  border-color: #dbd2bd;
-  background: #fbfaf6;
-  box-shadow: inset 0 1px 0 #d6c9a9;
+  border-color: #263d5b;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px #c6ad78;
 }
 
 .result-screen__back,
@@ -1607,7 +1631,7 @@ body {
 .yearly-luck__god,
 .monthly-luck__date,
 .monthly-luck__gods {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
 }
 
 .fortune-flow .great-luck__card,
@@ -1620,7 +1644,7 @@ body {
 
 @media (max-width: 370px) {
   .result-screen .basic-chart {
-    padding: 0.65rem;
+    padding: 0;
   }
 
   .basic-chart__pillar {
