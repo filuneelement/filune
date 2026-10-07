@@ -400,11 +400,12 @@ button:focus-visible {
 }
 
 .entry-form__name-field input:focus,
+.entry-form__year:focus,
+.entry-form__short-number:focus,
 .entry-form__birthplace-input:focus {
   border-color: #22395b;
-  outline: 1px solid #22395b;
-  outline-offset: 0;
-  box-shadow: 0 0 0 2px #c7a45a;
+  outline: none;
+  box-shadow: 0 0 0 1px #c7a45a;
 }
 
 button {
