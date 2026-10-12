@@ -1,6 +1,7 @@
 const ja = {
+  flow: { heroMain: 'あなたの物語を読み解く', hero: 'あなたの運命には\nどんな物語が待っているのでしょう？', start: '運命を見てみる', luneName: 'LUNE', guideLine: '', permissionTitle: 'あなたの物語を\n読んでもいいですか？', permissionBody: '命式を読み解くために、名前と生年月日・時刻、出生地を教えてください。', permissionAccept: 'はい、続けます', introCopy: 'こんにちは、ルネです。\n命式の手がかりをひとつずつ見つけて、あなたの物語につないでいきます。', back: '戻る', next: '次へ', topicEyebrow: '知りたいこと', topicQuestion: '今、いちばん気になるのは？', topics: ['自分自身', '恋愛・結婚', '仕事・才能', 'お金', 'これからの流れ'], followUp: 'もう少し教えてください', relationshipQuestion: '現在の関係について教えてください', relationshipStatuses: ['独身', '交際中', '結婚している'], durationQuestion: '交際期間はどのくらいですか？', durations: ['1年未満', '1年以上〜3年未満', '3年以上〜5年未満', '5年以上'], noQuestions: 'このテーマについての質問は準備中です。', optional: '任意', optionalQuestion: '一緒に見ておきたいことはありますか？', optionalPlaceholder: '気になっていることを入力してください（200字まで）', skip: 'スキップ', transition: 'いいですね。\n命式の流れを一つずつつないでいきます。', loading: '読み込み中' },
   language: '言語', country: '出生国', countryNames: { JP: '日本', KR: '韓国', US: 'アメリカ' },
-  entryTitle: '万年暦', profile: 'プロフィール', name: '名前', gender: '性別', female: '女性', male: '男性',
+  entryTitle: '万年暦', brandSubline: '四柱推命で、あなたを読み解く', entryCta: '自分の四柱推命を見る', profile: 'プロフィール', name: '名前', gender: '性別', female: '女性', male: '男性',
   birthDate: '生年月日', birthDateTime: '生年月日時', year: '年', month: '月', day: '日', birthTime: '出生時刻', hour: '時', minute: '分', unknownTime: '出生時刻がわからない',
   birthplace: '出生地', searchLocation: '都市を検索', locationAria: '出生地を検索', locationPlaceholder: { JP: '例: 東京、新宿、横浜', KR: '例: 서울、강남、수원', US: '例: New York、Los Angeles、Chicago' },
   candidates: '出生地の候補', noCandidates: '候補がありません', selectedLocation: '確定した出生地', useCorrection: '地域時補正を使用する', submit: '万年暦を見る',
@@ -15,5 +16,6 @@ const ja = {
   tenGods: { 比肩: '比肩', 劫財: '劫財', 食神: '食神', 傷官: '傷官', 偏財: '偏財', 正財: '正財', 偏官: '偏官', 正官: '正官', 偏印: '偏印', 印綬: '印綬' },
   stages: { 長生: '長生', 沐浴: '沐浴', 冠帯: '冠帯', 建禄: '建禄', 帝旺: '帝旺', 衰: '衰', 病: '病', 死: '死', 墓: '墓', 絶: '絶', 胎: '胎', 養: '養' },
   elements: { 木: '木', 火: '火', 土: '土', 金: '金', 水: '水' },
+  reading: { brandLine: 'LUNE · FILUNE', heroBrand: 'LUNE', heroNamed: '{name}さんの命式を\n読み解いてみよう。', heroGeneral: 'あなたの命式を\n読み解いてみよう。', core: 'あなたを表す核', personality: '基本の性質', strengths: '強み', cautions: '気をつけたいパターン', balance: '五行バランス', evidence: '命式から見えること', dayMaster: 'あなたの日干', dayBranch: 'あなたの日支', elements: '五行', tenGods: '主な十神', yin: '陰', yang: '陽', disclosure: 'この読み解きのもとになった命式を見る', topicsIntro: 'ここからは、もう少し具体的な話。', topics: ['恋愛・結婚', '仕事・才能', 'お金', '2027年', '総合'], preview: '続きを読む', previewOpen: '最初の一部を見る', locked: '続きはロックされています', previewUnavailable: '個別の読み解きは準備中です。', previewLabel: 'プレビュー', luneLine: 'まず、あなた自身から見てみよう。', howTitle: '一つの要素だけでは、物語は完成しません。', readingPath: ['日干', '月令', '十神', '大運'], howBody: 'FILUNEは一つの要素だけで判断せず、命式の中でつながるパターンを一緒に読み解きます。', selectedTopicLead: '選んだテーマを続けて見ていきます。', premiumTitle: 'さらに詳しいリーディング', premiumLoveItems: ['惹かれやすい相手', '長く続く関係のパターン', '関係で繰り返すこと', '時期ごとの流れ'] },
 } as const
 export default ja

@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
 import type { createBasicChartViewModel } from './lib/basicChartViewModel'
 import type { GreatLuckGender, GreatLuckResult } from './lib/calculateGreatLuck'
 import type { FourPillars, ThreePillars } from './lib/calculateEightChar'
-import luneImage from './assets/images/lune.png'
+import LuneVisual from './components/LuneVisual'
 import type { Birthplace } from './lib/timeCorrection'
 import {
   getDefaultCountryForLocale,
@@ -33,11 +33,21 @@ type ResultRouteData = {
   timeUnknown: boolean
   birthplace?: Birthplace
   timeCorrectionEnabled: boolean
+  interestTopic?: string
+  relationshipStatus?: string
+  relationshipDuration?: string
+  optionalQuestion?: string
 }
 
 type ResultHistoryState = {
   filuneResult?: ResultRouteData
 }
+
+type WizardStep = number | 'permission' | 'lune-intro'
+
+const topicQuestionConfig = {
+  love: { statusQuestion: 'relationshipStatus', durationWhenStatus: 'dating' },
+} as const
 
 function readResultHistoryState(): ResultRouteData | null {
   const result = (window.history.state as ResultHistoryState | null)?.filuneResult
@@ -59,6 +69,12 @@ function App() {
   })
   const t = messages[locale]
   const [isResultPage, setIsResultPage] = useState(() => initialResult !== null)
+  const [wizardStep, setWizardStep] = useState<WizardStep>(1)
+  const [interestTopic, setInterestTopic] = useState(initialResult?.interestTopic ?? '')
+  const [relationshipStatus, setRelationshipStatus] = useState(initialResult?.relationshipStatus ?? '')
+  const [relationshipDuration, setRelationshipDuration] = useState(initialResult?.relationshipDuration ?? '')
+  const [optionalQuestion, setOptionalQuestion] = useState(initialResult?.optionalQuestion ?? '')
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const [name, setName] = useState(initialResult?.name ?? '')
   const [gender, setGender] = useState(initialResult?.gender ?? '')
   const [year, setYear] = useState(initialResult?.year ?? '')
@@ -86,6 +102,11 @@ function App() {
       : t.genderRequired
 
   useEffect(() => { localStorage.setItem('filune:locale', locale) }, [locale])
+  useEffect(() => {
+    if (wizardStep !== 'lune-intro') return
+    const timer = window.setTimeout(() => setWizardStep(3), 1200)
+    return () => window.clearTimeout(timer)
+  }, [wizardStep])
   useEffect(() => { localStorage.setItem('filune:birthCountry', countryCode) }, [countryCode])
   useEffect(() => {
     localStorage.setItem('filune:birthCountrySource', countrySelectionSource)
@@ -154,8 +175,13 @@ function App() {
       const result = readResultHistoryState()
       const shouldShowResult = window.location.pathname === '/result' && result !== null
       setIsResultPage(shouldShowResult)
+      if (!shouldShowResult) setWizardStep(6)
 
       if (result) {
+        setInterestTopic(result.interestTopic ?? '')
+        setRelationshipStatus(result.relationshipStatus ?? '')
+        setRelationshipDuration(result.relationshipDuration ?? '')
+        setOptionalQuestion(result.optionalQuestion ?? '')
         setName(result.name)
         setGender(result.gender)
         setYear(result.year)
@@ -199,21 +225,18 @@ function App() {
     }
   }, [birthplaceOptionsOpen, birthplaceQuery, countryCode])
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setPillars(null)
-
+  function validateBirth(): boolean {
     if (!/^\d{4}$/.test(year) || Number(year) < 1) {
       setError(t.errors.year)
-      return
+      return false
     }
     if (!/^\d{1,2}$/.test(month) || Number(month) < 1 || Number(month) > 12) {
       setError(t.errors.month)
-      return
+      return false
     }
     if (!/^\d{1,2}$/.test(day)) {
       setError(t.errors.day)
-      return
+      return false
     }
 
     const numericYear = Number(year)
@@ -223,19 +246,39 @@ function App() {
     const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][numericMonth - 1]
     if (numericDay < 1 || numericDay > daysInMonth) {
       setError(t.errors.date)
-      return
+      return false
     }
     if (!timeUnknown) {
       if (!/^\d{1,2}$/.test(hour) || Number(hour) < 0 || Number(hour) > 23) {
         setError(t.errors.hour)
-        return
+        return false
       }
       if (!/^\d{1,2}$/.test(minute) || Number(minute) < 0 || Number(minute) > 59) {
         setError(t.errors.minute)
-        return
+        return false
       }
     }
 
+    return true
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!validateBirth()) return
+    setError('')
+    setWizardStep(4)
+  }
+
+  async function calculateAndShowResult() {
+    setPillars(null)
+    if (!validateBirth()) {
+      setWizardStep(3)
+      setIsTransitioning(false)
+      return
+    }
+    const numericYear = Number(year)
+    const numericMonth = Number(month)
+    const numericDay = Number(day)
     try {
       const { calculateEightChar, calculateEightCharWithoutBirthTime } = await import('./lib/calculateEightChar')
       const calculatedPillars = timeUnknown
@@ -262,31 +305,53 @@ function App() {
         timeUnknown,
         birthplace,
         timeCorrectionEnabled,
+        interestTopic,
+        relationshipStatus,
+        relationshipDuration,
+        optionalQuestion,
       }
       window.history.pushState({ filuneResult: routeData } satisfies ResultHistoryState, '', '/result')
       setPillars(calculatedPillars)
       setIsResultPage(true)
+      setIsTransitioning(false)
       setError('')
     } catch {
       setError(t.errors.calculate)
+      setWizardStep(3)
+      setIsTransitioning(false)
     }
+  }
+
+  function nextAfterConditional() {
+    setWizardStep(6)
+  }
+
+  async function beginReading() {
+    setWizardStep(7)
+    setIsTransitioning(true)
+    await calculateAndShowResult()
   }
 
   return (
     <main>
-      {!isResultPage && <div className="page-topbar">
-        <div className="page-topbar__brand">
-          <img className="entry-screen__guide page-topbar__guide" src={luneImage} alt="" />
-          <div className="page-topbar__title">FILUNE {t.entryTitle}</div>
-        </div>
-        <div className="language-picker">
-          <label htmlFor="ui-language">Language</label>
-          <select id="ui-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}>
-            <option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option>
-          </select>
-        </div>
-      </div>}
-      {!isResultPage && <div className="entry-screen">
+      {!isResultPage && wizardStep === 1 && <section className="story-step story-step--hero">
+        <div className="story-topbar"><div className="story-brand">FILUNE</div><div className="language-picker"><label htmlFor="ui-language">{t.language}</label><select id="ui-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div></div>
+        <div className="story-hero__content"><LuneVisual className="story-hero__lune" name={t.flow.luneName}/>{t.flow.guideLine && <p className="story-character-description">{t.flow.guideLine}</p>}{t.flow.heroMain && <p className="story-hero__main-copy">{t.flow.heroMain}</p>}<p className={t.flow.heroMain ? 'story-hero__subline' : 'story-hero__headline'}>{t.flow.hero}</p><button type="button" className="story-cta" onClick={() => setWizardStep('permission')}>{t.flow.start}</button></div>
+      </section>}
+      {!isResultPage && wizardStep !== 1 && <div className={`story-language${wizardStep === 'permission' || wizardStep === 'lune-intro' ? ' story-language--dark' : ''}`}><label htmlFor="wizard-language">{t.language}</label><select id="wizard-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div>}
+      {!isResultPage && wizardStep === 'permission' && <section className="story-step story-step--navy onboarding-scene">
+        <button type="button" className="story-back story-back--light" onClick={() => setWizardStep(1)} aria-label={t.flow.back}>‹</button>
+        <LuneVisual className="onboarding-scene__lune" name={t.flow.luneName}/>
+        <h1 className="onboarding-scene__title">{t.flow.permissionTitle}</h1>
+        <p className="onboarding-scene__body">{t.flow.permissionBody}</p>
+        <button className="story-cta onboarding-scene__cta" type="button" onClick={() => setWizardStep('lune-intro')}>{t.flow.permissionAccept}</button>
+      </section>}
+      {!isResultPage && wizardStep === 'lune-intro' && <section className="story-step story-step--navy onboarding-scene onboarding-scene--intro" aria-live="polite">
+        <LuneVisual className="onboarding-scene__lune" name={t.flow.luneName}/>
+        <p className="onboarding-scene__intro-copy">{t.flow.introCopy}</p>
+      </section>}
+      {!isResultPage && wizardStep === 3 && <div className="entry-screen story-form-screen">
+        <div className="birth-step-top"><button type="button" className="story-back" onClick={() => setWizardStep('permission')} aria-label={t.flow.back}>‹</button></div>
         <form className="entry-form" noValidate onSubmit={handleSubmit}>
           <section className="entry-form__section entry-form__profile" aria-label={`${t.name} / ${t.gender}`}>
             <div className="entry-form__profile-fields">
@@ -474,10 +539,14 @@ function App() {
               <span>{t.useCorrection}</span>
             </label>
           </section>
-          <button className="entry-form__submit" type="submit">{t.submit}</button>
+          <button className="entry-form__submit" type="submit">{t.flow.next}</button>
           {error && <p role="alert">{error}</p>}
         </form>
       </div>}
+      {!isResultPage && wizardStep === 4 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(3)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.topicEyebrow}</p><h1>{t.flow.topicQuestion}</h1><div className="story-options">{t.flow.topics.map((topic, i) => <button key={i} type="button" className={interestTopic === ['self','love','work','money','future'][i] ? 'selected' : ''} onClick={() => { setInterestTopic(['self','love','work','money','future'][i]); setRelationshipStatus(''); setRelationshipDuration('') }}>{topic}</button>)}</div><button type="button" className="story-cta story-cta--navy" disabled={!interestTopic} onClick={() => setWizardStep(interestTopic in topicQuestionConfig ? 5 : 6)}>{t.flow.next}</button></div></section>}
+      {!isResultPage && wizardStep === 5 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(4)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.followUp}</p><h1>{interestTopic in topicQuestionConfig ? t.flow.relationshipQuestion : t.flow.topicQuestion}</h1>{interestTopic in topicQuestionConfig ? <><div className="story-options">{t.flow.relationshipStatuses.map((v, i) => <button key={i} type="button" className={relationshipStatus === ['single','dating','married'][i] ? 'selected' : ''} onClick={() => { setRelationshipStatus(['single','dating','married'][i]); setRelationshipDuration('') }}>{v}</button>)}</div>{relationshipStatus === topicQuestionConfig.love.durationWhenStatus && <><h2>{t.flow.durationQuestion}</h2><div className="story-options">{t.flow.durations.map((v,i) => <button key={i} type="button" className={relationshipDuration === String(i) ? 'selected' : ''} onClick={() => setRelationshipDuration(String(i))}>{v}</button>)}</div></>}</> : <p className="story-note">{t.flow.noQuestions}</p>}<button type="button" className="story-cta story-cta--navy" disabled={interestTopic in topicQuestionConfig && (!relationshipStatus || (relationshipStatus === topicQuestionConfig.love.durationWhenStatus && !relationshipDuration))} onClick={nextAfterConditional}>{t.flow.next}</button></div></section>}
+      {!isResultPage && wizardStep === 6 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(interestTopic in topicQuestionConfig ? 5 : 4)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.optional}</p><h1>{t.flow.optionalQuestion}</h1><textarea maxLength={200} value={optionalQuestion} placeholder={t.flow.optionalPlaceholder} onChange={(event) => setOptionalQuestion(event.target.value)}/><small className="story-counter">{optionalQuestion.length}/200</small><button type="button" className="story-cta story-cta--navy" onClick={beginReading}>{t.flow.next}</button><button type="button" className="story-skip" onClick={beginReading}>{t.flow.skip}</button></div></section>}
+      {!isResultPage && wizardStep === 7 && <section className="story-step story-step--navy"><LuneVisual className="story-lune"/><p className="story-copy">{t.flow.transition}</p>{isTransitioning && <span className="story-loader" aria-label={t.flow.loading}/>}</section>}
 
       {isResultPage && pillars && chart && fullAge !== null && (
         <Suspense fallback={null}>
@@ -485,6 +554,7 @@ function App() {
             chart={chart}
             messages={t}
             locale={locale}
+            name={name}
             profileSummary={`${name.trim() ? `${name.trim()}${locale === 'en' ? ' (' : '（'}` : ''}${fullAge}${t.yearsSuffix}${gender ? `${t.ageSeparator}${gender === '女性' ? t.female : t.male}` : ''}${name.trim() ? (locale === 'en' ? ')' : '）') : ''}`}
             birthDateTime={`${year}.${month.padStart(2, '0')}.${day.padStart(2, '0')}${pillars.timeKnown === false ? `　${t.birthTimeUnknown}` : ` ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`}`}
             timeCorrectionSummary={pillars.timeKnown !== false && pillars.timeCorrection && birthplace
@@ -494,6 +564,7 @@ function App() {
             onBack={() => window.history.back()}
             greatLuck={greatLuck}
             greatLuckMessage={greatLuckMessage}
+            interestTopic={interestTopic}
           />
         </Suspense>
       )}

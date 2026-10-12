@@ -6,7 +6,12 @@ import MonthlyLuckSection from './MonthlyLuckSection'
 import YearlyLuckSection from './YearlyLuckSection'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
 import type { Messages, Locale } from '../i18n'
-import luneImage from '../assets/images/lune.png'
+import ResultHero from './result/ResultHero'
+import BasicReading, { hasBasicReading, type BasicReading as BasicReadingData } from './result/BasicReading'
+import DayMasterCard from './result/DayMasterCard'
+import DayBranchCard from './result/DayBranchCard'
+import FiveElementsBalance from './result/FiveElementsBalance'
+import SelectedTopicReading from './result/SelectedTopicReading'
 
 type BasicChart = ReturnType<typeof createBasicChartViewModel>
 
@@ -21,6 +26,9 @@ type BasicChartResultProps = {
   greatLuckMessage?: string
   messages: Messages
   locale: Locale
+  name: string
+  interestTopic?: string
+  reading?: BasicReadingData
 }
 
 function BasicChartResult({
@@ -34,17 +42,20 @@ function BasicChartResult({
   greatLuckMessage,
   messages: t,
   locale,
+  name,
+  interestTopic,
+  reading,
 }: BasicChartResultProps) {
   const [showHiddenStems, setShowHiddenStems] = useState(false)
 
   return (
     <section className="result-screen" aria-label={t.resultTitle}>
-      <header className="result-screen__header">
+      <ResultHero name={name} messages={t} />
+      <header className="result-screen__header result-screen__header--meta">
         <div className="page-topbar page-topbar--result">
           <button className="result-screen__back" type="button" aria-label={t.back} onClick={onBack}>&lt;</button>
           <div className="page-topbar__brand">
-            <img className="entry-screen__guide page-topbar__guide" src={luneImage} alt="" />
-            <div className="page-topbar__title">FILUNE {t.entryTitle}</div>
+            <div className="page-topbar__title">FILUNE</div>
           </div>
         </div>
         <p className="result-screen__profile">{profileSummary}</p>
@@ -56,6 +67,40 @@ function BasicChartResult({
           </p>
         )}
       </header>
+
+      <section className="result-content">
+        {hasBasicReading(reading) && <section className="reading-section">
+          <p className="section-eyebrow">{t.reading.brandLine}</p>
+          <BasicReading reading={reading} messages={t} />
+        </section>}
+        <section className="evidence-section">
+          <h2>{t.reading.evidence}</h2>
+          <div className="evidence-grid">
+            <DayMasterCard stem={chart.dayStem} messages={t} locale={locale} />
+            <DayBranchCard branch={chart.dayBranch} messages={t} />
+          </div>
+          <FiveElementsBalance chart={chart} messages={t} />
+          <div className="ten-god-panel"><h3>{t.reading.tenGods}</h3><div className="ten-god-chips">
+            {[...new Set(chart.columns.flatMap((column) => [column.stemTenGod, column.branchTenGod]).filter((god) => god !== '—' && god !== '日干'))].map((god) => (
+              <span className="ten-god-chip" key={god}>{t.tenGods[god as keyof typeof t.tenGods] ?? god}</span>
+            ))}
+          </div></div>
+        </section>
+        <section className="how-reads-section">
+          <p className="section-eyebrow">FILUNE</p><h2>{t.reading.howTitle}</h2><div className="reading-path">{t.reading.readingPath.map((item, index) => <span key={item}>{item}{index < t.reading.readingPath.length - 1 && <i>✦</i>}</span>)}</div><p>{t.reading.howBody}</p>
+        </section>
+        {interestTopic && <SelectedTopicReading data={{ topic: t.flow.topics[['self','love','work','money','future'].indexOf(interestTopic)] }} messages={t} />}
+        <section className="topic-section">
+          <div className="topic-section__intro"><p>{t.reading.premiumTitle}</p></div>
+          <div className="topic-grid">{(interestTopic === 'love' ? t.reading.premiumLoveItems : interestTopic ? [t.flow.topics[['self','love','work','money','future'].indexOf(interestTopic)]] : t.reading.topics.slice(0, 1)).map((topic) => <article className="premium-card" key={topic}>
+            <span className="premium-card__accent">✦</span><h3>{topic}</h3><p>{t.reading.previewUnavailable}</p>
+            <button type="button" aria-label={`${topic}: ${t.reading.previewOpen}`} disabled>{t.reading.previewOpen}</button>
+            <small>🔒 {t.reading.locked}</small>
+          </article>)}</div>
+        </section>
+
+        <details className="full-chart-disclosure">
+          <summary>{t.reading.disclosure}</summary>
 
       <section className="basic-chart">
         <div
@@ -142,6 +187,8 @@ function BasicChartResult({
         <GreatLuckSection result={greatLuck} message={greatLuckMessage} dayStem={chart.dayStem} messages={t} locale={locale} />
         <YearlyLuckSection dayStem={chart.dayStem} greatLuckPeriods={greatLuck?.cards ?? []} messages={t} locale={locale} />
         <MonthlyLuckSection dayStem={chart.dayStem} messages={t} locale={locale} />
+      </section>
+        </details>
       </section>
     </section>
   )

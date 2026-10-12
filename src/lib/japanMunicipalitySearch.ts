@@ -20,7 +20,10 @@ const municipalityByCity = new Map<string, JapanMunicipalitySource>()
 
 for (const place of japanSources) {
   if (!place.city) continue
-  const key = `${place.prefecture}:${place.city}`
+  // Designated-city wards share a city name and county, so they collapse to
+  // one city-level result. County is part of a municipality's identity for
+  // towns/villages: Hokkaido has two distinct 泊村 entries, for example.
+  const key = `${place.prefecture}:${place.county ?? ''}:${place.city}`
   const existing = municipalityByCity.get(key)
   if (!existing || (place.ward === '中央区' && existing.ward !== '中央区')) {
     municipalityByCity.set(key, place)
@@ -47,7 +50,7 @@ const cityLocations: Birthplace[] = [...municipalityByCity.values()].map((place)
   countryCode: 'JP',
   region: place.prefecture,
   city: place.city,
-  displayName: `${place.prefecture} ${place.city}`,
+  displayName: `${place.prefecture} ${place.county ? `${place.county} ` : ''}${place.city}`,
   latitude: place.latitude,
   longitude: place.longitude,
   timezone: place.timezone,
