@@ -17,6 +17,7 @@
     "verify:great-luck": "node scripts/verify-great-luck.mjs",
     "verify:monthly-luck": "node scripts/verify-monthly-luck.mjs",
     "verify:yearly-luck": "node scripts/verify-yearly-luck.mjs",
+    "verify:canonical-chart": "node scripts/verify-canonical-chart.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
