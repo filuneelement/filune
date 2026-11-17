@@ -1,0 +1,110 @@
+CS-005 최소 천간 합 상태 evaluator 구현 결과
+
+1. 구현 Rule ID
+OP-T03, OP-T04, OP-T07, OP-T08, OP-T10, OP-L01, OP-L02, IR-01.
+OP-T01/T02/T09/T12는 이번에 구현하지 않았다. 원국 내부에 해당 합이 존재하는 입력은 deferred로 반환하며, CS-005 원국에는 해당 합이 없다.
+
+2. 생성/수정 파일
+생성:
+src/lib/judgment/evaluators/stemCombination/types.ts
+src/lib/judgment/evaluators/stemCombination/selectScope.ts
+src/lib/judgment/evaluators/stemCombination/evaluateLuckToLuckCombination.ts
+src/lib/judgment/evaluators/stemCombination/evaluateLuckToNatalCombination.ts
+src/lib/judgment/evaluators/stemCombination/applyCombinationState.ts
+src/lib/judgment/evaluators/stemCombination/carryForward.ts
+src/lib/judgment/evaluators/stemCombination/index.ts
+src/lib/judgment/evaluators/stemCombination/README.md
+scripts/verify-cs005-stem-combination.mjs
+src/docs/rules/CS-005-stem-combination-result.txt
+수정: package.json에 verify:cs005-stem-combination 추가.
+
+Canonical 계산, legacy table, contract schema, 기존 evaluator, UI, AI, 기존 verify script는 변경하지 않았다. 기존 package-lock.json 작업 내용은 그대로 유지했다.
+
+3. OP-L01 scope 처리
+기존 ExecutionScopeContext 검증 및 candidate 선택을 재사용했다.
+대운: 원국 + 선택 대운.
+세운: 원국 + 선택 대운 + 선택 세운.
+월운: 원국 + 선택 세운 + 선택 월운.
+Producer 원본은 유지한다. 실행 관측 relation/coverage에는 별도 scope-bound ID를 부여하고 원본 relation ID·producer·evidence 계보를 보존한다.
+월운에서 대운 entity를 직접 비교하거나 대운–월운 신규 합을 생성하지 않는다.
+현재 contract에는 일진 scope가 없어 이번 API에서는 미지원이다. 임의 enum이나 일진 계산을 추가하지 않았다.
+
+4. OP-T10 운끼리 합
+현재 직접 비교 운끼리의 합을 먼저 처리한다.
+성립한 두 entity는 weakened이며 stopped가 아니다.
+그 두 entity는 원국과 새로 합하지 않는다.
+약화는 질적 상태·문서 근거로만 기록한다. 약화된 상태를 참조할 수 있지만 생극 결과·점수·비율은 계산하지 않는다.
+이전 ‘원국 합 우선’ 이력 규칙은 실행하지 않는다.
+
+5. OP-T03/04/07/08
+OP-T03: 운이 여러 원국 글자와 합할 수 있으면 년간 → 월간 → 시간 순서로 선택한다.
+OP-T04: 일간을 일반 운세의 합거 상대에서 제외한다.
+OP-T07: 원국–운 합이 성립하면 두 entity를 stopped로 생성한다.
+OP-T08: 유효한 기존 원국 stopped 상태를 유지하고 새 합 상대에서 제외한다.
+이번 상태의 active는 ‘이 slice에서 합에 의한 기능 제한이 성립하지 않음’이다. 전체 명리 기능·강도 평가가 아니다.
+
+6. Carry 처리
+원국에 발생한 stopped 변화만 원래 sourceStateRef, sourceStage, causedByApplicationRefs/ruleIds, validity.from/to, inheritedThrough와 함께 승계한다.
+sourceStateRef가 요청의 sourceStateId에 해당한다.
+새 하위 단계에서 같은 원국 변화를 새 합 결과로 재생성하지 않는다.
+RuntimeState 기능 상태는 active/weakened/stopped이며, inherited는 originMode에 기록한다. restored는 생성하지 않는다.
+운끼리 weakened 상태는 승계하지 않는다.
+이전 운–원국 합으로 stopped가 된 운 글자는 필요할 때 원래 state ID·scope·원인·기간의 역사 참조로 유지하며, 새 inherited 운 상태를 만들지 않는다.
+중복 source/provenance consume, change ID 바꿔 재소비, 기간·scope·원인 참조는 기존 validateContractBundle로 검사한다.
+IR-01에 따라 월운에서 이전 세운–원국 처리 결과를 새 판단으로 다시 생성하지 않는다.
+
+7. 2027.1 부모 세운
+2027-01-15 검사 시점의 부모는 丙午이다.
+원국 → 己未 대운 → 丙午 세운 → 辛丑 월운 경로를 실행했다.
+2027 丁未 세운은 입춘 이후 별도 경로로 평가했다.
+丁未 snapshot을 2027.1의 upstream으로 주면 period mismatch로 거부한다.
+
+8. CS-005 기대값과 일치/불일치
+구조 범위에서 일치:
+- 己未 대운: 대운 己와 원국 년간 甲이 stopped.
+- 입춘 이후 丁未 세운: 丁과 원국 시간 壬이 stopped.
+- 2027.1: 丙午 세운 丙과 辛丑 월운 辛이 weakened.
+- 2027.1: 원국 월간 丙은 active로 남으며, 월운 辛과 재합거되지 않음.
+- 대운에서 발생한 원국 甲 stopped는 provenance를 보존해 승계.
+C rev215 C-10-2의 2027.1 ‘상신 丙 유지’ 가운데 ‘원국 丙이 기능 정지되지 않음’만 비교했다.
+丙의 상신 역할이나 천간 유리 우세/지지 공존 등의 최종 길흉은 판정·검증하지 않았다.
+기대값은 테스트 assertion에서만 사용한다. 불일치 시 source expected, events, states, processing history, evidence가 assertion 메시지에 출력된다.
+
+검사 입력에 관한 한계:
+C의 역산 출생일과 戌시 범위 하한(19:30)을 합성 대표 시각으로 사용했다. 관측된 정확한 출생시각이라고 주장하지 않는다.
+이 대표 입력의 실제 Canonical 원국이 C 원국과 일치함을 assertion으로 확인했다.
+별도 Rule 단위 합성 fact 배열은 상대 순서·일간 제외·재사용 금지 검사 전용이다. 실제 만세력 계산 정답이나 CS 기대값 fixture로 채택하지 않았다.
+
+9. 새 verify 결과
+npm run verify:cs005-stem-combination: 41 checks 통과.
+동일 입력의 동일 JSON, 전체 input/upstream 무변경, scope, 운끼리 합 우선, 양쪽 stopped, 상대 우선순위, 일간 제외, stopped 재사용 금지, carry 계보, 중복 consume 거부, 丙午 부모 선택, 丁未 부모 거부, RoleState 미생성, 지장간 미사용을 검사했다.
+
+10. 기존 verify 전체 결과
+기존 verify 17/17 통과. 신규 포함 전체 verify 명령은 18개다.
+judgment-runtime-context: 41개 유지.
+judgment-producers: 41개 유지.
+judgment-authority-provenance: 49개 유지.
+judgment-contract-layer: 118개 유지(95 original + 23 regression).
+기존 3개 audit probe rejected 유지.
+judgment-contract 및 기존 calendar/location/canonical 검증 모두 통과.
+
+11. Build 결과
+npm run build: TypeScript/Vite 통과.
+기존 client asset 이름/hash가 유지되며 UI 연결은 추가하지 않았다.
+
+12. 다음 구현에 필요한 Rule 영역
+원국 내부 합: OP-T01/T02/T09/T12는 별도 범위로 검증·구현 필요.
+격국/투출/역할/통근: I-01/I-02/I-02a/I-03/I-04 계열/I-05 등은 다음 별도 slice이며 이번에 확장하지 않았다.
+未의 미확정 지장간 정보에 의존하는 판단은 deferred 유지.
+독립 계산·역사적 시차 provenance를 포함한 문서 준수 회귀검증도 별도 필요.
+
+지원 범위의 추가 한계:
+- Carry 원인 기간이 하위 실행 기간 전체를 덮지 않으면 경계 분리가 필요하므로 거부한다. 임의 복원 상태를 생성하지 않는다.
+- 이전 운–원국 합으로 stopped인 운이 새 운끼리 합에 참여하는 경계는 이번 최소 slice에서 미지원으로 거부한다. 새 우선순위 규칙을 추론하지 않는다.
+- 일진 scope는 현재 contract 미지원이다.
+
+완료 범위: 최소 합 상태 구조 구현·검증.
+REGRESSION_READY = NO
+PUBLICATION_READY = NO
+RoleState 자동 생성 없음. 未 지장간 추론 없음. 전체 지장간 표 보완 없음.
+격국/용신/상신/병/구응 전체 evaluator, 지지 최종 길흉, UI, AI 문장, publication 처리는 구현하지 않았다.

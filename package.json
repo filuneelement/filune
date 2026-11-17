@@ -18,7 +18,13 @@
     "verify:monthly-luck": "node scripts/verify-monthly-luck.mjs",
     "verify:yearly-luck": "node scripts/verify-yearly-luck.mjs",
     "verify:canonical-chart": "node scripts/verify-canonical-chart.mjs",
-    "preview": "vite preview"
+    "verify:judgment-contract": "node scripts/verify-judgment-contract.mjs",
+    "verify:judgment-contract-layer": "tsc -p tsconfig.contracts.json && node scripts/verify-judgment-contract-layer.mjs",
+    "verify:judgment-producers": "node scripts/verify-judgment-producers.mjs",
+    "verify:judgment-runtime-context": "node scripts/verify-judgment-runtime-context.mjs",
+    "preview": "vite preview",
+    "verify:judgment-authority-provenance": "node scripts/verify-judgment-authority-provenance.mjs",
+    "verify:cs005-stem-combination": "node scripts/verify-cs005-stem-combination.mjs"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",
