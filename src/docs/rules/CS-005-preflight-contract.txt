@@ -1,0 +1,391 @@
+FILUNE CS-005 preflight contract — 설계 보고
+범위: 입력·상태·증거 계약 제안. 구현 승인이나 새 명리 규칙이 아니다.
+기준: A rev179, B rev38, C rev215, D rev152, 25-7 rev16 및 기존 mapping 7개.
+기존 코드 읽기: canonical/types.ts, canonical/calculateCanonicalChart.ts,
+judgment/types.ts, judgment/facts/fromCanonical.ts, dayRelationships.ts,
+hiddenStemRoleTable.ts, calculateGreatLuck.ts, calculateYearlyLuck.ts,
+calculateMonthlyLuck.ts, solarTermPillars.ts.
+이번 산출물은 이 TXT 보고서뿐이다. 코드·mapping·fixture·테스트 변경 없음.
+
+1. Canonical에서 바로 쓸 수 있는 입력
+
+용어 구별:
+- CanonicalChart는 CalculatedChart.chart의 원국 4주·basicRelations 부분이다.
+- 절입·대운·세운·월운·시간정책은 바깥 CalculatedChart에 있다.
+- “바로 사용”은 값의 읽기/재사용 가능을 뜻한다. 문서 준수·독립 검증 완료를 뜻하지 않는다.
+- 기존 confirmed는 legacy-filune-jst-v1 아래의 확정이며 FILUNE 문서 인증과 다르다.
+- C/P/U/X = confirmed / provisional / unknown / unsupported.
+- 필수 입력이 U/X면 값을 만들어 채우지 않는다. provisional은 불확실성을 유지한다.
+- AssessedValue는 C/P에 value가 있고 U/X에는 없다. 현재 CalculationAvailability의
+  available을 독립 검증 완료나 문서상 confirmed로 승격하지 않는다.
+- 아래 field 이름 중 기존 JSON pointer 외의 이름은 제안 계약이며 아직 타입이 아니다.
+
+A. 기존 Canonical 또는 CalculatedChart에 있는 입력
+field | source | expected type | Rule ID | required/optional | 허용 상태
+natalPillars | /chart/pillars/{year,month,day,time} | AssessedValue<CanonicalPillar> | C-01·03·09·11, I-01·02·06, OP-T01·02·04 | 필수 | C/P/U/X 유지
+natalBasicRelations | /chart/basicRelations/{position} | AssessedValue<{relationships:DayRelationships,stemTenGod:TenGod,twelveStage:TwelveStage}> | C-09·10, I-01·02·05 | 필수(십성·지장간 후보); twelveStage는 이 slice에서 미사용 | C/P/U/X 유지
+recordedBirth | /birthInput, /timePolicy/recorded | BirthInput + recorded time | C-03·04·06·12, OP-P02·04 | 증거 연결 필수; 출생지 추가값은 원문/입력에 있을 때만 | 원래 BirthInput에는 assessment 없음; 별도 provenance C/P/U/X 필요
+calculationContext | /context | CalculationContext | C-01~11의 계산 재현, OP-P04 | 필수 | 버전·기준시각은 사실; 문서 준수 상태 별도
+solarTermContext | /solarTerms/evaluation | AssessedValue<{input,instant,risshun,previousJie,nextJie}> | C-01·02·06·08 | 필수 | C/P/U/X; 독립 대조 상태 별도
+solarTermAmbiguity | /solarTerms/ambiguousOnRecordedDate | boolean | C-02, OP-P02 | 필수 | 기존 판별 범위만 의미; ±1일 문서 조건 충족을 대신하지 않음
+timePolicy | /timePolicy | TimePolicy | C-03·04·06, OP-P02 | 필수 | 각 usage.status C/P/U/X; fixed-jst를 KST 역사 보정 인증으로 취급 금지
+greatLuck | /greatLuck | CalculationAvailability<CanonicalGreatLuckResult> | C-05·06, OP-L01·02 | 필수 | available/U/X; available 아래 출처·정밀도 별도
+solarYears | /yearlyLuck/cards | Serialized<YearlyLuckCard>[] | C-08, OP-L01 | 필수 | 현재 타입에 항목별 assessment 없음; runtime wrapper에서 보존/부여 근거 필요
+solarMonths | /monthlyLuck/cards | Serialized<MonthlyLuckCard>[] | C-08, OP-L01 | 필수 | 위와 같음
+canonicalUncertainties | /uncertainties | Uncertainty[] | C-02·03·06·12, OP-P02·04 | 필수(빈 배열 가능) | 현재 4개 uncertainty code 범위만 포함
+
+직접 재사용 가능한 원국 십성·지장간 데이터도 문서의 체계와 다르면 승인된
+기본 체계로 간주할 수 없다. 특히 기존 표는 子에 壬·癸, 亥에 戊·甲·壬을
+포함한다. A C-10의 체계 구분과 C C-10-1 CS-109의 “亥 기본 체계에 戊가 없음”
+설명과 대조가 필요하다. 이번 작업에서 목록을 고치거나 필터링하지 않았다.
+CS-005는 일지 子를 포함하므로 이 차이를 미래 구현자가 무시해서는 안 된다.
+
+2. 새 Derived Fact 계약이 필요한 항목
+
+B. 기존 순수 함수/기존 값에서 안전하게 재사용·투영 가능한 것
+field | source | expected type | Rule ID | required/optional | 허용 상태
+luckTenGods | 기존 calculateTenGod(dayStem, targetStem) 및 canonical 운 카드 | Assessed<TenGod> | C-09, I-04-1·07 | 필수 | 입력 assessment 전파; U/X에서 계산 금지
+hiddenStemDetailsCandidate | 기존 calculateDayRelationships + HIDDEN_STEM_ROLE_TABLE | Assessed<HiddenStemDetail[]> | C-10, I-01·02·05 | 필수 후보 | 값 자체 C/P 가능, 문서 체계 호환성은 별도 U
+mainHiddenStemCandidate | 기존 DayRelationships.mainHiddenStem/mainHiddenTenGod | Assessed<{stem,tenGod}> | I-01·02 | 필수 후보 | 위와 같음
+positionFacts | 4주의 기존 year/month/day/time 식별자 투영 | {entityId,position,origin}[] | C-11, I-06, OP-T01·02·03·12 | 필수 | 해당 pillar assessment 유지; 운에 원국 위치 부여 금지
+periodCandidates | 기존 greatLuck/yearlyLuck/monthlyLuck 카드와 start/end 투영 | PeriodRef[] | C-08, OP-L01·02 | 필수 | 미상 경계는 U; 정확한 순간을 임의 생성하지 않음
+sourceFactLinks | 기존 canonicalPointer와 projection fact ID의 연결 | FactRef[] | 모든 선택 규칙 | 필수 | 원래 fact assessment 유지
+
+위 목록의 “안전”은 기존 결과를 복제·투영하는 수준이다. 문서에 맞도록
+재계산하거나 표를 바꿔도 안전하다는 뜻은 아니다. 년주/월주/일주/시주,
+절입, 대운, 세운, 월운의 새 공식은 만들지 않는다. referenceTime도 새 Date()가
+아닌 저장된 context를 쓴다. 코드의 currentIndex만으로 과거/미래 운을 고르지 않는다.
+
+D. 공급 계약이 아직 없어 REVIEW인 runtime 항목
+field | source | expected type(제안) | Rule ID | required/optional | 허용 상태
+hiddenStemSystem | 승인된 체계 증거 + 기존 table 버전의 대조 결과 | {systemName,tableVersion,compatibility,evidenceIds} | C-10, I-01·02, OP-Z12 | 필수 | C/P/U; 불일치는 원문을 고치지 않고 기록
+relationshipCandidates | 현재 src/lib에서 재사용 가능한 합·충·형·해·파·원진 전체 함수 미확인 | Assessed<RelationCandidate[]> + completeness | C-11, I-06·07·10, OP-T*, OP-Z* | 필수 | C/P/U/X; 미확인을 빈 배열로 바꾸지 않음
+relationshipCoverage | 동일 범위의 어떤 종류를 조사했는지 | {scopeId,kindsChecked,missingKinds,inputFactIds} | C-11, I-10, OP-Z10 | 필수 | C/P/U/X
+stemElementPolarity | 기존 함수 내부 STEM_INFO는 비공개; 공용 읽기 계약 미확인 | Assessed<{element,polarity}> | I-02, C-05·09 | 필요한 부분 필수 | C/P/U/X; 숨은 새 오행 공식을 만들지 않음
+rootEvidence | 기존 지장간 후보/위치 + 통근 확인의 출처 | EvidenceRef[] + 판단 application ref | I-05, I-04 | 전체 길흉 포함 시 필수 | C/P/U/X
+comparisonScope | 현재 운 단위·선택 period·원국 entity refs | ScopeProposal / RuleApplicationRef | OP-L01, OP-T10 | 필수 | selection 입력은 C/P/U, 유효 범위 확정은 Rule 결과
+exposureState | 월령 목록과 천간의 fact refs + I-02 application | ExposureDecision[] | I-02·02a | 전체 구조 포함 시 필수 | 미평가/결정/보류 구분; 입력 fact C/P/U/X
+relationshipState | candidate refs + 적용 RuleApplication refs | RelationshipDecision[] | OP-T01~10(11 제외), OP-Z01~13 | 필수 | 미평가와 미성립 구분
+roleState | 구조 판단 application refs, 원고 출처는 증거로만 | RoleDecision[] | I-03·04·04-1·04a·04c, OP-P01 | “상신 유지”까지 포함하면 필수 | 미평가/결정/보류; CS 기대 역할을 미리 입력하지 않음
+natalChanges | 합거 등 평가 결과가 원국에 남긴 변화 | NatalChange[] | OP-T07·08, OP-L02 | 필수 | application·근거·유효기간 필요; 원국 entity 대상만
+carryState | 상위 snapshot의 원국 변화 참조 | CarryEntry[] | OP-L02, IR-01 | 필수 | 상위 미확정 상태를 하위 확정으로 승격하지 않음
+qualitativeJudgments | 축별 근거와 규칙 실행 결과 | AxisDecision[] | I-04·14, OP-L03 | 완전 길흉 회귀 시 필수 | 미평가/결정/보류; 점수·확률 없음
+runtimeUncertainty | canonical + 출처·정책·체계·상태 공급 불확실성 | RuntimeUncertainty[] | C-02·03·10·12, OP-P02·04 | 필수(빈 배열 가능) | C/P/U/X와 원인 범위를 분리
+
+중요: exposureState/relationshipState/roleState/natalChanges/carryState는
+원시 Derived Fact가 아니라 규칙이 실행된 뒤 생성되는 Judgment state다.
+별도 계약의 필요 항목으로 열거했을 뿐, Facts producer가 미리 판정해 채우지 않는다.
+“辛과 丙의 합 후보 존재”는 Derived Fact 후보이나 재사용 가능한 기존 관계 함수가
+확인되지 않았다. 이번 제약 아래 새 후보 계산기도 작성하지 않으며 공급 공백으로 남긴다.
+
+3. provenance/evidence 계약이 필요한 항목
+
+C. 원문 또는 검증 산출물에서 별도로 공급할 증거
+field | source | expected type(제안) | Rule ID | required/optional | 허용 상태
+birthOrigin | C C-10-1 1번·C-1 ① | {fieldRef,kind:고객입력/원문직접/역산,candidates,adoptionReason,sourceRefs} | C-12, OP-P04 | 필수 | 원국 직접 출처와 역산 날짜의 assessment 분리; 역산 연도는 확정으로 승격 금지
+birthTimeExtent | C-1 ① 및 원문 시주 | {kind:exact/range/pillar-only/unknown,reportedValue,sourceRefs} | C-03·06, OP-P02 | 필수 | C/P/U/X; 戌시를 임의 특정 분으로 대체 금지
+calendarObservations | 독립 계산 둘·공공 역법 자료 | {producer,version,basis,inputRef,value,timezone,publishedAt?,url?,sourceRef}[] | C-01·02·04·06·08, OP-P04 | 필수 | 관측값 assessment·자료 누락 따로
+calculationComparison | 위 관측 및 비교 기록 | {observationIds,independenceBasis,dateAgreement,ganZhiAgreement,minuteDifference?,verifierRef} | C-02, OP-P04 | 필수 | 확인/불일치/미확인; 독립 여부는 보고서의 주장과 실제 재현 증거 구별
+historicalTimeBasis | 출생 날짜별 표준시·서머타임 근거 | {effectivePeriod,offset,sourceRefs} | C-04, OP-P02 | 필수 | C/P/U; legacy fixed-jst만으로 확정 금지
+boundaryComparison | D E-5 네 칸 | {toolDefault,filuneCriterion,usedValue,reason,sourceRefs} | C-03, OP-P02 | 필수 | C/P/U; 새 시주 계산 금지
+hiddenStemSystemEvidence | A C-10·A-8-1, D H-3-1 | {sourceRefs,declaredSystem,tableRef,comparisonRefs} | C-10 | 필수 | C/P/U; 기존 table의 주석만으로 충족 불가
+sourceReferences | 확정 원문 5개의 revision·section·위치·hash | DocumentReference[] | 모든 선택 규칙 | 필수 | 버전 일치/불일치/미확인; 출처 등급과 다른 축
+sourceLayer | A A-0·25-7 ⑦ | S1/S2/S3/S4/S5/OP 및 원문 인용 위치 | I-14, OP-P03·04 | 관련 판단에 필수 | S 코드는 적중도/숫자 신뢰도 아님
+operatorDocumentRecord | 25-7 승인·반영·완료·동결·이전 보류 원문 | {sourceRef,literalStatus,scope}[] | 승인 기준본 추적 | 필수 | 실행 OperatorReview와 변환하지 않음
+regressionExpectationRefs | C C-10-1·C-10-2의 별도 참조 | {caseId,sourceRef,expectedFieldRef}[] | 향후 계층4 검증 | 검증 단계 필수, runtime evaluator 입력에는 금지 | 기대값 출처 상태만 관리
+
+독립 대조 증거가 없으면 independence는 미확인이다. 같은 라이브러리 실행 두 번,
+canonical 결과와 그 projection 비교, 원고를 보고 사후 수정한 결과는 독립 검증으로
+기록하지 않는다. C에 기재된 과거 대조 결과는 문서 증거이며 새 실행 검증과 구분한다.
+
+별도 EvidenceContext 제안:
+{documentManifest, sourceReferences, birthOrigin, birthTimeExtent,
+ calendarObservations, calculationComparison, boundaryComparison,
+ hiddenStemSystemEvidence, operatorDocumentRecords, uncertaintyRefs}
+
+4. CS-005 상태 모델 제안
+
+다음은 schema 설계 표기이며 실제 값이 들어 있는 fixture나 TypeScript 코드가 아니다.
+
+FactEnvelope<T>:
+ {id, kind:calculated/derived, value(사용가능할 때만), assessment:C/P/U/X,
+  originRef, inputFactIds, producerVersion, uncertaintyIds}
+originRef는 구별 union:
+ - canonical: canonical schema version + canonicalPointer
+ - derived: producer reference + inputFactIds
+ - document: document/revision/section/location/hash
+문서 해석 자체를 calculated/derived fact로 둔갑시키지 않는다.
+
+JudgmentContext:
+ {contextId, canonicalRef, documentManifestRef, asOf, targetPeriodRef,
+  requestedStage:natal/great/year/month, birthEvidenceRef, uncertaintyRefs}
+연산 기준시각과 절기 운 기간은 별도다. 임의 출생시각을 asOf로 대신하지 않는다.
+
+EntityRef:
+ {entityId, origin:natal/great/year/month, periodId?, position?, part:stem/branch,
+  calculatedFactId}
+같은 글자도 entityId가 다르다. position은 원국에만 허용한다.
+
+DerivedFacts:
+ {factEnvelopes, hiddenStemCandidates, tenGodFacts, positionFacts,
+  periodCandidates, relationCandidates, coverage}
+합거·유리함·상신 유지 등 판단은 이 객체의 선계산 값이 아니다.
+
+ExposureDecision:
+ {stemEntityId, monthHiddenStemFactRefs, classification?, functionDecisionRef?,
+  applicationRef, evidenceIds, state:evaluated/deferred/not-evaluated}
+투출 분류 이력과 현재 기능 상태를 서로 덮어쓰지 않는다(I-02a).
+
+RelationshipDecision:
+ {candidateRef, scopeId, participants:EntityRef[], applicability,
+  effectCategory?, targetEntityIds, applicationRef, evidenceIds, uncertaintyIds}
+- applicability: evaluated/not-applicable/deferred/not-evaluated
+- effectCategory 예: 합거 / 합이불합 / 작용력 약화 / 성질 유지 / 오행 강화.
+  실제 채택은 해당 원문 규칙의 표현과 적용 결과로만 한다.
+- 강도는 원문 범주(예: 상당히 약화, 크게 약화, 일반/강한/매우 강한)를
+  rule reference와 함께 기록한다. 숫자 비율 또는 순서 점수로 정렬하지 않는다.
+- 관계 존재와 영향은 분리한다. 관계 없음은 completeness 확인 뒤에만 표현한다.
+
+RoleState:
+ {scopeId, assignments:[{entityRef, role:용신/상신/병/구응,
+   applicationRef, evidenceIds, uncertaintyIds}], completionState}
+상신 丙이라는 회귀 기대값을 이 필드의 초기값으로 넣지 않는다.
+원고의 역할 판단은 EvidenceContext의 문서 근거이고 runtime assignment는 평가 결과다.
+역할 선정을 평가하지 않은 최소 단계에서는 completionState가 미완료다.
+
+FunctionalDecision:
+ {entityRef, scopeId, category:유지/정지/약화/미평가,
+  relationshipDecisionRefs, applicationRef, evidenceIds}
+“영향을 받지 않음”과 “합거되지 않아 기능 유지”를 동일시하지 않는다.
+
+NatalChange:
+ {changeId, natalEntityRef, category, creatingApplicationRef,
+  sourceStageSnapshotRef, effectivePeriodRef, evidenceIds, uncertaintyIds}
+
+LuckCarryState:
+ {entries:[{natalChangeRef, sourceSnapshotRef, effectivePeriodRef}],
+  exclusions:[{sourceDecisionRef, reason, ruleRef}]}
+운끼리 약화는 원국 변화가 아니므로 carry entry가 아니다(OP-L02).
+상위 운 글자 자체를 하위 직접 비교 entity로 복사하지 않는다(OP-L01).
+
+StageSnapshot (A OP-L02 여섯 정보의 대응):
+ {snapshotId, contextRef,
+  natalStructureRef,                    ① 원국 구조
+  natalInternalDecisionRefs,            ② 원국 내부 합거
+  inheritedNatalChangeRefs,             ③ 유효 상위 운의 원국 변화
+  currentLuckPairDecisionRefs,          ④ 현재 운끼리 합
+  currentLuckNatalDecisionRefs,         ⑤ 현재 운–원국 관계
+  outgoingCarryStateRef,                ⑥ 다음 단계 승계 상태
+  roleStateRef?, functionalDecisionRefs, axisDecisionRefs?,
+  evidenceIds, uncertaintyIds, executionStatus}
+상태 추가 시 기존 snapshot을 수정하지 않고 새 평가 결과로 추적 가능하게 한다.
+
+AxisDecision:
+ {axis:천간/지지, assessment?:유리/유리우세/영향작음/유불리공존/불리우세/불리,
+  favorableEvidenceIds, unfavorableEvidenceIds, counterEvidenceIds,
+  roleDecisionRefs, applicationRefs, completionState}
+completionState 미평가에서는 assessment를 채우지 않는다. unknown은 불리/중립이 아니다.
+성/패/패속의성도 근거 있는 Judgment 범주로만 보존하고 범용 산술식은 두지 않는다.
+
+CS-005에 필요한 snapshot 구성:
+- 원국 snapshot: 입력 사실과 원국 구조/관계 평가 결과를 분리.
+- 己未 대운 snapshot: 그 단계의 관계와 발생한 원국 변화만 outgoing carry로 기록.
+- 丙午 세운 snapshot: 2027.1을 포함하는 입춘 전 월운의 부모 상태.
+- 丁未 세운 snapshot: 2027 입춘 이후의 별도 부모 상태. 2027.1의 부모가 아님.
+- 辛丑 월운 snapshot: 원국 + 丙午 세운 + 월운 직접 비교 범위 및 유효 원국 변화.
+
+“2027 세운 상태”와 “2027년 1월”은 연도 숫자만으로 연결할 수 없다.
+기간 선택은 기존 startInstant/endInstant와 C-08의 절입 기준을 재사용한다.
+부모 snapshot은 유효기간 참조로 연결하고, 丁未 세운의 결과를 辛丑 월운으로
+소급 승계하지 않는다. 원문의 2027.1 기대값은 테스트 비교 출처에만 둔다.
+
+운끼리 합 우선은 단계 순서가 기록된 OP-T10 RuleApplication 결과로 표현한다.
+상신 丙 유지까지 주장하려면 RoleState의 상신 지정 결과와 해당 원국 entity의
+FunctionalDecision을 함께 참조해야 한다. Fact producer가 먼저 이 결론을 만들면 안 된다.
+
+계층 분리 제안(미구현):
+Calculated Fact: 기존 canonical/계산 함수의 시각·간지·십성·지장간 후보.
+Derived Fact: 판정 전 관계 후보·위치·대상 식별/원시 사실 참조. 검증된 공급자 필요.
+Rule Judgment: 범위 확정·합거/약화·역할·성패·축별 판정·상태 승계.
+Operator/Publication State: 검토 절차·검사·발행 여부. 명리 길흉과 독립.
+
+5. READY-NOW / NEEDS-CONTRACT / DEFER 수
+
+대상은 implementation-readiness.md의 후보 57개만이다.
+이번 분류는 원문 규칙의 확정성을 다시 심사하는 것이 아니라 현행 입력/상태 공급과
+좁은 slice에서의 필요성을 판정한다. 아직 evaluator가 구현되었다는 뜻은 아니다.
+
+READY-NOW = 4
+C-05: 기존 대운 순역 결과를 읽고 검증 가능한 입력(년간·성별)이 있다. 출처 인증 별도.
+C-08: 기존 세운/월운 절입 기간·간지를 재사용 가능. “2027.1=丁未” 같은 새 추정 금지.
+C-09: 기존 calculateTenGod 및 canonical 십성 재사용 가능. 입력 assessment 보존.
+I-04b: 월지/일간 기반 조후 대상 아님을 확인하는 용도만. 조후 효과 구현은 범위 밖.
+
+NEEDS-CONTRACT = 44
+Rule ID | 꼭 필요한 이유 / 남은 계약
+C-01 | 기존 4주·절입의 문서 정책/독립 증거 연결
+C-02 | 독립 관측 둘·공공 역법·±1일 판별 근거
+C-03 | 출생 시각 범위·원문 시주·도구/FILUNE 경계 기록
+C-04 | 역사적 표준시 근거와 legacy 보정의 적용 내역
+C-06 | 시각 범위와 대운수/교운 범위의 증거; 단일 임의 시각 금지
+C-10 | 지장간 체계명·기존 table 호환성 대조
+C-11 | 관계 전체 후보 공급자·coverage·기간/원국 위치
+C-12 | 원국 직접/날짜 역산 구분·후보·채택 근거
+I-01 | 승인된 월령 본기 입력과 지지 격 결과 계약
+I-02 | 지장간 체계·오행 fact·투출 분류 결과 계약
+I-02a | 투출 분류와 기능 정지 상태 분리
+I-03 | 역할 assignment와 근거; 기대 역할 선주입 금지
+I-04 | 성패·실제 상신 기능 판단 및 증거 계약
+I-04-1 | 순용/역용 역할 판단 출력 계약
+I-04a | 합거 대상 역할과 실제 성패 예외의 근거
+I-04c | 대운/세운의 병 제거 및 동반 손상 판단 결과 계약
+I-05 | 통근 근거·지장간 체계·구조 판단 연결
+I-06 | 위치 fact와 정성 강도 구분; 운의 위치 적용 제외
+I-07 | 생극 방향 공급 및 극/충 중복 방지 기록
+I-08a | 일간합 제외 판단과 상대 십성 유지 기록
+I-10 | 전체 관계표의 누락 여부·해석 포함 여부 분리
+I-14 | 유리/불리/반대 근거와 중복 방지 기록; 과거 합산 등급 미사용
+OP-T01 | 원국 인접 합 후보 및 판단 결과 상태
+OP-T02 | 먼 합 후보와 합이불합 상태
+OP-T03 | 운→원국 유효 상대 선택·entity ID·순서 기록
+OP-T04 | 일간 entity와 합거 제외 기록
+OP-T07 | 양 당사자 기능 정지·유효기간·생성 application
+OP-T08 | 기존 합거 유지·새 글자 별도 entity·재사용 금지
+OP-T10 | 운끼리 합 우선 결과 및 원국 재합 제외 연결
+OP-Z01 | 지지합 비합거 invariant와 천간 상태 분리
+OP-Z02 | 육합 약화 범주·근거(수치 임계값 없음)
+OP-Z03 | 반합/삼합 후보와 오행 강화 판단; 존재와 영향 분리
+OP-Z05 | 원래 지지 성질 유지 invariant
+OP-Z10 | 모든 유효 합 coverage·동시 참여 결과
+OP-Z11 | 충 존재/약화 영향/실제 손해 분리
+OP-Z12 | 작용 중 천간 기능과 반합 강화 판단 연결
+OP-Z13 | 원국 묘고 충에서 자동 개고·새 투출 생성 금지
+OP-L01 | stage·기간·현재 직접 비교 entity 계약
+OP-L02 | 원국 변화·유효기간·승계 provenance; 운끼리 약화 미승계
+OP-L03 | 축별 categorical output; 근거 없는 단계 산출 금지
+OP-P01 | 원국 거리·운 비교 범위와 정성 극 판단 연결
+OP-P02 | 계산 기준·보정·경계 검산 기록
+OP-P03 | 해당 운 단위 S3/S4 근거 구분
+OP-P04 | 역산·독립 계산·사후 수정 구분
+
+특히 기존 REVIEW였고 이번 slice에 필요한 핵심은
+C-02·03·04·06·10·11·12, I-03·04·04-1·04c·05·06·07·10·14,
+OP-Z01·02·11, OP-L02, OP-P01~04이다.
+수치화로 이 계약의 공백을 메우지 않는다.
+
+DEFER = 9
+C-07 | 고객 교운 표현은 첫 구조/상태 slice 밖. 교운 원시 범위 증거 C-06은 유지.
+I-11 | 이 좁은 첫 단계의 혼잡 판정 일반화는 연기. 다른 기간/명식은 별도 범위 심사.
+I-13 | 첫 대상 기간의 교운기 해당 여부를 기간 증거로 확인한 뒤 병기 분기 제외.
+OP-T09 | 원국 월간–시간 합 일반 분기는 뒤로. 관계 후보·coverage로 해당 관계 없음이 확인되어야 생략 가능.
+OP-T12 | 원국 다대일 일반 분기는 뒤로. 동일하게 후보 없음 검증 전 임의 생략 금지.
+OP-Z04 | 첫 구조/상태 관측의 방합 일반화는 뒤로. 전체 명식/운 테스트 통과로 간주하지 않음.
+OP-Z07 | 반복 육합 강도 일반화는 뒤로. 대상 범위 반복 관계 유무 검증은 필요.
+OP-Z09 | OP-Z07과 같은 개정 반복 강화 행; 첫 범위 적용 유무 확인 후 연기.
+OP-P05 | 고객 문장으로의 변환/발행은 뒤로. 최종 전체 회귀 완료를 뜻하지 않음.
+
+DEFER는 원문 미확정/폐기를 뜻하지 않는다. 후보와 기간이 아직 확인되지 않아
+이 규칙이 실제로 필요하면 DEFER를 NEEDS-CONTRACT로 올려야 한다.
+CS-005 12개월 전체 또는 NT 세트 전체를 실행할 때는 다시 범위를 확장해야 한다.
+OP-T11 및 OP-R01~03은 애초 후보 57개에 없으며 제외를 유지한다.
+
+6. 기존 judgment 타입 수정 필요 여부
+
+필요: YES (향후 구현 때; 지금 수정하지 않음).
+- JudgmentFact는 canonicalPointer:string을 강제한다. derived/document origin을
+  정확히 표현하려면 originRef union 또는 별도 Fact 타입이 필요하다.
+- 기존 fromCanonical은 birthInput·solarTerms·timePolicy를 투영하지 않는다.
+  위 데이터가 CalculatedChart에 있어도 현재 evaluator facts에 자동 공급되지 않는다.
+  fromCanonical을 계산기로 바꾸지 말고 별도 허용 projection/증거 입력 경계를 정해야 한다.
+- JsonValue만으로 역할·관계·유효기간·carry 불변조건을 보장할 수 없다.
+  typed runtime state와 application/evidence ref 계약이 필요하다.
+- RuleReference는 rule source 추적에 재사용 가능하지만 독립 계산 관측과 출생
+  provenance 전부를 나타내지는 못한다. EvidenceContext를 별도 둔다.
+- 현 uncertainty code는 출생시각 미상·절입·진태양시·성별 4개에 한정된다.
+  문서 체계 불일치·출처 부족·승계 미확정은 별도 runtime uncertainty로 표현한다.
+- CanonicalChart 확장은 우선 제안하지 않는다. 판단별 실행 상태는 별도 snapshot에 둔다.
+
+7. OperatorReview / Publication 분리 제안
+
+분리 필요: YES.
+RuleExecutionStatus:
+ 기존 RuleStatus(applied / not-applicable / deferred / unsupported / error)를
+ 실행 적용 여부로 유지. 결과가 유리하다는 의미나 발행 허가는 아니다.
+OperatorReviewStatus:
+ 기존 auto-approved / review-required / blocked는 실행별 review 정책의 상태로만 유지.
+ 정책 미정이면 기존 operatorApprovalRequired:'unresolved'를 유지한다.
+ 이번 보고서에서 어떤 문서 승인도 세 상태 중 하나로 대응시키지 않는다.
+PublicationStatus:
+ 별도 제안 객체 {policyRef?, status:not-evaluated/eligible/held,
+ checkRecordRefs, reviewRef?, reasonRefs}. 명칭은 schema 제안이며 문서 상태 번역이 아니다.
+ 문서 D Q/P 검사·검토가 없으면 eligible을 채우지 않는다. 기본 발행 허용 없음.
+DocumentOperationRecord:
+ 승인 / 적용 / 반영 / 완료 / 동결 / 과거 보류는 literalStatus로 별도 보존.
+
+기존 RuleApplication.evaluation / operatorReview 구분은 재사용할 수 있다.
+Publication 전용 타입은 없다. 이를 completeness:'complete'에서 추론하면 안 된다.
+현재 completeness는 등록 registry 실행 완료일 뿐 문서 전체 충족/발행 가능 상태가 아니다.
+
+8. 구현 전에 사람이 결정해야 할 것
+
+(1) C-10 기본 체계의 정확한 데이터와 기존 HIDDEN_STEM_ROLE_TABLE 차이의 처리.
+    기존 함수를 그대로 재사용할 수 있는 범위와 문서 호환성 증거의 승인 주체.
+(2) 기존 합/충 전체 관계 공급 함수가 확인되지 않은 공백을 어떻게 해결할지.
+    이번의 “기존 재사용만” 제약에서는 새 계산/관계 공급자를 작성할 수 없다.
+(3) CS-005 출생 시각이 戌시 범위·날짜가 역산이라는 점을 기존 BirthInput과
+    어떻게 병존시킬지. 임의 중앙 시각/후보 연도를 confirmed로 넣지 않는다.
+(4) 독립 도구 둘 및 공공 역법 자료의 산출물·timezone·버전·비교 책임자 공급.
+(5) 상신·병·구응 실제 역할과 성패의 판단 근거 계약. C의 답을 입력 역할로
+    넣고 같은 답이 나오는 것을 회귀검증이라고 하지 않는다.
+(6) 정성 범주를 enum으로 보존하는 데 동의할지. 임계값·확률·가중합은 없음.
+(7) 원국/대운/丙午 세운/丁未 세운/辛丑 월운의 기간 참조와 승계 종료 계약.
+(8) review 정책과 발행 검사의 별도 owner/절차. 승인 이력을 auto-approved로 옮기지 않음.
+(9) 최초 완료 범위를 “합 상태 구조 검증”으로 할지 “천간/지지 최종 판정+ST”까지
+    할지. 전자는 부분 결과이며 후자 통과라고 표시할 수 없다.
+
+테스트 경로(목록만, 테스트 구현/실행 없음):
+CT-01~07
+ → RT-01~10, RT-12
+ → H-3-1의 NT-01~09 관계 기대값
+ → NT-01~09
+ → 계층4 CS-005 C-10-1 및 C-10-2(최초 관측은 2027.1)
+ → ST-01~07.
+
+이 목록은 완전 slice 완료를 향한 검증 gate다. 원문 D는 최초 CS 하나에 대해
+검증 gate를 줄이는 규정을 두지 않으므로 NT를 NT-02/08만으로 축소해 완료라고
+하지 않는다. 기존 mapping의 NT-02/08 선택은 초기 관련성 점검으로만 한정한다.
+RT-11은 조후 효과 분기, RT-13은 OP-T11/교운기 다대일이라 첫 구현 범위에서
+DEFER한다. 해당 항목 미실행인 동안 D H-4의 엔진 전체 적용 가능 통과를 주장하지 않는다.
+NT-04/05의 조후 효과, NT-03 등의 비겁월/다대일 등 첫 범위를 넘는 기대사항도
+전체 통과는 확장 구현 뒤에만 가능하다. 첫 단계에서는 보류를 기록한다.
+ST는 실제 고객 문장 대상이 생긴 뒤 수행하며 텍스트 없음은 0건 통과가 아니다.
+RT-09 고정 예는 CS-005 10월이다. 이 테스트를 1월 사례로 재명명하지 않는다.
+RT-01~08의 고정 CS도 D의 원래 이름을 유지한다.
+
+9. 구현 가능한 최소 Rule ID 묶음
+
+지금 재사용 입력이 명확한 단위:
+C-05 / C-08 / C-09 / I-04b(비적용 검증만).
+이 네 규칙만으로 상신 丙 유지 또는 2027.1 최종 길흉을 구현할 수는 없다.
+
+계약 확정 뒤 “합 상태 구조”에 한정한 최소 구현 후보:
+C-11, I-06, I-08a,
+OP-T01, OP-T02, OP-T03, OP-T04, OP-T07, OP-T08, OP-T10,
+OP-L01, OP-L02.
+입력·정책 선행 지원: C-01~06, C-08~12, OP-P02, OP-P04.
+C-05/08/09는 기존 계산 재사용, 나머지는 위 계약을 갖춘다는 조건이다.
+이 묶음의 최소 출력은 entity별 합거/약화/재사용 제외/기능 상태와 근거·승계다.
+“기능 유지 entity가 상신이다”까지 확장하려면 I-01·I-02·I-02a·I-03·I-04·I-04-1,
+I-04a·I-04c·I-05·I-07·I-14 및 관련 지지 규칙·OP-P01·03 계약이 더 필요하다.
+상신 역할을 미리 넣지 않으므로 구조 묶음만으로 “상신 丙 유지 검증 완료”라고 하지 않는다.
+
+IR-01은 후보 57개에 추가 집계하지 않았지만 OP-L02의 적용 해석 참조로 유지한다.
+OP-T11/OP-R01~03 제외, I-04b 비적용 확인 범위는 그대로다.
+
+10. 구현 시작 가능 여부: NO
+
+기존 값 재사용 가능성과 evaluator 구현 준비 완료는 다르다.
+관계 후보 공급 공백, 지장간 체계 불일치 확인, 출생 범위/독립 증거,
+역할·기능·승계 계약이 미확정이므로 CS-005 evaluator 구현 착수 준비는 완료되지 않았다.
+이 보고서는 schema 설계 제안만 제공한다. 실제 명리 규칙·새 계산식·AI·UI·테스트·
+fixture·OperatorReview 매핑을 만들지 않았으며 여기서 멈춘다.

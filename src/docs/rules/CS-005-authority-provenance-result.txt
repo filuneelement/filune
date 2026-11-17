@@ -1,0 +1,147 @@
+CS-005 지장간 authority / provenance 작업 결과
+
+1. legacy vs A179 전체 차이
+A rev179에는 12지 전체 지장간 구성·역할 표가 없다. 子 본기 癸는 명시되어 있으나 전체 목록·역할은 미확정이다. 나머지 11지는 완전한 역할 배정이 없어 unknown으로 유지했다. 상세 12행 비교표는 아래 본문에 있다.
+기존 A/C/D 복합 감사에서는 子 여기 壬, 亥 여기 戊의 차이가 확인된다. 이 근거는 D/C이며 A 단독 원문 근거와 분리했다.
+
+2. Judgment 전용 hidden stem system
+filune-a179 전용 경로와 frozen metadata를 구현했다. A 원문에 명시된 역할만 공급한다. 子 partial, 나머지 11지 unknown이며 완성된 12지 표로 인증하지 않는다. legacy 계산과 UI는 기존 표를 유지한다.
+
+3. CS-005 영향
+원국 子의 癸만 명시적 역할 fact로 공급한다. 기존 子 壬은 A 경로에서 자동 공급하지 않으나, 이를 부존재 판정으로 사용하지 않는다. 원국 辰/寅/戌, 己未 대운 未, 2027 丁未 세운 未, 2027.1 辛丑 월운 丑의 전체 지장간 fact는 보류한다. 2027년 1월 세운은 입춘 전 丙午임을 구분했다. 상신 丙 유지 등의 판정은 생성하지 않았다.
+
+4. 실제 provenance 공급
+실제 Canonical 계산/입력 projection, 실제 입력 receipt가 있을 때의 customer-input, 실제 A 원문 source-document를 공급한다. 계산 버전, referenceTime, 입력 SHA-256, A 원문 SHA-256을 기록한다. producedAt은 관측 시각이 없어 null이다. 계산 결과 confirmed와 문서 준수 확인을 동일시하지 않는다.
+
+5. 실제 independent-cross-check 가능한 항목
+현재 연결되어 증거로 인정 가능한 항목은 없다. astronomy-engine의 년/월주·절입과 lunar-typescript의 일/시주는 같은 항목의 독립 이중 계산 기록이 아니다.
+
+6. independent evidence 없는 항목
+출생일시, 출생지, 역사적 timezone, 지역시 보정, 절입 시각, 사주 4주, 대운 시작일. C 문서의 과거 대조·역산 서술을 새 runtime 독립 검증이나 실제 고객 입력으로 바꾸지 않았다. 역산 채택 provenance와 operator-confirmed도 unavailable이다.
+
+7. deferred Rule ID
+C-01, C-02, C-03, C-04, C-05, C-06, C-07, C-08, OP-P02, OP-P04.
+직접 독립 대조 요구: C-02 / OP-P04. 나머지는 기존 upstream calendar compliance gate에 따른 보수적 보류이며 각 규칙에 새 독립 검증 요건을 추가한 것이 아니다.
+
+8. verify 결과
+기존 verify 16/16 및 새 verify 49개 통과. runtime context 41개, producer 41개, contract layer 118개(기존 95 + regression 23) 유지. 기존 judgment contract 통과. 세 validation gap probe rejected 유지.
+
+9. build 결과
+TypeScript/Vite build 통과. 기존 client asset hash 유지.
+
+10. CS-005 evaluator 구현 시작 가능 여부: NO
+남은 blocker 2개:
+- A에 근거한 완전한 12지 역할 표 또는 명시적으로 승인된 보충 출처·권위 관계가 필요하다.
+- 실제 동일 항목의 독립 대조, 역산 후보/채택 근거, 출생시각 범위·출처와 필요한 역사적 시간대 증거가 필요하다.
+
+실제 evaluator / 역할 자동 판정 / UI / AI / canonical 공식은 구현·변경하지 않았다.
+
+상세 근거 및 구현 파일 목록
+
+# CS-005 authority / provenance audit
+
+Scope: hidden-stem authority separation and actual provenance supply only. No rule evaluator, role judgment, CS expected outcome fixture, canonical formula, UI, or AI changes.
+
+## Source authority and integrity
+
+A rev179, A-8 (highest priority), A-8-1 C-10/I-02, A-8-9 IR-02. Frozen source SHA-256: 4d918e24854c5d48724779e2167cd2d0fa9b7c6140afb5ff8c076f067c40d80c.
+
+A names the default 本기·중기·여기 system but does not supply a complete twelve-branch role table. I-02 explicitly assigns 子 main 癸; IR-02 uses 子(지장간 癸). C-10 presents alternate 亥 lists 壬甲 / 戊甲壬 without assigning all roles to a selected exhaustive table. Case exposure examples 寅甲 / 戌戊 do not specify full role lists. No values are inferred from these examples.
+
+Thus filune-a179 has frozen authority metadata, but partial DATA. It is not a complete production table. sourceDisplayOrder main/middle/residual follows A's system naming; it is a technical serialization order, not a newly claimed complete source table order. Legacy display order remains residual/middle/main. Omitted roles mean unknown, never absent/nonexistent.
+
+## Twelve-branch comparison
+
+Legacy column is exact existing display order 여기 → 중기 → 본기, with missing positions shown —. A column records only explicitly assigned roles. “Unverified” does not mean equal or different.
+
+| Branch | Legacy 여기 / 중기 / 본기 | A179 explicit role data | Difference / comparison | CS-005 impact |
+|---|---|---|---|---|
+| 子 | 壬 / — / 癸 | main 癸; exhaustive role list unconfirmed | main matches; legacy residual 壬 not asserted by A | natal day: emits main 癸 only; no default fallback 壬 |
+| 丑 | 癸 / 辛 / 己 | unknown | unverified | 2027.1 辛丑: full hidden facts deferred |
+| 寅 | 戊 / 丙 / 甲 | unknown; A mentions 甲 exposure | full roles/order unverified | natal month: full hidden facts deferred |
+| 卯 | 甲 / — / 乙 | unknown | unverified | outside specified four stage branches |
+| 辰 | 乙 / 癸 / 戊 | unknown | unverified | natal year: full hidden facts deferred |
+| 巳 | 戊 / 庚 / 丙 | unknown | unverified | outside specified four stage branches |
+| 午 | 丙 / 己 / 丁 | unknown | unverified | January 2027 still belongs to 2026 丙午 yearly period; do not substitute 丁未 |
+| 未 | 丁 / 乙 / 己 | unknown | unverified | 己未 great luck and post-立春 2027 丁未 yearly period: full facts deferred |
+| 申 | 戊 / 壬 / 庚 | unknown | unverified | outside specified four stage branches |
+| 酉 | 庚 / — / 辛 | unknown | unverified | outside specified four stage branches |
+| 戌 | 辛 / 丁 / 戊 | unknown; A mentions 戊 exposure | full roles/order unverified | natal hour per C source; unknown exact input time produces no hour entity |
+| 亥 | 戊 / 甲 / 壬 | alternate list examples 壬甲 / 戊甲壬, no full role assignment | selected full roles/order unverified | outside specified four stage branches |
+
+The prior A/C/D compatibility audit remains separate: D rev152 H-3-1 gives 子 main 癸 only and full lists for 丑/寅/辰/午/戌; C rev215 C-10-1 excludes 戊 in default 亥. That combined audit detects legacy 子 residual 壬 and 亥 residual 戊 differences. Those observations are NOT silently promoted into A-only table authority. No A-only assertion is made for the other eleven full rows. A-only complete compatibility remains unverified.
+
+## Implementation boundary
+
+- systems/hiddenStemFiluneA179.ts: frozen metadata; twelve entries, 子 partial / eleven unknown. Validates supplied A metadata and cited clauses. Provenance adapter checks entire supplied text against frozen source hash.
+- produceJudgmentEngineFacts: requires explicit filune-a179 selection and actual source text. Emits only documented assigned roles and existing calculateTenGod results; partial/unknown availability accompanies every branch entity. No legacy fallback.
+- produceJudgmentFacts default path remains legacy, preserving existing 41 producer checks. No legacy table modification.
+- Raw Canonical basicRelations remains unchanged and is marked legacy-reference-only in the selected A projection. It must not be consumed as A-authoritative hidden-stem data.
+- Existing calculateTenGod is reused; A 子 main 癸 produces its existing relationship to the supplied day stem. No exposure, strength, structure, useful-god or supporting-god judgment is calculated.
+- No claim that partial A facts validate C's complete judgments. CS-005's 丙 support persistence cannot be established by these facts alone.
+
+## CS-005 four-stage impact
+
+C rev215 C-1 supplies natal 甲辰 丙寅 戊子 壬戌 and reverse-inferred birth date 1964-02-09 with 戌 hour RANGE 19:30–21:29. No midpoint is invented. Source-date routing verification uses unknown time and therefore creates no time-pillar fact. This is an authority-routing check, not a CS expectation fixture.
+
+| Stage | Branches / context | A-only availability | Result boundary |
+|---|---|---|---|
+| Natal | 辰 寅 子 戌 (C original pillars) | 子 main 癸 partial; 辰/寅/戌 unknown | no full structure/role inference; exact birth time provenance absent |
+| 己未 great luck | 未 | unknown | no state change produced |
+| 2027 yearly | 丁未 after 立春, 丙午 before it | 未/午 unknown | explicit effective period required; no yearly role outcome |
+| January 2027 辛丑 | 丑, still 丙午 yearly period | unknown | no合去/weakening/丙 persistence result |
+
+## Actual provenance inventory
+
+provenanceProducer reprojects/validates actual Canonical values, checks context and fact values, records sourceType/sourceRef, calculationVersion, documentRevision, referenceTime, SHA-256 input hash and actual source-text hash. producedAt=null: referenceTime is not a witnessed production timestamp. Hashes identify bytes, not truth. Sidecar metadata extends no contract-schema meaning. Projections from one calculation share one originIdentity; renaming a producer cannot establish independence. This adapter cannot register independent-cross-check, reverse-inference or operator-confirmed records.
+
+| Item | Actual current source | Independent second source currently recorded? | Provenance storage | A compliance status |
+|---|---|---|---|---|
+| Birth date/time | canonical birthInput; customer receipt only if supplied | none; input is not an observed birth certificate | actual input hash; receipt ref provisional | C-03/OP-P02 boundary/uncertainty metadata inspectable; C source reverse-inferred date is not customer-confirmed exact time |
+| Birthplace | optional Birthplace metadata / supplied selection | none | birthInput snapshot/hash; absent stays absent | does not itself verify historic standard time C-04 |
+| Timezone | birthInput birthplace.timezone; timePolicy per-field interpretation; fixed-JST calendar path; US Intl historical conversion | none; host ICU/tzdata unpinned | version/timePolicy and source references | C-04 external historical checking missing; no false compliance |
+| Local correction | timeCorrection.ts; US usTimeCorrection.ts; selected none/longitude; trueSolarTime unsupported | none | existing correction/timePolicy snapshot | C-03/OP-P02 metadata available; tool/document boundary differences unresolved |
+| Jie instant | astronomy-engine SunPosition/SearchSunLongitude via solarTermPillars.ts | none in runtime evidence | canonical solarTerms + calculation version | C-01/C-08 facts available; C-02 direct independent comparison missing |
+| Four pillars | year/month astronomy-engine; day/hour lunar-typescript; optional existing corrected-hour function | none computes and records all same items independently | canonical pillar facts + version/timePolicy | C-01/C-03/C-08 facts projected only, not document certification |
+| Great-luck start | calculateGreatLuck.ts using same astronomy jie and existing conversion | none; same boundary library is not independent | canonical greatLuck / input hash / version | C-05/C-06 facts projected; unknown-hour range and C-07 wording not newly implemented |
+
+lunar-typescript and astronomy-engine are distinct packages but currently supply DIFFERENT pillar components. Calling shared solarTermPillars functions from multiple paths is the same source. KASI snippets/tests are not a fresh runtime comparison evidence record. No false independent-check record is generated.
+
+| Evidence type | Actual supply |
+|---|---|
+| customer-input | only caller-supplied real receipt reference; provisional; no receipt from bare birthInput |
+| deterministic-calculation | actual canonical projection, existing ten-god lookup, structural relation producer; provisional |
+| source-document | actual supplied A text checked against metadata/clauses and frozen SHA; provisional, existence ≠ confirmation |
+| independent-cross-check | unavailable; no paired independent same-item runtime observations |
+| reverse-inference | unavailable as runtime evidence; C-1 describes historical selection, but no original candidate/adoption provenance supplied to adapter |
+| operator-confirmed | unavailable; no actual decision event/approval scope supplied; historical document status is not runtime approval |
+
+## Evidence execution policy
+
+Direct independent comparison requirements: C-02 and OP-P04. C-01/C-03/C-04/C-05/C-06/C-07/C-08/OP-P02 have no universal standalone independent comparison clause; the existing implementation policy defers these behind the upstream calendar-compliance gate (D H-2/H-5-2). This is explicitly a conservative runtime gate, not a new A rule. C-04 additionally needs historical external data when applicable; OP-P02 needs actual boundary/time-policy compliance and provenance. Deterministic facts may still be produced while certification is deferred.
+
+Deferred policy IDs with current evidence: C-01, C-02, C-03, C-04, C-05, C-06, C-07, C-08, OP-P02, OP-P04. Other mapped rules having “no direct independent requirement” are NOT thereby implemented, approved or executable. No evaluator is connected.
+
+## Remaining decisions / blockers (two)
+
+1. Supply an authoritative A-backed complete twelve-branch role table (or explicitly authorize a separate supplemental source, revision and authority relationship). Current original A cannot support the requested complete table; copying D/C without authorization would violate A-only sourcing.
+2. Supply actual same-item independent observations plus their sources/timezones, original reverse-inference candidate/adoption provenance, and birth-time range/source (including applicable historical timezone evidence). Existing Canonical input cannot express an hour range; do not invent an exact timestamp or modify canonical formulas here.
+
+Evaluator implementation start: NO. Infrastructure available; document-conformant CS-005 execution remains deferred. No evaluator, role assignment, UI, AI, or canonical formula was added.
+
+## Verification result
+
+- New verify:judgment-authority-provenance: 49 checks passed, including frozen source hash, twelve-row partial/unknown coverage, explicit selection, CS source-date unknown-time routing, real evidence restrictions, no mutation and legacy preservation.
+- Existing verify commands: 16/16 passed (17 total including new command).
+- verify:judgment-runtime-context: 41 checks passed.
+- verify:judgment-producers: 41 checks passed unchanged.
+- verify:judgment-contract-layer: 118 checks passed (95 original + 23 regression); three audit probes rejected.
+- verify:judgment-contract: passed.
+- TypeScript/Vite build: passed. Client asset filenames/hashes unchanged from the pre-change build.
+- Existing verify scripts, contract schemas, canonical, legacy table, evaluator and UI files were not edited in this task.
+
+## Task file manifest
+
+New: systems/hiddenStemFiluneA179.ts; producers/provenanceProducer.ts; scripts/verify-judgment-authority-provenance.mjs; this audit and companion .txt.
+Modified: producers/hiddenStemProducer.ts, evidenceProducer.ts, index.ts, types.ts, validation.ts; package.json adds one verify command.
+Pre-existing package-lock.json changes were retained without edits. The judgment/docs directories were already untracked on entry; this manifest describes changes during this task, not an attribution of the entire git status.

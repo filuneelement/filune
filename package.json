@@ -24,7 +24,16 @@
     "verify:judgment-runtime-context": "node scripts/verify-judgment-runtime-context.mjs",
     "preview": "vite preview",
     "verify:judgment-authority-provenance": "node scripts/verify-judgment-authority-provenance.mjs",
-    "verify:cs005-stem-combination": "node scripts/verify-cs005-stem-combination.mjs"
+    "verify:cs005-stem-combination": "node scripts/verify-cs005-stem-combination.mjs",
+    "verify:cs005-natal-stem-combination": "node scripts/verify-cs005-natal-stem-combination.mjs",
+    "verify:cs005-exposure-root": "node scripts/verify-cs005-exposure-root.mjs",
+    "verify:cs005-pattern-candidates": "node scripts/verify-cs005-pattern-candidates.mjs",
+    "verify:cs005-assessment-propagation": "node scripts/verify-cs005-assessment-propagation.mjs",
+    "verify:cs005-pattern-judgment": "node scripts/verify-cs005-pattern-judgment.mjs",
+    "verify:cs005-yongshen-candidates": "node scripts/verify-cs005-yongshen-candidates.mjs",
+    "verify:cs005-yongshen-judgment": "node scripts/verify-cs005-yongshen-judgment.mjs",
+    "verify:cs005-sangshen-candidates": "node scripts/verify-cs005-sangshen-candidates.mjs",
+    "verify:cs005-sangshen-judgment": "node scripts/verify-cs005-sangshen-judgment.mjs"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",
