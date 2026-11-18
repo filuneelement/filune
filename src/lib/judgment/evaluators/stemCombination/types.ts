@@ -17,3 +17,8 @@ export function exactContains(period: Validity, from: string, to = from): boolea
   return period.from.kind === 'exact' && period.to.kind === 'exact'
     && period.from.instant <= from && (to === from ? from < period.to.instant : to <= period.to.instant)
 }
+
+/** A candidate remains, but its current participation or effect cannot be established. */
+export class UnsupportedPriorStopLuckPairError extends TypeError {
+  constructor() { super('New luck pair participation or effect is unresolved; unsupported boundary requires review.') }
+}

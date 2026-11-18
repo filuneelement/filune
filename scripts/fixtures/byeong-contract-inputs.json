@@ -1,0 +1,21 @@
+{
+  "CS-005": {
+    "pillars": ["甲辰", "丙寅", "戊子", "壬戌"],
+    "pattern": "偏官",
+    "components": [{"position": "year", "tenGod": "偏官"}, {"position": "month", "tenGod": "偏印"}]
+  },
+  "CS-126": {
+    "pillars": ["辛未", "戊戌", "乙丑", "丁丑"],
+    "pattern": "正財",
+    "components": [{"position": "month", "tenGod": "正財"}, {"position": "year", "tenGod": "偏官"}, {"position": "time", "tenGod": "食神"}]
+  },
+  "CS-127": {
+    "pillars": ["壬戌", "壬子", "辛未", "丁酉"],
+    "pattern": "食神",
+    "components": [{"position": "year", "tenGod": "傷官"}],
+    "observations": [
+      {"sourcePosition": "year", "targetPosition": "month", "resource": "印綬", "relation": "controls", "existence": "present", "effect": "damage"},
+      {"sourcePosition": "day", "targetPosition": "month", "resource": "偏印", "relation": "controls", "existence": "present", "effect": "damage"}
+    ]
+  }
+}

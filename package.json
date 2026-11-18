@@ -33,7 +33,15 @@
     "verify:cs005-yongshen-candidates": "node scripts/verify-cs005-yongshen-candidates.mjs",
     "verify:cs005-yongshen-judgment": "node scripts/verify-cs005-yongshen-judgment.mjs",
     "verify:cs005-sangshen-candidates": "node scripts/verify-cs005-sangshen-candidates.mjs",
-    "verify:cs005-sangshen-judgment": "node scripts/verify-cs005-sangshen-judgment.mjs"
+    "verify:cs005-sangshen-judgment": "node scripts/verify-cs005-sangshen-judgment.mjs",
+    "verify:byeong-judgment": "npm run verify:byeong-regression && npm run verify:byeong-contract",
+    "verify:byeong-regression": "node scripts/verify-byeong-regression.mjs",
+    "verify:byeong-contract": "node scripts/verify-byeong-contract.mjs",
+    "verify:gueung-contract": "node scripts/verify-gueung-contract.mjs",
+    "verify:gueung-v1": "node scripts/verify-gueung-v1.mjs",
+    "verify:cs005-end-to-end": "node scripts/verify-cs005-end-to-end.mjs",
+    "verify:stem-combination-eligibility": "node scripts/verify-stem-combination-eligibility.mjs",
+    "verify:cs005-monthly-window": "node scripts/verify-cs005-monthly-window.mjs"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",
