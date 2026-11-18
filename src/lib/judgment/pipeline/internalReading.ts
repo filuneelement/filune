@@ -1,11 +1,15 @@
+import { applyRoleFunctionEffects, evaluateRoleFunctions } from '../evaluators/roleFunctionState'
+import type { RoleFunctionPath } from '../evaluators/roleFunctionState'
 import { calculateCanonicalChart } from '../../canonical/calculateCanonicalChart'
 import { calculateMonthlyLuck } from '../../calculateMonthlyLuck'
 import type { BirthInput, CalculationContext } from '../../canonical/types'
 import { evidenceContextSchema } from '../contracts'
 import type { EvidenceRecord, Validity } from '../contracts'
 import { produceJudgmentEngineFacts, produceExposureRootFacts } from '../producers'
+import { produceEffectFacts, stemTenGodPointer } from '../producers/effectFactProducer'
+import type { FunctionEffects, TargetFunction } from '../producers/effectFactProducer'
 import type { ExposureRootSources } from '../systems/exposureRootAuthority'
-import { detach, recordId, sortedUnique } from '../producers/shared'
+import { detach, recordId, RELATION_EVIDENCE, sortedUnique } from '../producers/shared'
 import { adaptCarryContext, createExecutionScopeContext, producerPeriod, selectExecutionCandidates } from '../runtime'
 import type { ExecutionScopeContext } from '../runtime'
 import { evaluateNatalStemCombination } from '../evaluators/natalStemCombination'
@@ -150,6 +154,84 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
   const rootStemScope = evaluateStemCombination({ producer, context })
   mergeEvidence(rootStemScope.bundle.evidence.records)
 
+  const factsByPointer = new Map(producer.facts.map((fact) => [fact.canonicalPointer, fact]))
+  const factsById = new Map(producer.facts.map((fact) => [fact.id, fact]))
+  // Preserve the basis of legacy deferred EffectFacts while keeping undefined actions out of roleFunctions.
+  const legacyEffectPaths: RoleFunctionPath[] = []
+  for (const judgment of yongShen.judgments) {
+    if (judgment.status !== 'confirmed' || !judgment.roleStateRef) continue
+    const candidates = yongCandidates.candidates.filter((candidate) => judgment.sourceCandidateIds.includes(candidate.candidateId))
+    legacyEffectPaths.push({ roleStateRef: judgment.roleStateRef, judgmentRef: judgment.judgmentId,
+      requiredRelationRefs: [], requiredParticipantIds: [], actionUnspecified: true,
+      structuralFactRefs: sortedUnique([pattern.judgment.judgmentId, ...judgment.functionBasis.exposureFactIds,
+        ...derived.roots.filter((root) => root.rootExistence === 'present'
+          && candidates.some((candidate) => candidate.roleBasis.rootFactIds.includes(root.id))).map((root) => root.id)]),
+      structuralStatus: 'unknown', exclusive: false, evidenceIds: judgment.evidenceIds })
+  }
+  for (const judgment of sangShen.judgments) {
+    if (judgment.status !== 'confirmed' || !judgment.roleStateRef) continue
+    legacyEffectPaths.push({ roleStateRef: judgment.roleStateRef, judgmentRef: judgment.judgmentId,
+      requiredRelationRefs: [], requiredParticipantIds: [], actionUnspecified: true,
+      observedRelationRefs: judgment.functionBasis.relationFactIds,
+      structuralFactRefs: sortedUnique([judgment.sourcePatternJudgmentId, ...judgment.relatedYongShenIds, ...judgment.functionBasis.rootFactIds]),
+      structuralStatus: 'unknown', exclusive: false, evidenceIds: judgment.evidenceIds })
+  }
+  function functionEffectsIn(scope: ExecutionScopeContext | null, states: StemCombinationResult['states'],
+    combination: Pick<ReturnType<typeof evaluateNatalStemCombination>, 'status' | 'bundle'> | null,
+    preRoles: ReturnType<typeof evaluateRoleFunctions> = []): FunctionEffects {
+    if (!scope) return { effects: [], diagnostics: [] }
+    const included = new Set(scope.includedEntityIds)
+    const functions: TargetFunction[] = []
+    const scopeFields = { scopeId: scope.scopeId, effectivePeriod: scope.effectivePeriod }
+    for (const entity of producer.entities) {
+      if (entity.part !== 'stem' || !included.has(entity.entityId)) continue
+      const pointer = stemTenGodPointer(entity, factsById.get(entity.canonicalFactRef)?.canonicalPointer)
+      const fact = pointer ? factsByPointer.get(pointer) : undefined
+      if (fact && typeof fact.value === 'string') functions.push({ ...scopeFields, targetEntityId: entity.entityId,
+        kind: 'ten-god', name: fact.value, ownershipFactRef: fact.id })
+    }
+    for (const [kind, name, candidates] of [['yongshen', '용신', yongCandidates.candidates],
+      ['sangshen', '상신', sangCandidates.candidates]] as const) {
+      const ids = new Set([...candidates.map((item) => item.entityId), ...roles.flatMap((role) =>
+        role.role === name && role.entityId ? [role.entityId] : [])])
+      for (const entityId of ids) {
+        if (!included.has(entityId)) continue
+        const refs = roles.filter((role) => role.role === name && role.entityId === entityId
+          && role.status === 'evaluated' && !role.provisional)
+        const snapshots = preRoles.filter(({ fact }) => fact.entityId === entityId && fact.functionType === kind
+          && refs.length === 1 && fact.roleStateRef === refs[0].roleStateId)
+        for (const snapshot of snapshots.length ? snapshots : [undefined]) {
+          functions.push({ ...scopeFields, targetEntityId: entityId, kind, name,
+            ...(snapshot ? { preRoleFunction: snapshot.fact } : {}),
+            ...(refs.length === 1 ? { roleStateRef: refs[0].roleStateId } : {}) })
+        }
+      }
+    }
+    const priorityEvidence = combination?.bundle.coverage.filter((item) => item.scopeId === scope.scopeId
+      && item.kind === 'stem-combination' && item.completion === 'complete')
+      .flatMap((item) => item.evidenceIds).filter((ref) => ref === RELATION_EVIDENCE) ?? []
+    return produceEffectFacts({ producer, context: scope, states, roles, functions, natalScopeId: context.scopeId,
+      evidence: [...evidenceById.values()],
+      ...(combination?.status === 'evaluated' ? { priorLuckStops: { scopeId: scope.scopeId,
+        states: states.filter((state) => state.scopeId !== scope.scopeId) } } : {}),
+      ...(combination?.status === 'evaluated' ? { priority: { scopeId: scope.scopeId,
+        status: 'clear', evidenceIds: priorityEvidence } } : {}) })
+  }
+  function markFunctionEffects(scope: { scopeId: string; effectivePeriod: Validity | null; periodSelectionStatus?: string }, result: FunctionEffects) {
+    const scopeConfirmed = scope.periodSelectionStatus === 'confirmed'
+    const deferred = !scopeConfirmed || result.effects.some((fact) => fact.status === 'deferred')
+    const status: StageStatus = deferred ? 'deferred' : result.effects.length ? 'confirmed' : 'not-applicable'
+    const stage = stageResult(scope, producerRef, 'effect-facts', status, {
+      resultRefs: result.effects.map((fact) => fact.effectId), ruleIds: ['OP-P06'],
+      reasonCodes: scopeConfirmed ? result.diagnostics.flatMap((item) => item.reasonCodes) : ['EFFECT_SCOPE_UNCONFIRMED'],
+      evidenceIds: result.effects.flatMap((fact) => fact.evidenceIds),
+    })
+    stages.push(stage)
+    return stage
+  }
+  const natalFunctionEffects = functionEffectsIn(context, natalCombination.states, natalCombination)
+  markFunctionEffects(context, natalFunctionEffects)
+
   const activePeriods: Partial<Record<'greatLuck' | 'yearlyLuck' | 'monthlyLuck', Validity>> = {}
   for (const stage of ['greatLuck', 'yearlyLuck', 'monthlyLuck'] as const) {
     const refs = sortedUnique(producer.entities.flatMap((item) => item.sourceScope === stage && item.periodRef ? [item.periodRef] : []))
@@ -205,6 +287,29 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     else for (const id of ['byeong-candidates', 'byeong', 'gueung']) {
       stages.push(stageResult(fallback, producerRef, id, 'deferred', { reasonCodes: ['LUCK_SCOPE_UNAVAILABLE'] }))
     }
+    const preRoles = scope ? evaluateRoleFunctions({ producer, context: scope, natalScopeId: context.scopeId,
+      roles, states: runtimeStates, paths: legacyEffectPaths, evidence: [...evidenceById.values()],
+      retainUnspecifiedForEffectCompatibility: true,
+      restrictionsResolved: stateResult?.status === 'evaluated' }) : []
+    const functionEffects = functionEffectsIn(scope, runtimeStates, stateResult, preRoles)
+    const roleFunctions = preRoles.filter(({ fact }) => !fact.reasonCodes.includes('ROLE_ACTION_UNSPECIFIED')).map(({ fact, diagnostic, requiredFunctionIds }) => ({
+      preEffect: fact, diagnostic,
+      postEffect: applyRoleFunctionEffects(fact, functionEffects.effects, referenceTime, requiredFunctionIds),
+    }))
+    const roleEffectDeferrals = preRoles.filter(({ fact }) => fact.reasonCodes.includes('ROLE_ACTION_UNSPECIFIED'))
+      .map(({ fact }) => ({ inputRef: fact.roleFunctionStateId, roleStateRef: fact.roleStateRef,
+        targetFunctionId: fact.functionId, reasonCodes: fact.reasonCodes, evidenceIds: fact.evidenceIds }))
+    const relationActions = [...new Map(preRoles.flatMap(({ diagnostic }) =>
+      diagnostic.observedActions.map((action) => [action.relationFactId, action] as const))).values()]
+    const roleEffectContexts = functionEffects.effects.flatMap((effect) => {
+      if (effect.status !== 'confirmed') return []
+      const roleStateRefs = sortedUnique(roles.filter((role) => role.entityId === effect.targetEntityId
+        && role.status === 'evaluated' && !role.provisional && !role.uncertaintyIds.length
+        && role.usage === 'runtime-result' && role.validScopeId === context.scopeId
+        && role.applicationRef?.executionId === context.executionId).map((role) => role.roleStateId))
+      return roleStateRefs.length ? [{ effectId: effect.effectId, targetEntityId: effect.targetEntityId, roleStateRefs }] : []
+    })
+    const effectFactStage = markFunctionEffects(scope ?? fallback, functionEffects)
     const interpretation = stageResult(scope ?? fallback, producerRef, 'luck-function-effects', 'deferred', {
       reasonCodes: ['LUCK_FUNCTION_EFFECTS_UNVERIFIED'], ruleIds: ['OP-L03'],
     })
@@ -212,7 +317,7 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     return {
       stateResult,
       output: { calendarStage, stemState, interpretation, pillar: pillar?.value ?? null, effectivePeriod: own ?? null,
-        scope, carryContext, relations: scopedRelations, runtimeStates,
+        scope, carryContext, relations: scopedRelations, runtimeStates, functionEffects, roleFunctions, relationActions, roleEffectContexts, roleEffectDeferrals, effectFactStage,
         currentApplications: stateResult?.bundle.applications.filter((item) => item.scopeId === scope?.scopeId) ?? [],
         byeongCandidates: evaluated?.candidates.candidates ?? [], byeong: evaluated?.byeong ?? null, guEung: evaluated?.guEung ?? null, natalScopeId: context.scopeId },
     }
@@ -222,12 +327,13 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
   const month = runLuck('monthlyLuck', year.stateResult)
   const interpretationInputs = [great.output, year.output, month.output].map((item) => ({
     scopeId: item.interpretation.scopeId, affectedFunction: null, issueType: null, effectDirection: null, reliefLevel: null,
+    functionEffectRefs: item.functionEffects.effects.filter((fact) => fact.status === 'confirmed').map((fact) => fact.effectId),
     activePeriod: item.effectivePeriod, status: item.interpretation.status, evidenceRefs: item.interpretation.evidenceIds,
   }))
   return detach({
     canonical,
     natal: { pattern: pattern.judgment, yongShen: yongShen.judgments, sangShen: sangShen.judgments,
-      byeong: natalEffects.byeong, guEung: natalEffects.guEung, successState, roles: [...roles, ...natalEffects.byeong.roleStates], runtimeStates: natalCombination.states },
+      functionEffects: natalFunctionEffects, byeong: natalEffects.byeong, guEung: natalEffects.guEung, successState, roles: [...roles, ...natalEffects.byeong.roleStates], runtimeStates: natalCombination.states },
     luck: { daewoon: great.output, sewoon: year.output, month: month.output },
     interpretationInputs, diagnostics: {
       completeness: stages.some((item) => item.status === 'deferred') ? 'partial' : 'complete',
@@ -284,13 +390,17 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       ...stages.flatMap((stage) => stage.evidenceIds),
       ...month.relations.flatMap((relation) => relation.evidenceIds),
       ...month.runtimeStates.flatMap((state) => state.evidenceIds),
+      ...month.roleFunctions.flatMap((item) => item.postEffect.evidenceIds),
+      ...month.roleEffectDeferrals.flatMap((item) => item.evidenceIds),
+      ...month.functionEffects.effects.flatMap((effect) => effect.evidenceIds),
     ])
     return {
       monthIndex: index + 1, calendarYear: year, calendarMonth: card.month, jieName: card.jieName, pillar: card.pillar,
       startInstant, endInstant, effectivePeriod, referenceTime: startInstant, scopeId, scope: month.scope,
       parentSewoonId: parentSewoon?.id ?? null, parentSewoon, natalScopeId: month.natalScopeId,
       natalPatternRef: reading.natal.pattern.judgmentId, natalRoles: reading.natal.roles,
-      relationFacts: month.relations, runtimeStates: month.runtimeStates.filter((state) => state.scopeId === scopeId),
+      roleFunctions: month.roleFunctions, relationActions: month.relationActions,
+      roleEffectContexts: month.roleEffectContexts, roleEffectDeferrals: month.roleEffectDeferrals, functionEffects: month.functionEffects, relationFacts: month.relations, runtimeStates: month.runtimeStates.filter((state) => state.scopeId === scopeId),
       historicalStateRefs: month.runtimeStates.filter((state) => state.scopeId !== scopeId).map((state) => state.stateId),
       carryRefs: month.carryContext,
       currentApplications: month.currentApplications,
@@ -298,7 +408,7 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       stageStatus: { calendar: month.calendarStage.status, stemState: month.stemState.status,
         byeong: stages.find((stage) => stage.stageId === 'byeong')?.status ?? 'deferred',
         guEung: stages.find((stage) => stage.stageId === 'gueung')?.status ?? 'deferred',
-        successState: successState.status, functionEffects: month.interpretation.status },
+        successState: successState.status, functionEffects: month.effectFactStage.status },
       reasonCodes: sortedUnique(stages.flatMap((stage) => stage.reasonCodes)),
       evidenceRefs, evidence: reading.diagnostics.evidence.filter((item) => evidenceRefs.includes(item.evidenceId)),
       provenance: month.calendarStage.provenance,

@@ -41,7 +41,12 @@
     "verify:gueung-v1": "node scripts/verify-gueung-v1.mjs",
     "verify:cs005-end-to-end": "node scripts/verify-cs005-end-to-end.mjs",
     "verify:stem-combination-eligibility": "node scripts/verify-stem-combination-eligibility.mjs",
-    "verify:cs005-monthly-window": "node scripts/verify-cs005-monthly-window.mjs"
+    "verify:cs005-monthly-window": "node scripts/verify-cs005-monthly-window.mjs",
+    "verify:effect-fact-contract": "node scripts/verify-effect-facts.mjs contract",
+    "verify:effect-fact-producer": "node scripts/verify-effect-facts.mjs producer",
+    "verify:cs005-effect-facts": "node scripts/verify-effect-facts.mjs cs005",
+    "verify:role-function-state": "node scripts/verify-effect-facts.mjs role-function",
+    "verify:cs005-role-function-state": "node scripts/verify-effect-facts.mjs cs005-role-function"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",
