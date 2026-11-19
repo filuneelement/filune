@@ -1,0 +1,78 @@
+FILUNE v1 명리 엔진 구현 상태 및 검증 결과
+검증일 2026-11-18
+대상 CS-005, 2027.02 월운 壬寅, 2027-02-15 00:00 UTC
+
+1. 완료 여부
+
+부분 반영. CS-005의 요청된 역할·상태·약화 결과는 현재 작업 트리에서
+확인했다. 범용 RoleFunctionState의 조건 정리는 일부 남아 있다.
+이번 확인에서는 엔진 코드, 규칙 문서, 회귀 expected를 수정하지 않았다.
+판정은 커밋되지 않은 기존 변경을 포함한 현재 작업 트리 기준이다.
+
+2. 반영된 조건 정리와 잔여 사항
+
+- 관계 목록이 비어 있다는 이유만으로 개별 작용을 보류하지 않는다.
+  verify:role-function-state는 필수 관계가 없는 독립 작용의 active를 검사한다.
+- 운영 파이프라인은 원국 통근을 구조 근거로 보존한다. 원국의 모든 근을
+  월운 필수 참여자로 넘기거나 연결 용신 상태를 상신의 필수조건으로 넘기는
+  처리는 현재 호출 경로에 없다.
+- 범용 평가기에는 requiredRelationRefs 배열이 필수 입력으로 남아 있으며,
+  requiredFunctionIds로 연결 용신 상태를 검사하는 분기와 참여자 정지 시
+  ALTERNATIVE_PATH_UNRESOLVED를 반환하는 분기가 남아 있다.
+  기존 단위 검증은 이 두 분기의 deferred 동작도 기대한다.
+- CS-005 2027.02의 roleFunctions 출력은 0건이다. 별도의 기존 역할 대상
+  EffectFact 호환 경로는 ROLE_ACTION_UNSPECIFIED 보류를 유지한다.
+  이는 개별 역할 작용의 효과 기록에 대한 보류이며 원국 역할 귀속은 확정이다.
+
+3. 원국 RoleState 및 기존 구조 판정
+
+- 丙 용신 confirmed, 丙 상신 confirmed.
+  RoleState 계약에서는 두 역할 모두 evaluated, provisional=false로 표현한다.
+- 운 scope에서 용신과 상신을 재선정하지 않는다.
+- Pattern, YongShenJudgment, SangShenJudgment, Byeong, GuEung의
+  기존 판정과 회귀 expected는 이번 확인에서 수정하지 않았다.
+
+4. 2027.02 RuntimeState
+
+- 원국 丙 active
+- 원국 甲 stopped
+- 원국 戊 active
+- 월운 壬 active
+
+5. 2027.02 Relation / Effect
+
+- 甲→丙 생 관계의 현재 작용은 甲 stopped로 비활성이다. 구조 관계는 보존된다.
+- 丙→戊는 두 entity가 active이며 현재 작용을 검토할 수 있는 상태
+  (investigable)로 기록된다.
+- 월운 壬→丙 극 관계는 confirmed이며 source와 target은 active다.
+  丙의 편인 작용에 weaken confirmed가 기록된다.
+- 戊→월운 壬 극으로 월운 壬의 편재 작용에 weaken confirmed가 기록된다.
+- 丙에 대한 확정 약화에는 roleEffectContexts가 원국 용신·상신 두 RoleState
+  참조를 연결한다. 해석 단계에서 용신·상신 역할을 가진 丙이 壬의 극을
+  받았다는 맥락을 사용할 수 있다. 丙의 RuntimeState는 active를 유지한다.
+- 2월 EffectFact 집계는 confirmed 2건, deferred 2건이다.
+  별도 용신·상신 작용 대상의 기존 EffectFact는 deferred를 유지한다.
+  정지된 대상에 대한 진단 1건은 blocked이며 EffectFact는 발행되지 않는다.
+  극 자체로 stop을 발행하지 않으며 길흉·중요도·강도 점수는 기록하지 않는다.
+
+6. 검증 결과
+
+- CS-005 E2E PASS (8 checks)
+- EffectFact 계약, 생산자, CS-005 2월 통합 검증 PASS
+- RoleFunctionState 단위 및 CS-005 2월 통합 검증 PASS
+- npm run build PASS
+- git diff --check PASS
+- 전체 verify PASS (package.json의 verify:* 40개)
+- CS-005 monthly-window PASS (12개월, 19 checks)
+
+REGRESSION_LEAK: 검사 범위에서 발견되지 않았다. CS-005 2월 실행에
+expected를 추가했을 때도 functionEffects, roleFunctions, roleEffectContexts가
+동일했다. 기존 회귀 fixture, monthly-window 검증, E2E 검증 파일은 HEAD와
+동일하다. 현재 테스트에는 위에 적은 기존 deferred 분기의 기대값도 포함된다.
+
+7. 다음 개발 단계
+
+범용 평가기에서 문서가 개별 작용에 직접 요구하는 경로만 검사하도록 정리한다.
+현재 작용 평가는 RuntimeState와 Relation/Effect에 두고, 해석 계층은 확정
+EffectFact와 원국 RoleState를 연결해 구조적 중요도를 판단한다. 기존 EffectFact
+호환 출력과 회귀 expected를 유지하면서 신규 명리 규칙 없이 진행한다.

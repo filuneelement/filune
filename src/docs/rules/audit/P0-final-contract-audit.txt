@@ -1,0 +1,53 @@
+FILUNE P0 최종 계약 감사
+
+기준 문서
+  src/docs/rules/master/09-engine-integration-spec.md
+  src/docs/rules/master/10-implementation-audit.md
+  세부 규칙은 master 01~08 참조
+
+결론
+  기존 검증 40/40, 신규 verify:judgment-p0 1/1 통과.
+  겸격 유정 판정, 합거 기록 승계, 역할의 현재 기능과 운 효과 계약에 미충족 항목이 있다.
+  감사 중 코드와 테스트를 수정하지 않았다. 기존 테스트의 이동 전 문서 경로는
+  실행 중에만 임시 연결했으며 검증 후 링크를 제거했다.
+
+아래 표에서 core/는 src/lib/judgment/core/를, P0는 scripts/verify-judgment-p0.mjs를 가리킨다.
+
+계약 | 구현 파일/함수 | 테스트 | 상태 | 문제
+-----|---------------|--------|------|-----
+1. 원국 BranchPattern 불변 | core/luckScope.ts:45 runJudgmentCore | P0:35, :144 | PASS | —
+투출 이력과 유효 투출 분리 | core/pattern.ts:37 provisionalPattern, :49 finalPattern | P0:25, :41, :88 | PASS | 이력은 누적하고 유효 집합에는 active와 weakened를 유지한다.
+Runtime 전후 provisional/final 보존 | core/luckScope.ts:71 실행 순서, :106 스냅샷 | P0:25, :90 | PASS | —
+겸격에서 한 용신이 합거된 뒤 유효 격 재계산 | core/pattern.ts:49 finalPattern | P0:24, :81 | PASS | combined → proper 및 combined → transformed를 각각 검증했다.
+겸격 유정·무정의 근거 평가 | core/pattern.ts:21 structure | P0:35는 겸격 전환만 검증 | FAIL | 食神 + 財라는 조합만으로 favorable_harmony를 부여한다. 실제 위치·합·Root·Runtime·대상 기능을 확인하라는 01-pattern-master.md:210의 PT-019와 어긋난다.
+
+2. active / weakened / stopped 동작 분리 | core/stems.ts:30 resolveStemRuntime, core/policies.ts:77 resolveActualFunction | P0:38, :92 및 읽기 전용 재현 | PASS | 생극 작동은 operating / reduced / inactive로 구분된다.
+약화된 source의 관계 참여 | core/stems.ts:14 stemRelations, core/policies.ts:84 | scripts/verify-effect-facts.mjs:151, 읽기 전용 generate → reduced 재현 | PARTIAL | P0 자동 회귀는 약화된 투출 유지까지 검증한다. 약화 source의 생극 작동을 직접 단언하는 P0 테스트는 없다.
+정지된 source의 신규 생극 Effect 차단 | core/policies.ts:84 resolveActualFunction | P0:92, scripts/verify-effect-facts.mjs:146, 읽기 전용 generate → inactive 재현 | PARTIAL | 관계 Fact와 비활성 진단 기록은 보존된다. P0에 정지 source의 generate 직접 자동 단언이 없다.
+Root 강화 후에도 stopped 유지 | core/luckScope.ts:72 Runtime 확정, core/branches.ts:38 roots | P0:85 | PASS | —
+
+3. 직접 범위에서 운↔운 합 우선 처리 | core/stems.ts:9 directScopes, :44 resolveStemRuntime | P0:59 | PASS | —
+운↔운 합은 양쪽 weakened | core/stems.ts:46 resolveStemRuntime | P0:38, :119 | PASS | —
+운↔운 합 참여 천간의 동일 scope 원국 재합 차단 | core/stems.ts:45 paired 집합, :56 원국합 필터 | P0:59 | PASS | 경쟁 상대인 원국 천간이 active를 유지한다.
+남은 운↔원국 유효합은 양쪽 stopped | core/stems.ts:55 원국합 분기 | P0:85, :111 | PASS | —
+복수 운 합 상대를 대운 → 세운 → 월운 → 일진 순으로 하나 선택 | core/stems.ts:6 순서 정의, :44 정렬 및 첫 유효 상대 선택 | P0:67 | PARTIAL | 대운이 세운에 우선하는 경우와 미선택 상대의 active 유지는 검증했다. 세운·월운·일진 간 우선순위의 독립 단언은 없다.
+일간합 예외 | core/stems.ts:56 원국합 필터의 dayMaster 제외 | P0:76 | PASS | —
+
+4. RelationFact에 고유 길흉 없음 | core/types.ts:43 StemRelationFact, core/stems.ts:14 stemRelations | P0:105 | PASS | direction / good / bad 필드가 없음을 검증했다.
+generate / control / combine 및 FormulaFact 분리 | core/stems.ts:14 stemRelations, core/types.ts:51 FormulaFact, core/luckScope.ts:93 공식 기록 | P0:100, :127 및 읽기 전용 generate 재현 | PASS | generate 동작은 읽기 전용 재현으로 확인했다. P0 직접 자동 단언은 없다.
+FoodGodControlsKilling / HurtingOfficerControlsKilling / HurtingOfficerCombinesKilling 분리 | core/stems.ts:64 killingFormula | P0:116 식신제살, :124 상관극살, :109 상관합살, :127 무효합 | PASS | 식신과 상관의 control을 각각 분기하고, 상관 combine에는 유효합을 요구한다.
+승계된 합거의 공식과 작동 기록 추적 | core/luckScope.ts:83 validCombination, core/policies.ts:84 작동 상태 | 읽기 전용 재현. 乙일간, 원국 辛, 대운 丙, 세운 戊 | PARTIAL | 세운에서도 양쪽 stopped는 유지되지만, 현 scope의 신규 이벤트만 조회하므로 합살 공식이 사라지고 합 관계의 현재 작동이 inactive로 기록된다. 자동 회귀 없음.
+
+5. 財格 + 財剋印 = favorable | core/policies.ts:53 EX-043 정책 | P0:97 辰월 | PASS | —
+印格 + 財剋印 = unfavorable | core/policies.ts:55 EX-045 정책 | P0:97 亥월 기본 케이스 | PASS | —
+印格 + 印過多 + 財剋印 = favorable | core/policies.ts:48 EX-046 정책 우선 조회, core/luckScope.ts:86 근거 전달 | P0:97 亥월 과다 근거 및 공식 | PASS | 과다 상태는 호출자 제공 근거에 의존한다. 코어는 근거 ID 배열의 비어 있지 않음까지 확인한다.
+최종 PatternContext 기반 정책 조회와 정성 판정 | core/policies.ts:60 resolvePatternEffectPolicy, :77 resolveActualFunction | P0:97 격별 방향과 Context 참조, :129 레지스트리 거부 | PASS | 관계 Fact에는 방향이 없으며 정책에서 정성 방향을 조회한다. context_dependent 우회와 숫자 점수는 없다.
+
+6. 원국~일진 독립 스냅샷과 상위 상태 불변 | core/luckScope.ts:106 freeze(detach(...)), core/stems.ts:30 new Map(inherited) | P0:38, :144 | PASS | 통합 경로의 일진은 유효기간이 있는 사전 계산 일주를 입력받는다.
+일반 관계 범위와 FormationBranchPool 분리 | core/luckScope.ts:68 직접 범위 필터 및 누적 지지 사용 | P0:44 | PASS | 월·일 직접 범위에서 제외된 지지도 누적 FormationBranchPool에 남는다.
+
+7. RoleHistory / CurrentState / CurrentFunction 분리 | core/types.ts:63 RoleCurrentState, core/luckScope.ts:101 현재 역할 투영 | P0:80 병 이력 및 stopped → inactive, 읽기 전용 active → deferred 재현 | PARTIAL | 현재 기능은 천간 상태만 반영하며 active는 항상 deferred다. 실제 역할 경로 평가나 네 역할 각각의 회귀는 없다.
+P0 역할 탐지 범위 제한 및 운 글자에 새 원국 역할 부여 금지 | core/luckScope.ts:101 역할 투영, src/lib/judgment/pipeline/internalReading.ts:351 원국 역할 전달 | P0:80, scripts/verify-cs005-end-to-end.mjs:67 | PASS | 새 P0 경로 기준이다. 기존 luck 결과에는 별도 평가 경로가 있다.
+운의 지원·악화·해소를 별도 P0 LuckEffect로 산출 | core/luckScope.ts:106 스냅샷 출력, src/lib/judgment/pipeline/internalReading.ts:123 기존 효과 평가 | P0 자동 회귀 없음 | NOT_IMPLEMENTED | IA-P0-25~27의 LuckSupportEffect, LuckAdverseEffect, LuckReliefEffect를 P0 스냅샷에서 산출하지 않는다.
+
+8. 기존 회귀 및 신규 P0 재실행 | package.json 검증 명령 | 기존 40/40, 신규 P0 1/1. CS-005 종단 및 12개월 월운 창, CS-126/127 병 회귀 포함 | PASS | CS-109 관련 검증은 scripts/verify-judgment-runtime-context.mjs:25의 지장간 호환성 확인까지이며 독립 P0 종단 단언은 확인되지 않았다.
