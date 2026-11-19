@@ -46,7 +46,15 @@
     "verify:effect-fact-producer": "node scripts/verify-effect-facts.mjs producer",
     "verify:cs005-effect-facts": "node scripts/verify-effect-facts.mjs cs005",
     "verify:role-function-state": "node scripts/verify-effect-facts.mjs role-function",
-    "verify:cs005-role-function-state": "node scripts/verify-effect-facts.mjs cs005-role-function"
+    "verify:cs005-role-function-state": "node scripts/verify-effect-facts.mjs cs005-role-function",
+    "verify:judgment-p0": "node scripts/verify-judgment-p0.mjs",
+    "verify:judgment-p1-1": "node scripts/verify-judgment-p1-1.mjs",
+    "verify:judgment-p1-2": "node scripts/verify-judgment-p1-2.mjs",
+    "verify:judgment-p1-3": "node scripts/verify-judgment-p1-3.mjs",
+    "verify:judgment-p1-fix": "node scripts/verify-judgment-p1-fix.mjs",
+    "verify:judgment-p1-integration-audit": "node scripts/verify-judgment-p1-integration-audit.mjs",
+    "verify:judgment-p1-closure": "node scripts/verify-judgment-p1-closure.mjs",
+    "verify:judgment-p1-lifecycle": "node scripts/verify-judgment-p1-lifecycle.mjs"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",

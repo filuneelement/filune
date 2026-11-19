@@ -1,0 +1,66 @@
+FILUNE P1 최종 종료 재감사
+
+전체 판정: READY_FOR_NEXT_PHASE
+
+LK-072와 SG-174 / EX-140 종료 차단 항목을 보완했다.
+종료 감사 기준: src/docs/codex/p1-final-closure-audit.md
+
+수정 결과
+
+LK-072 — 합거의 유효기간
+유효기간은 시작 시각을 포함하고 종료 시각을 제외한다. 코어가 만료된 운을
+직접 입력받아도 합거 관계·공식은 이력에 남고 런타임에는 반영되지 않는다.
+현재 유효한 별도 정지 원인이 없다면 천간과 역할 상태는 현재 근거로 재평가한다.
+유효기간 안의 합거는 기존 정지를 유지한다.
+
+SG-174 / EX-140 — 운 이벤트 수명주기
+luckEffects는 해당 scope에서 새로 발행된 이벤트, luckEffectHistory는 발생 이력,
+luckEffectStates는 현재 유효 여부를 보여준다. 세운·월운·일진에서도 동일 이벤트 ID와
+발생 scope·기간을 보존하고, 원인이 끝나면 currentlyEffective=false / expired=true가 된다.
+독립된 다음 리딩으로 이력을 넘길 때는 priorHistory에 앞선 스냅샷을 전달한다.
+월운 윈도우는 이력을 자동 승계하고 현재 상태는 매 기간의 입력으로 계산한다.
+만료된 운이 코어에 직접 주어지면 해당 기간의 마지막 유효 시점으로 이력을 재구성한다.
+
+Scope-state 재감사
+
+보호 대기 상신 활성화: PASS
+활성화 승계 및 중복 이벤트 방지: PASS
+위협 종료 및 보호 대기 복귀: PASS
+상신 정지 및 약화 이벤트: PASS
+상신 정지 종료 및 복원: PASS
+조건부 병 활성 종료: PASS
+운에 의한 병 해소의 종료 및 원래 병 경로 재평가: PASS
+투출 종료와 현재 격 모드 복원: PASS
+Root·Formation·Capacity 복원: PASS
+傷官合殺 병 해소 이벤트의 관계·공식 연결 보존: PASS
+
+전체 회귀
+
+npx tsc -b: PASS
+npm run build: PASS
+기존 회귀: 40/40
+P0: PASS
+P1-1: 23/23
+P1-2: 25/25
+P1-3: 30/30
+P1-fix: 6/6
+P1 통합 Policy: 68/68
+P1-closure: 13/13
+P1-lifecycle: 13/13
+
+기존 스크립트의 이동 전 문서 경로는 검증 중에만 임시 링크로 연결했다.
+실행 후 해당 링크를 제거했다. 기존 테스트 기대값은 수정하지 않았다.
+
+남은 항목
+
+FAIL: 0
+NOT_IMPLEMENTED: 0
+PARTIAL: 승인된 보류 및 제한 도달성 4건
+- BG-045 / PA-1300 — 겁재격 정관·칠살·재성의 공통 절대순위 근거 부족.
+- BG-059 / PP-906 — 印增刃勢의 범용 판정 조건 미확정.
+- BG-044 / BG-053 — 칠살 감당력을 판정할 정성 근거 부족.
+- PA-904 / EX-026 — 허용된 양인 조합에서 傷官合必要殺의 도달성 제한.
+
+회귀 실행
+npm run verify:judgment-p1-closure
+npm run verify:judgment-p1-lifecycle

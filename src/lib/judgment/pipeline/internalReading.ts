@@ -1,3 +1,7 @@
+import { luckPeriodStatus } from '../core/luckValidity'
+import { judgmentCoreFromReading } from '../core/fromReading'
+import type { JudgmentCoreEvidence } from '../core/fromReading'
+import type { LuckScopeInput, ResourceExcessEvidence } from '../core/luckScope'
 import { applyRoleFunctionEffects, evaluateRoleFunctions } from '../evaluators/roleFunctionState'
 import type { RoleFunctionPath } from '../evaluators/roleFunctionState'
 import { calculateCanonicalChart } from '../../canonical/calculateCanonicalChart'
@@ -34,6 +38,10 @@ export type InternalReadingInput = {
   executionId: string
   natalInspectionPeriod: Validity
   sources: ExposureRootSources & { draftA: string }
+  /** Optional precomputed daily pillar and its effective period. */
+  dailyLuck?: Omit<LuckScopeInput, 'scope'>
+  resourceExcessEvidence?: ResourceExcessEvidence
+  judgmentCoreEvidence?: JudgmentCoreEvidence
   /** Gregorian label of the first 절기월. The period itself begins at that month's 절입. */
   monthlyWindowStart?: { year: number; month: number }
 }
@@ -42,7 +50,7 @@ const aggregate = (statuses: string[]): StageStatus => statuses.includes('deferr
   ? 'deferred' : statuses.some((status) => status === 'confirmed' || status === 'candidate') ? 'confirmed' : 'rejected'
 
 /** Internal first-scope pipeline. Documents supply authority; case expectations stay in the verifier. */
-function runSingleInternalReading({ birth, calculation, executionId, natalInspectionPeriod, sources }: InternalReadingInput) {
+function runSingleInternalReading({ birth, calculation, executionId, natalInspectionPeriod, sources, dailyLuck, resourceExcessEvidence, judgmentCoreEvidence }: InternalReadingInput) {
   const canonical = calculateCanonicalChart(birth, calculation)
   const producer = produceJudgmentEngineFacts(canonical, { hiddenStemSystem: { systemId: 'filune-a179', sourceText: sources.A } })
   const { producerRef } = producer
@@ -235,8 +243,7 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
   const activePeriods: Partial<Record<'greatLuck' | 'yearlyLuck' | 'monthlyLuck', Validity>> = {}
   for (const stage of ['greatLuck', 'yearlyLuck', 'monthlyLuck'] as const) {
     const refs = sortedUnique(producer.entities.flatMap((item) => item.sourceScope === stage && item.periodRef ? [item.periodRef] : []))
-    const matches = refs.map((ref) => producerPeriod(producer, ref)).filter((period) => period.from.kind === 'exact'
-      && period.to.kind === 'exact' && period.from.instant <= referenceTime && referenceTime < period.to.instant)
+    const matches = refs.map((ref) => producerPeriod(producer, ref)).filter((period) => luckPeriodStatus(period, referenceTime) === 'effective')
     if (matches.length === 1) activePeriods[stage] = matches[0]
   }
 
@@ -330,7 +337,7 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     functionEffectRefs: item.functionEffects.effects.filter((fact) => fact.status === 'confirmed').map((fact) => fact.effectId),
     activePeriod: item.effectivePeriod, status: item.interpretation.status, evidenceRefs: item.interpretation.evidenceIds,
   }))
-  return detach({
+  const reading = detach({
     canonical,
     natal: { pattern: pattern.judgment, yongShen: yongShen.judgments, sangShen: sangShen.judgments,
       functionEffects: natalFunctionEffects, byeong: natalEffects.byeong, guEung: natalEffects.guEung, successState, roles: [...roles, ...natalEffects.byeong.roleStates], runtimeStates: natalCombination.states },
@@ -343,6 +350,9 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
         sangShen: sangCandidates.candidates, byeong: natalEffects.candidates.candidates },
       evidence: [...evidenceById.values()].sort((a, b) => a.evidenceId.localeCompare(b.evidenceId)) },
   })
+  const judgmentCore = judgmentCoreFromReading(producer, executionId, natalInspectionPeriod, natalCombination,
+    [...roles, ...natalEffects.byeong.roleStates, ...natalEffects.guEung.roleStates], activePeriods, dailyLuck, resourceExcessEvidence, judgmentCoreEvidence)
+  return { ...reading, judgmentCore }
 }
 
 function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof runSingleInternalReading>,
@@ -360,14 +370,17 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
     || index > 0 && window[index - 1].card.endInstant.getTime() !== card.startInstant.getTime())) {
     throw new TypeError('Canonical monthly periods do not form a continuous window')
   }
+  let priorHistory = input.judgmentCoreEvidence?.priorHistory
   return window.map(({ year, card }, index) => {
     const startInstant = card.startInstant.toISOString()
     const endInstant = card.endInstant.toISOString()
-    // Each month rebuilds its own producer and parent chain. No previous month is an upstream input.
+    // Rebuild the current parent chain independently; only event history crosses the month boundary.
     const reading = runSingleInternalReading({ ...input, executionId: recordId('monthly-window-run', [input.executionId, startInstant]),
+      judgmentCoreEvidence: { ...input.judgmentCoreEvidence, priorHistory },
       calculation: { ...input.calculation, referenceTime: startInstant, monthlyLuckYear: year },
       natalInspectionPeriod: { periodId: recordId('monthly-window-natal-inspection', [startInstant]),
         from: { kind: 'exact', instant: startInstant }, to: { kind: 'exact', instant: endInstant } } })
+    priorHistory = reading.judgmentCore.at(-1) ?? priorHistory
     const { month, sewoon } = reading.luck
     const effectivePeriod: Validity = month.effectivePeriod ?? {
       periodId: recordId('monthly-window-calendar-period', [startInstant]),
@@ -404,6 +417,7 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       historicalStateRefs: month.runtimeStates.filter((state) => state.scopeId !== scopeId).map((state) => state.stateId),
       carryRefs: month.carryContext,
       currentApplications: month.currentApplications,
+      judgmentCore: reading.judgmentCore.find((state) => state.scope === 'monthlyLuck') ?? null,
       status: month.interpretation.status,
       stageStatus: { calendar: month.calendarStage.status, stemState: month.stemState.status,
         byeong: stages.find((stage) => stage.stageId === 'byeong')?.status ?? 'deferred',
@@ -421,5 +435,5 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
 export function runInternalReading(input: InternalReadingInput) {
   const current = runSingleInternalReading(input)
   if (!input.monthlyWindowStart) return current
-  return detach({ ...current, luck: { ...current.luck, monthlyWindow: runMonthlyWindow(input, current, input.monthlyWindowStart) } })
+  return { ...current, luck: { ...current.luck, monthlyWindow: runMonthlyWindow(input, current, input.monthlyWindowStart) } }
 }
