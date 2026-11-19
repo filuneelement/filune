@@ -1,13 +1,13 @@
 import type { CurrentPersonalityResult } from '../current/types'
 import type { NatalPersonalityResult } from '../types'
 
-export interface RenderPersonalityKoInput {
+export interface PersonalityRenderInput {
   natal: NatalPersonalityResult
   current?: CurrentPersonalityResult
   name?: string
 }
 
-export type PersonalityKoSection = 'overview' | 'outward' | 'closeRelations' | 'decision'
+export type PersonalityRenderSection = 'overview' | 'outward' | 'closeRelations' | 'decision'
   | 'emotion' | 'strengths' | 'cautions' | 'currentExpression'
 
 export interface RenderProvenance {
@@ -23,5 +23,9 @@ export interface RenderedPersonalityBlock extends RenderProvenance {
   paragraphs: Array<RenderProvenance & { text: string; certainty: 'confirmed' | 'conditional' | 'mixed' }>
 }
 
-export type RenderedPersonalityKo = Partial<Record<PersonalityKoSection, RenderedPersonalityBlock>>
+export type RenderedPersonality = Partial<Record<PersonalityRenderSection, RenderedPersonalityBlock>>
   & { provenance: RenderProvenance[] }
+
+export type RenderPersonalityKoInput = PersonalityRenderInput
+export type PersonalityKoSection = PersonalityRenderSection
+export type RenderedPersonalityKo = RenderedPersonality

@@ -16,3 +16,6 @@ export type {
 } from './current/types'
 export { renderPersonalityKo } from './render/ko/renderPersonalityKo'
 export type { RenderedPersonalityKo, RenderedPersonalityBlock, RenderPersonalityKoInput, RenderProvenance } from './render/types'
+export { renderPersonalityJa } from './render/ja/renderPersonalityJa'
+export type { PersonalityRenderInput, PersonalityRenderSection, RenderedPersonality } from './render/types'
+export { renderPersonalityEn } from './render/en/renderPersonalityEn'
