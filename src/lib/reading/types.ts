@@ -1,3 +1,4 @@
+import type { RelationshipOutcomeFact } from '../outcome'
 import type { CalculatedChart } from '../canonical/types'
 import type { Validity } from '../judgment/contracts'
 import type { LuckScopeState } from '../judgment/core/luckScope'
@@ -28,6 +29,7 @@ export interface ReadingAssemblyInput {
   readonly canonical?: Readonly<CalculatedChart>
   readonly judgment?: Readonly<ReadingJudgmentResult>
   readonly personality?: Readonly<NatalPersonalityResult | CurrentPersonalityResult>
+  readonly relationshipOutcomes?: readonly RelationshipOutcomeFact[]
   readonly luckScopes?: readonly LuckScopeState[]
   /** Additional snapshots already evaluated at their own in-period reference instants. */
   readonly evaluatedLuckScopes?: readonly { readonly snapshot: LuckScopeState; readonly evaluatedAt: string }[]
@@ -37,7 +39,7 @@ export interface ReadingAssemblyInput {
   readonly productScope: ProductScope
 }
 
-export type ReadingTopic = 'birth' | 'structure' | 'personality' | 'strength' | 'challenge' | 'daewoon' | 'year' | 'month'
+export type ReadingTopic = 'birth' | 'structure' | 'relationship' | 'personality' | 'strength' | 'challenge' | 'daewoon' | 'year' | 'month'
 export type ReadingCertainty = 'confirmed' | 'contextual' | 'conditional' | 'provisional' | 'deferred'
   | 'unknown' | 'unsupported' | 'not-applicable' | 'rejected'
 export type ChapterReadiness = 'ready' | 'partial' | 'source_gap' | 'engine_gap' | 'outcome_not_implemented'
@@ -63,10 +65,10 @@ export interface ReadingProvenance {
 }
 
 export interface ReadingMeaningRef {
-  readonly producer: 'canonical' | 'judgment' | 'personality'
+  readonly producer: 'canonical' | 'judgment' | 'personality' | 'outcome'
   readonly kind: 'canonical_value' | 'pattern' | 'relation' | 'structural_function' | 'role_assignment' | 'role_function'
     | 'scope_snapshot' | 'monthly_snapshot' | 'luck_effect' | 'personality_fact' | 'personality_conflict'
-    | 'personality_modifier' | 'current_personality_fact'
+    | 'personality_modifier' | 'current_personality_fact' | 'outcome_fact'
   readonly recordId: string
   readonly scopeId?: string
 }

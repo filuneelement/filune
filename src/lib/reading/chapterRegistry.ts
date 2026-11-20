@@ -19,7 +19,7 @@ export const chapterRegistry = [
   { id: 'CH-03', access: 'premium', sourceSection: 'CH-3', readiness: 'partial', scopes: ['natal'] },
   { id: 'CH-04', access: 'premium', sourceSection: 'CH-4', readiness: 'outcome_not_implemented', scopes: ['natal', 'daewoon', 'month'] },
   { id: 'CH-05', access: 'premium', sourceSection: 'CH-5', readiness: 'outcome_not_implemented', scopes: ['natal', 'month'] },
-  { id: 'CH-06', access: 'premium', sourceSection: 'CH-6', readiness: 'outcome_not_implemented', scopes: ['natal', 'month'] },
+  { id: 'CH-06', access: 'premium', sourceSection: 'CH-6', readiness: 'outcome_not_implemented', scopes: ['natal', 'daewoon', 'sewoon', 'month'] },
   { id: 'CH-07', access: 'premium', sourceSection: 'CH-7', readiness: 'outcome_not_implemented', scopes: ['natal', 'daewoon', 'sewoon', 'month'] },
   { id: 'CH-08', access: 'premium', sourceSection: 'CH-8', readiness: 'partial', scopes: ['daewoon'] },
   { id: 'CH-09', access: 'premium', sourceSection: 'CH-9', readiness: 'partial', scopes: ['sewoon', 'month'] },

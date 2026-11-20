@@ -4,6 +4,7 @@ import { collectReadingUnits } from './deduplication'
 import { chapterGaps, gap, selectionKinds } from './gaps'
 import { collectLuck, collectNatalJudgment, scopeNames } from './judgmentUnits'
 import { collectCurrentPersonality, collectNatalPersonality } from './personalityUnits'
+import { collectRelationshipUnits } from './relationshipUnits'
 import { bounds, uniqueIds, type RoutedUnits } from './semanticUnit'
 import type { ChapterId, ReadingAssembly, ReadingAssemblyInput, ReadingCertainty, ReadingScope, SelectionKind } from './types'
 
@@ -54,6 +55,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
       ...collectLuck(input, snapshots, referenceTime, out),
       ...(current?.effectHistory.map(effect => effect.id) ?? []),
     ])
+    collectRelationshipUnits(input.relationshipOutcomes ?? [], referenceTime, out)
     if (current) collectCurrentPersonality(current, natalIds, referenceTime, out)
   }
   const semanticUnits = out.units()
@@ -65,7 +67,14 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
   const units = new Map(semanticUnits.map(unit => [unit.id, unit]))
   const chapterResults = chapters.map(entry => {
     const placements = out.placements(entry.id)
-    const gaps = [...chapterGaps.filter(item => item.chapterId === entry.id)]
+    const relationshipEnabled = entry.id === 'CH-06' && input.relationshipOutcomes !== undefined
+    const gaps = [...chapterGaps.filter(item => item.chapterId === entry.id && !relationshipEnabled)]
+    if (relationshipEnabled) {
+      gaps.push(gap(entry.id, 'relationship-coverage', 'source_gap',
+        'Relationship development and commitment timing remain deferred.', 'B CH-6', 'OUT-REL-03', 'OUT-REL-05'))
+      if (!placements.length) gaps.push(gap(entry.id, 'relationship-input', 'engine_gap',
+        'Evaluated relationship facts are unavailable.', 'OUT-REL-01', 'OUT-REL-02'))
+    }
     if (entry.id === 'F-01' && unknownHour) {
       gaps.push(gap(entry.id, 'unknown-hour', 'source_gap', 'Birth-hour publication is unresolved.', 'B F-①', 'W-97'))
     }
@@ -95,7 +104,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
       gaps.push(gap(entry.id, 'input', 'engine_gap', 'Source results are unavailable.', `B ${entry.sourceSection}`))
     }
     return {
-      id: entry.id, readiness: entry.readiness, placements, gaps, selections,
+      id: entry.id, readiness: relationshipEnabled ? 'partial' as const : entry.readiness, placements, gaps, selections,
       availableUnitIds: uniqueIds(placements.filter(item => item.visibility === 'available').map(item => item.unitId)),
       customerRenderable: false as const,
       ...(entry.id === 'F-LINK' && { navigationChapterIds: ['CH-04', 'CH-05', 'CH-06', 'CH-07', 'CH-08', 'CH-10'] as const }),
