@@ -80,7 +80,7 @@ try {
     assert.equal(fact.originRelationId, adverseControl(birthSnapshot).relationFactId)
     assert.equal(fact.originScopeId, birthSnapshot.id)
     assert.deepEqual(fact.period, current.validity)
-    assert.equal(fact.certainty, 'contextual')
+    assert.equal(fact.certainty, 'confirmed')
     assert.equal(fact.currentlyEffective, true)
     assert.equal(fact.lifecycle, 'active')
     assert.deepEqual(fact.sourceJudgmentIds, [current.id])

@@ -7,7 +7,7 @@ const load = (path) => server.ssrLoadModule(`/src/lib/${path}.ts`)
 try {
   const inputs = JSON.parse(await readFile(new URL('./fixtures/byeong-judgment-inputs.json', import.meta.url), 'utf8'))
   const [A, draftRuleSource, C, D, approval] = await Promise.all(
-    ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((name) => readFile(`src/docs/source/${name}.md`, 'utf8')),
+    ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((name) => readFile(`src/docs/source/authority/${name}.md`, 'utf8')),
   )
   const { calculateCanonicalChart } = await load('canonical/calculateCanonicalChart')
   const { CURRENT_CALCULATION_VERSION } = await load('canonical/version')

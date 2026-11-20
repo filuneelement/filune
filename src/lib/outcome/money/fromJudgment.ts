@@ -20,7 +20,8 @@ export function moneyOutcomeFromReading(input: {
     referenceTime: evaluatedAt, natal,
     luck: [
       ...(judgment.luck.monthlyWindow ?? []).flatMap(month => month.judgmentCore
-        ? [{ snapshot: month.judgmentCore, evaluatedAt: month.referenceTime }] : []),
+        ? [{ snapshot: month.judgmentCore, evaluatedAt: month.referenceTime,
+          parentSnapshot: month.parentJudgmentCore ?? undefined }] : []),
       ...evaluatedLuckScopes,
       ...[...judgment.judgmentCore, ...luckScopes].map(snapshot => ({ snapshot, evaluatedAt })),
     ],

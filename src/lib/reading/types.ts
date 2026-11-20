@@ -6,6 +6,7 @@ import type { ActualStructuralFunction } from '../judgment/core/policies'
 import type { runInternalReading } from '../judgment/pipeline/internalReading'
 import type { CurrentPersonalityResult, PersonalityPeriod, PersonalityScope } from '../personality/current/types'
 import type { NatalPersonalityResult } from '../personality/types'
+import type { EventTimingFact } from '../eventTiming/types'
 
 export type ReadingScope = PersonalityScope
 export type ChapterId =
@@ -32,6 +33,7 @@ export interface ReadingAssemblyInput {
   readonly moneyOutcomes?: readonly MoneyOutcomeFact[]
   readonly healthOutcomes?: readonly HealthOutcomeFact[]
   readonly relationshipOutcomes?: readonly RelationshipOutcomeFact[]
+  readonly eventTimingFacts?: readonly EventTimingFact[]
   readonly luckScopes?: readonly LuckScopeState[]
   /** Additional snapshots already evaluated at their own in-period reference instants. */
   readonly evaluatedLuckScopes?: readonly { readonly snapshot: LuckScopeState; readonly evaluatedAt: string }[]
@@ -41,7 +43,7 @@ export interface ReadingAssemblyInput {
   readonly productScope: ProductScope
 }
 
-export type ReadingTopic = 'birth' | 'structure' | 'relationship' | 'health' | 'money' | 'personality' | 'strength' | 'challenge' | 'daewoon' | 'year' | 'month'
+export type ReadingTopic = 'birth' | 'structure' | 'relationship' | 'health' | 'money' | 'event_timing' | 'personality' | 'strength' | 'challenge' | 'daewoon' | 'year' | 'month'
 export type ReadingCertainty = 'confirmed' | 'contextual' | 'conditional' | 'provisional' | 'deferred'
   | 'unknown' | 'unsupported' | 'not-applicable' | 'rejected'
 export type ChapterReadiness = 'ready' | 'partial' | 'source_gap' | 'engine_gap' | 'outcome_not_implemented'
@@ -67,10 +69,10 @@ export interface ReadingProvenance {
 }
 
 export interface ReadingMeaningRef {
-  readonly producer: 'canonical' | 'judgment' | 'personality' | 'outcome'
+  readonly producer: 'canonical' | 'judgment' | 'personality' | 'outcome' | 'event_timing'
   readonly kind: 'canonical_value' | 'pattern' | 'relation' | 'structural_function' | 'role_assignment' | 'role_function'
     | 'scope_snapshot' | 'monthly_snapshot' | 'luck_effect' | 'personality_fact' | 'personality_conflict'
-    | 'personality_modifier' | 'current_personality_fact' | 'outcome_fact'
+    | 'personality_modifier' | 'current_personality_fact' | 'outcome_fact' | 'event_timing_fact'
   readonly recordId: string
   readonly scopeId?: string
 }
@@ -91,6 +93,9 @@ export interface ReadingSemanticUnit extends ReadingProvenance {
   readonly directionEvidence?: ActualStructuralFunction['evidenceStatus']
   readonly currentFunction?: string
   readonly lifecycle?: string
+  readonly healthLifeMeanings?: Extract<HealthOutcomeFact, { lifeMeanings: unknown }>['lifeMeanings']
+  readonly eventType?: EventTimingFact['eventType']
+  readonly eventDirection?: EventTimingFact['direction']
   readonly effectProjections?: readonly {
     readonly scope: ReadingScope
     readonly scopeId: string

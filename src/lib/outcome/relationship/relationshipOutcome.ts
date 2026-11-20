@@ -15,6 +15,9 @@ type Meaning =
   | { semanticType: 'relationship_palace_relation'; relationKind: RelationKind }
   | { semanticType: 'relationship_contact_signal' | 'relationship_change_signal'; relationKind: RelationKind;
       possibleInterpretations: readonly ('contact' | 'change')[] }
+  | { semanticType: 'relationship_formation'; relationKind: 'six_combination' | 'three';
+      result: 'opportunity_to_form_close_relationship' }
+  | { semanticType: 'relationship_pressure'; result: 'close_relationship_can_face_strain' }
 
 export type RelationshipOutcomeFact = OutcomeFact & { readonly domain: 'relationship' } & Readonly<Meaning>
 export type EvaluatedRelationshipScope = { readonly snapshot: LuckScopeState; readonly evaluatedAt: string }
@@ -38,6 +41,7 @@ function fact(snapshot: LuckScopeState, scope: OutcomeFact['scope'], temporalSta
     relationId?: string
     roleIds?: readonly string[]
     effectIds?: readonly string[]
+    mappingEvidence?: readonly string[]
   }): RelationshipOutcomeFact {
   const { lifecycle = 'active', certainty, relationId, roleIds = [], effectIds = [] } = options
   const identity = meaning.semanticType === 'relationship_significator' ? meaning.significator : ''
@@ -52,8 +56,8 @@ function fact(snapshot: LuckScopeState, scope: OutcomeFact['scope'], temporalSta
     sourceJudgmentIds: [snapshot.id], sourceRelationIds: relationId ? [relationId] : [],
     sourceRoleIds: sortedUnique(roleIds), sourceLuckEffectIds: sortedUnique(effectIds),
     sourceParticipantIds: sortedUnique(participants),
-    provenance: scope === 'natal' ? ['OUT-REL-01', 'A:I-15', ...(relationId ? ['Master03:B-003'] : [])]
-      : ['OUT-REL-02', 'A:I-22', 'A:OP-R01', 'A:OP-R03', 'B:W-87', 'B:W-88', ...(meaning.semanticType === 'relationship_palace_relation' ? ['C:C-7-2'] : [])],
+    provenance: options.mappingEvidence ?? (scope === 'natal' ? ['OUT-REL-01', 'A:I-15', ...(relationId ? ['Master03:B-003'] : [])]
+      : ['OUT-REL-02', 'A:I-22', 'A:OP-R01', 'A:OP-R03', 'B:W-87', 'B:W-88', ...(meaning.semanticType === 'relationship_palace_relation' ? ['C:C-7-2'] : [])]),
   }
 }
 
@@ -92,7 +96,8 @@ function natalFacts(chart: Readonly<CalculatedChart>, snapshot: LuckScopeState, 
 }
 
 function palaceRelations(snapshot: LuckScopeState, palaceId: string, scope: OutcomeFact['scope'],
-  temporalStatus: OutcomeFact['temporalStatus'], evaluatedAt: string): RelationshipOutcomeFact[] {
+  temporalStatus: OutcomeFact['temporalStatus'], evaluatedAt: string,
+  gender: CalculatedChart['birthInput']['gender']): RelationshipOutcomeFact[] {
   const pool = new Map(snapshot.formationBranchPool.map(participant => [participant.id, participant]))
   // Inactive stage placeholders carry the parent's evaluated pattern context.
   if (snapshot.patternContext.scope !== snapshot.scope || pool.get(palaceId)?.scope !== 'natal') return []
@@ -124,10 +129,47 @@ function palaceRelations(snapshot: LuckScopeState, palaceId: string, scope: Outc
       : relationKind === 'clash'
         ? { semanticType: 'relationship_change_signal', relationKind, possibleInterpretations: ['change'] }
         : { semanticType: 'relationship_contact_signal', relationKind, possibleInterpretations: ['contact', 'change'] }
-    return [fact(snapshot, scope, temporalStatus, meaning, relation.participants, {
+    const signal = fact(snapshot, scope, temporalStatus, meaning, relation.participants, {
       relationId: relation.id, lifecycle,
       certainty: lifecycle === 'deferred' ? 'deferred' : meaning.semanticType === 'relationship_palace_relation' ? 'contextual' : 'conditional',
       effectIds: effects.map(item => item.event.id),
+    })
+    if (scope === 'natal' || lifecycle !== 'active' || snapshot.runtimeStatus !== 'resolved'
+      || (relationKind !== 'six_combination' && relationKind !== 'three')) return [signal]
+    // A I-22 and P8 combine the palace relation with the applicable incoming stem.
+    const stem = snapshot.stemFacts.flatMap(item => [item.source, item.target]).find(item =>
+      item.scope === snapshot.scope && snapshot.runtime.some(state => state.entityId === item.id && state.state === 'active')
+      && (significators(item.tenGod, gender).includes('partner')
+        || (gender === '女性' && item.tenGod === '食神')))
+    if (!stem) return [signal]
+    return [signal, fact(snapshot, scope, temporalStatus, {
+      semanticType: 'relationship_formation', relationKind, result: 'opportunity_to_form_close_relationship',
+    }, [...relation.participants, stem.id], {
+      relationId: relation.id, certainty: 'confirmed', effectIds: signal.sourceLuckEffectIds,
+      mappingEvidence: ['A:I-22', 'A:OP-R03', '07:L202-L207', 'B:W-88'],
+    })]
+  })
+}
+
+function pressure(snapshot: LuckScopeState, scope: OutcomeFact['scope'], temporalStatus: OutcomeFact['temporalStatus'],
+  gender: CalculatedChart['birthInput']['gender']): RelationshipOutcomeFact[] {
+  if (gender !== '女性' || snapshot.runtimeStatus !== 'resolved' || snapshot.patternContext.scope !== snapshot.scope) return []
+  return snapshot.stemFacts.flatMap(relation => {
+    if (relation.action !== 'control' || relation.source.tenGod !== '傷官' || relation.target.tenGod !== '正官'
+      || (relation.source.scope !== snapshot.scope && relation.target.scope !== snapshot.scope)) return []
+    const actual = snapshot.actualFunctions.find(item => item.relationFactId === relation.id)
+    if (actual?.policyId !== 'OFF-03' || actual.direction !== 'unfavorable'
+      || !actual.byeongCandidate || [relation.source.id, relation.target.id].some(id =>
+        !snapshot.runtime.some(item => item.entityId === id && item.state !== 'stopped'))
+      || !actual.structuralEffect?.currentlyEffective || !['operating', 'reduced'].includes(actual.function)
+      || !snapshot.policyRoles.byeong.some(item => item.policyId === 'OFF-03' && item.currentState !== 'inactive'
+        && item.relationFactIds.includes(relation.id))) return []
+    const reduced = actual.function === 'reduced'
+    return [fact(snapshot, scope, temporalStatus, {
+      semanticType: 'relationship_pressure', result: 'close_relationship_can_face_strain',
+    }, [relation.source.id, relation.target.id], {
+      relationId: relation.id, certainty: reduced ? 'contextual' : 'confirmed', lifecycle: reduced ? 'reduced' : 'active',
+      mappingEvidence: ['A:I-15', 'A:OP-R03', '07:L762-L765', ...(actual.ruleId ? [actual.ruleId] : [])],
     })]
   })
 }
@@ -155,7 +197,9 @@ export function buildRelationshipOutcome(input: {
   }
   const now = canonical.context.referenceTime
   add(natalFacts(canonical, natal, palaceId, day.value.branch))
-  add(palaceRelations(natal, palaceId, 'natal', 'baseline', now))
+  const gender = canonical.birthInput.gender
+  add(palaceRelations(natal, palaceId, 'natal', 'baseline', now, gender))
+  add(pressure(natal, 'natal', 'baseline', gender))
   const natalBranches = new Map(natal.formationBranchPool.filter(item => item.scope === 'natal')
     .map(item => [item.id, item.branch]))
   const natalStems = new Map((['year', 'month', 'day', 'time'] as const).flatMap(position => {
@@ -172,7 +216,10 @@ export function buildRelationshipOutcome(input: {
       participant.scope === 'natal' && natalStems.get(participant.id) !== participant.stem))) continue
     const status = luckPeriodStatus(snapshot.validity, now)
     if (status === 'unknown') continue
-    add(palaceRelations(snapshot, palaceId, scopes[snapshot.scope], status === 'effective' ? 'current' : status, evaluatedAt))
+    const scope = scopes[snapshot.scope]
+    const temporalStatus = status === 'effective' ? 'current' : status
+    add(palaceRelations(snapshot, palaceId, scope, temporalStatus, evaluatedAt, gender))
+    add(pressure(snapshot, scope, temporalStatus, gender))
   }
   return [...results.values()].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 }

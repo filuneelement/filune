@@ -16,13 +16,18 @@ export function healthOutcomeFromReading(input: {
   const natal = judgment?.judgmentCore.find(snapshot => snapshot.scope === 'natal')
   if (!judgment || !natal) return []
   const evaluatedAt = judgment.canonical.context.referenceTime
+  const currentMonth = judgment.judgmentCore.find(snapshot => snapshot.scope === 'monthlyLuck'
+    && snapshot.runtimeStatus === 'resolved' && snapshot.patternContext.scope === snapshot.scope)
   return buildHealthOutcome({
     canonical: judgment.canonical, natal,
     luck: [
+      ...(currentMonth ? [{ snapshot: currentMonth, evaluatedAt }] : []),
       ...(judgment.luck.monthlyWindow ?? []).flatMap(month => month.judgmentCore
-        ? [{ snapshot: month.judgmentCore, evaluatedAt: month.referenceTime }] : []),
+        ? [{ snapshot: month.judgmentCore, evaluatedAt: month.referenceTime,
+          parentSnapshot: month.parentJudgmentCore ?? undefined }] : []),
       ...evaluatedLuckScopes,
-      ...[...judgment.judgmentCore, ...luckScopes].map(snapshot => ({ snapshot, evaluatedAt })),
+      ...[...judgment.judgmentCore.filter(snapshot => snapshot !== currentMonth), ...luckScopes]
+        .map(snapshot => ({ snapshot, evaluatedAt })),
     ],
   })
 }

@@ -39,6 +39,16 @@ Hurting Officer → Wealth has its own source-backed earning and method gate. A 
 
 Money uses the assertion policy and the [audited mapping register](../../codex/p4-outcome-assertion-policy-correction-result.md#b-money-impact). `OUT-MONEY-04` supplies the upstream checks for separately supported loss, division and Money-related difficulty. The [P4-I brief](../../codex/p4i-money-outcome-batch1.md) scopes implementation.
 
+## Individual Relationship expansion
+
+| Semantic | Required facts | Required current state | Real-life meaning and limitations | Provenance |
+|---|---|---|---|---|
+| `relationship_formation` | Independently eligible scoped day-palace six combination or full three Formation and an applicable incoming stem in that same evaluated scope. Read the published TenGod of the scope participant. The initial subset is a woman's Food God or partner role, or a man's Wealth partner role. | The palace relation is active and the stem is active in resolved Runtime. | Opportunity to form a close relationship. The conjunction alone retains its contact/change signal. Customer relationship status, favorable development, and actual formation are independent. | A I-22 ① and OP-R03, primary 07 L202–207, B W-88. |
+| `relationship_pressure` | A woman's evaluated OFF-03 path from Hurting Officer to Direct Officer, the affected partner significator, and the linked active or weakened damage. The direct path must have a participant in the evaluated scope. | The adverse function operates or is reduced after protection; stopped participants do not qualify. | A close relationship can face strain. The result does not determine existing relationship status, another person's conduct, or an ending. | A I-15 and OP-R03, primary 07 L762–765 and Judgment policy provenance. |
+| `relationship_commitment` · deferred | A separate I-22 ③ mapping with a qualified evaluated interval, current supporting roles and corroboration specific to a substantial commitment. | Requires a verified mapping and a positive fixture. | An opportunity for a significant commitment. Formation and contact are insufficient. I-22 ④ favorable development has its own same-period direction and no-damage checks. | A I-22 ③–④ and OP-R03, B W-88, primary 07 L602 and L1849. |
+
+Contact, change, formation, pressure and eventual commitment are independent. Preserve simultaneous positive opportunity and evidenced pressure. A missing or reduced pressure path does not alter an independently confirmed opportunity. Relationship endings and professional partnership/cooperation require separate source mappings. This contract operates on one chart. Two-chart compatibility remains separate.
+
 ## Health source contract
 
 Health Outcome Source Contract READY. Batch 1 supplies structural evidence and timing. The following real-life meaning is approved for semantic expansion under the existing publication limits. Structural overall direction, favorable or unfavorable, supplies no Health result. Each Health fact requires its own evidence even when the structural axes agree.
@@ -53,6 +63,19 @@ Health Outcome Source Contract READY. Batch 1 supplies structural evidence and t
 ### Health publication gate
 
 A verified traditional area plus a currently affected, independently verified target and an approved source link supports increased burden as an internal nonclinical meaning. Preserve A I-16 specificity and omit the area when local evidence is conditional. The broad possibility of Health difficulty is a semantic distinction from structural evidence. Customer wording remains subject to B W-30–35 and D Q10. In particular, W-30 allows naming the traditional area and identifying a time to pay attention. It does not authorize stating an organ is weak, a symptom will appear, or publishing unrestricted `건강 문제가 나타날 수 있음` copy. Preserve the result and interval in the semantic layer. Any change to the fixed customer wording requires publication authority.
+
+### Health life meanings
+
+Keep the existing reason and timing fact IDs. Their `lifeMeanings` distinguish the assertions linked to that condition, target and source interval. Assembly preserves the values on the same unit for chapter reuse.
+
+| Meaning | Required facts | Required current state | Real-life meaning and limitations | Provenance |
+|---|---|---|---|---|
+| `health_burden` | Existing eligible Health-specific path, verified target and Judgment relation. | Adverse operating or reduced function. Preserve actual activation and attenuation. | The evidenced condition can bring nonclinical health difficulty or increased burden, including the natal basis if qualified. | OUT-HEALTH-02, ⑲-A C–F. |
+| `health_problem_prone_period` | The burden path plus an independently evaluated exact luck interval and the existing local activation or recurrence gate. | Effective in the evaluated interval. Exclude expired results from current chapters. | The period can bring increased burden or difficulty. It carries the same condition and interval as the burden meaning. | ⑲-A C–F, CS-026/034/071 and repeated Killing cases. |
+| `body_area_burden` | A verified affected role target and its approved traditional area on the adverse path. | Effective adverse function with an established unfavorable direction. | Burden in the evidenced traditional area may increase. A baseline correspondence does not qualify. Named areas remain subject to W-35 at publication. | A I-16, ⑲-A C-1/D and B W-35. |
+| `health_management_period` | Same mapped local activation and verified period used to identify a time to observe. | Effective during the evaluated interval. | The interval merits attention under the existing management framing. No clinical or wellness intervention is inferred. | ⑲-A D–F, B CH-7 and W-30–35. |
+
+Assess certainty from the strength of the active path and the mapping. An operating unfavorable condition can have confirmed certainty in any eligible scope. Reduced function and unfavorable candidates retain contextual certainty. Certainty of the mapped burden condition does not predict the occurrence of a medical event.
 
 ### Eligible structural paths
 

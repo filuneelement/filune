@@ -17,7 +17,13 @@ export type MoneyOutcomeFact = OutcomeFact & Meaning & {
   readonly direction: 'favorable' | 'unfavorable' | 'deferred'
 }
 
-export type EvaluatedMoneyScope = { readonly snapshot: LuckScopeState; readonly evaluatedAt: string }
+type MoneyScopeParent = Pick<LuckScopeState, 'id' | 'actualFunctions' | 'stemFacts'>
+
+export type EvaluatedMoneyScope = {
+  readonly snapshot: LuckScopeState
+  readonly evaluatedAt: string
+  readonly parentSnapshot?: MoneyScopeParent
+}
 const scopes = { natal: 'natal', greatLuck: 'daewoon', yearlyLuck: 'sewoon', monthlyLuck: 'month' } as const
 const earningPolicies = new Set(['FOOD-01', 'FOOD-04', 'WEALTH-01', 'HO-01', 'PEER-03', 'ROB-04'])
 const divisionPolicies = new Set(['WEALTH-05', 'PEER-06', 'ROB-03'])
@@ -26,7 +32,7 @@ const isWealth = (god: string) => god === '正財' || god === '偏財'
 const live = (fn: string) => fn === 'operating' || fn === 'reduced'
 const unique = (ids: readonly string[]) => [...new Set(ids)].sort()
 
-function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporalStatus'], parent?: LuckScopeState) {
+function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporalStatus'], parent?: MoneyScopeParent) {
   if (snapshot.scope === 'dailyLuck' || snapshot.scope !== snapshot.patternContext.scope
     || snapshot.runtimeStatus !== 'resolved') return []
   const scope = scopes[snapshot.scope]
@@ -159,7 +165,7 @@ export function buildMoneyOutcome({ natal, referenceTime, luck = [] }: {
   const snapshots = new Map([natal, ...luck.map(({ snapshot }) => snapshot)].map(item => [item.id, item]))
   const byId = new Map(project(natal, 'baseline').map(fact => [fact.id, fact]))
   const periods = new Set<string>()
-  for (const { snapshot, evaluatedAt } of luck) {
+  for (const { snapshot, evaluatedAt, parentSnapshot } of luck) {
     if (snapshot.scope === 'natal' || snapshot.scope === 'dailyLuck' || snapshot.scope !== snapshot.patternContext.scope
       || luckPeriodStatus(snapshot.validity, evaluatedAt) !== 'effective') continue
     const { from, to } = snapshot.validity
@@ -168,7 +174,8 @@ export function buildMoneyOutcome({ natal, referenceTime, luck = [] }: {
     const key = JSON.stringify([snapshot.scope, Date.parse(from.instant), Date.parse(to.instant)])
     if (periods.has(key)) continue
     periods.add(key)
-    const parent = snapshot.parentScopeId === null ? undefined : snapshots.get(snapshot.parentScopeId)
+    const parent = snapshot.parentScopeId === null ? undefined
+      : parentSnapshot?.id === snapshot.parentScopeId ? parentSnapshot : snapshots.get(snapshot.parentScopeId)
     for (const fact of project(snapshot, status === 'effective' ? 'current' : status, parent)) byId.set(fact.id, fact)
   }
   return [...byId.values()].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0)

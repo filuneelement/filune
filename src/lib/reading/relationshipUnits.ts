@@ -19,7 +19,8 @@ export function collectRelationshipUnits(facts: readonly RelationshipOutcomeFact
     const contextIds = [fact.id, ...fact.sourceRelationIds]
     const timing: UnitRoute[] = fact.scope === 'month'
       ? [{ chapterId: 'CH-09', role: 'context', contextIds }, { chapterId: 'CH-10', role: 'timing', contextIds }]
-      : fact.scope === 'sewoon' ? [{ chapterId: 'CH-09', role: 'timing', contextIds }] : []
+      : fact.scope === 'sewoon' ? [{ chapterId: 'CH-09', role: 'timing', contextIds }]
+        : fact.scope === 'daewoon' && 'result' in fact ? [{ chapterId: 'CH-08', role: 'timing', contextIds }] : []
     out.add({
       topic: 'relationship', scope: fact.scope, certainty: fact.certainty,
       sourceStatus: fact.temporalStatus, lifecycle: fact.lifecycle,

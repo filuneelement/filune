@@ -78,6 +78,10 @@ try {
     for (const id of fact.sourceRoleIds) assert.ok(snapshot.roleEngine.roleHistory.some(role => role.roleId === id))
     for (const id of fact.sourceLuckEffectIds) assert.ok(snapshot.luckEffectHistory.some(effect => effect.id === id))
     for (const id of fact.sourceRelationIds) {
+      if (fact.semanticType === 'relationship_pressure') {
+        assert.ok(snapshot.stemFacts.some(relation => relation.id === id && relation.action === 'control'))
+        continue
+      }
       const relation = [...snapshot.branchFacts, ...snapshot.formationFacts].find(relation => relation.id === id)
       assert.ok(relation?.participants.includes(palace.sourceParticipantIds[0]))
       assert.ok(['six_combination', 'clash', 'three', 'half'].includes(relation.kind))
@@ -171,7 +175,7 @@ try {
   assert.ok(section(assemble([greatFact]), 'CH-06').availableUnitIds.length)
 
   const allowedTypes = new Set(['relationship_palace_context', 'relationship_significator', 'relationship_palace_relation',
-    'relationship_contact_signal', 'relationship_change_signal'])
+    'relationship_contact_signal', 'relationship_change_signal', 'relationship_formation', 'relationship_pressure'])
   assert.ok(relationshipOutcomes.every(fact => allowedTypes.has(fact.semanticType)))
   assert.doesNotMatch(JSON.stringify(relationshipOutcomes),
     /"(?:textKo|textJa|textEn|score|rank|probability|partnerQuality|event|partnerChart)"\s*:/u)

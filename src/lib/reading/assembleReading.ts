@@ -7,6 +7,7 @@ import { collectHealthUnits } from './healthUnits'
 import { collectLuck, collectNatalJudgment, scopeNames } from './judgmentUnits'
 import { collectCurrentPersonality, collectNatalPersonality } from './personalityUnits'
 import { collectRelationshipUnits } from './relationshipUnits'
+import { collectEventTimingUnits } from './eventTimingUnits'
 import { bounds, uniqueIds, type RoutedUnits } from './semanticUnit'
 import type { ChapterId, ReadingAssembly, ReadingAssemblyInput, ReadingCertainty, ReadingScope, SelectionKind } from './types'
 
@@ -60,6 +61,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     collectRelationshipUnits(input.relationshipOutcomes ?? [], referenceTime, out)
     collectHealthUnits(input.healthOutcomes ?? [], referenceTime, out)
     collectMoneyUnits(input.moneyOutcomes ?? [], referenceTime, out)
+    collectEventTimingUnits(input.eventTimingFacts ?? [], referenceTime, out)
     if (current) collectCurrentPersonality(current, natalIds, referenceTime, out)
   }
   const semanticUnits = out.units()
@@ -68,6 +70,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     month.startInstant < month.endInstant && (index === 0 || months[index - 1].endInstant === month.startInstant))
   const annualPeriods = new Set(semanticUnits.filter(unit => unit.scope === 'sewoon'
     && unit.meaningRef.kind === 'scope_snapshot').map(unit => JSON.stringify(bounds(unit.period))))
+  const eventTimingAvailable = (input.eventTimingFacts?.length ?? 0) > 0
   const units = new Map(semanticUnits.map(unit => [unit.id, unit]))
   const chapterResults = chapters.map(entry => {
     const placements = out.placements(entry.id)
@@ -75,9 +78,14 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     const healthEnabled = entry.id === 'CH-07' && input.healthOutcomes !== undefined
     const moneyEnabled = entry.id === 'CH-05' && input.moneyOutcomes !== undefined
     const gaps = [...chapterGaps.filter(item => item.chapterId === entry.id && !relationshipEnabled && !healthEnabled && !moneyEnabled)]
-    if (moneyEnabled) {
+    if (moneyEnabled && !eventTimingAvailable) {
       gaps.push(gap(entry.id, 'money-coverage', 'source_gap',
         'Contract, business, spending and collaboration timing remains deferred.', 'B CH-5', 'OUT-MONEY-06'))
+    }
+    if (moneyEnabled && eventTimingAvailable) {
+      gaps.push(gap(entry.id, 'money-coverage', 'source_gap',
+        'Spending and collaboration timing remain deferred; contract and business timing is available only for mapped event evidence.',
+        'B CH-5', 'OUT-MONEY-06', 'Master 15 §6A'))
     }
     if (healthEnabled) {
       gaps.push(gap(entry.id, 'health-coverage', 'source_gap',

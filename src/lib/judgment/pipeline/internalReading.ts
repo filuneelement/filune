@@ -254,7 +254,8 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     const contextAvailable = required.every((key) => activePeriods[key])
     const fallback = { scopeId: recordId('unresolved-scope', [executionId, stage]), effectivePeriod: own ?? null }
     const scope = contextAvailable ? createExecutionScopeContext(producer, { executionId, referenceTime, stage,
-      selectedPeriodRefs: Object.fromEntries(required.map((key) => [key, activePeriods[key]!.periodId])) }) : null
+      selectedPeriodRefs: Object.fromEntries(required.map((key) => [key, activePeriods[key]!.periodId])),
+      intersectYearWithGreatLuck: stage === 'yearlyLuck' }) : null
     const selected = producer.entities.find((item) => item.periodRef === own?.periodId && item.sourceScope === stage && item.part === 'stem')
     const pillar = selected ? producer.facts.find((item) => item.id === selected.canonicalFactRef) : undefined
     const calendarConfirmed = !!own && pillar?.assessment === 'confirmed'
@@ -407,6 +408,12 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       ...month.roleEffectDeferrals.flatMap((item) => item.evidenceIds),
       ...month.functionEffects.effects.flatMap((effect) => effect.evidenceIds),
     ])
+    const judgmentCore = reading.judgmentCore.find((state) => state.scope === 'monthlyLuck') ?? null
+    const parent = reading.judgmentCore.find((state) => state.id === judgmentCore?.parentScopeId)
+    // Window entries can be consumed without the full parent chain from this evaluation.
+    const parentJudgmentCore = parent ? {
+      id: parent.id, scope: parent.scope, actualFunctions: parent.actualFunctions, stemFacts: parent.stemFacts,
+    } : null
     return {
       monthIndex: index + 1, calendarYear: year, calendarMonth: card.month, jieName: card.jieName, pillar: card.pillar,
       startInstant, endInstant, effectivePeriod, referenceTime: startInstant, scopeId, scope: month.scope,
@@ -417,7 +424,7 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       historicalStateRefs: month.runtimeStates.filter((state) => state.scopeId !== scopeId).map((state) => state.stateId),
       carryRefs: month.carryContext,
       currentApplications: month.currentApplications,
-      judgmentCore: reading.judgmentCore.find((state) => state.scope === 'monthlyLuck') ?? null,
+      judgmentCore, parentJudgmentCore,
       status: month.interpretation.status,
       stageStatus: { calendar: month.calendarStage.status, stemState: month.stemState.status,
         byeong: stages.find((stage) => stage.stageId === 'byeong')?.status ?? 'deferred',

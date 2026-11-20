@@ -14,7 +14,7 @@ const relationshipUnits = assembly => assembly.semanticUnits.filter(unit => unit
 const scopeNames = { natal: 'natal', greatLuck: 'daewoon', yearlyLuck: 'sewoon', monthlyLuck: 'month' }
 const relationKinds = ['six_combination', 'clash', 'three', 'half']
 const allowedTypes = ['relationship_palace_context', 'relationship_significator', 'relationship_palace_relation',
-  'relationship_contact_signal', 'relationship_change_signal']
+  'relationship_contact_signal', 'relationship_change_signal', 'relationship_formation', 'relationship_pressure']
 const forbidden = /"(?:marriage_prediction|divorce_prediction|affair_prediction|fated_partner|perfect_match|partner_quality|compatibility(?:_score)?|relationship_score|relationship_probability|has_spouse|is_married|is_single|has_partner|partner_exists|married|dating|breakup|relationship_failure|relationship_favorable|relationship_unfavorable|score|rank|probability|textKo|textJa|textEn|localeText|customerText|relationshipStyle)"|\d+\s*%/iu
 
 try {
@@ -67,7 +67,7 @@ try {
     const [palaceId] = palace.sourceParticipantIds
     assert.equal(natal.formationBranchPool.find(item => item.id === palaceId).branch, palace.branch)
     const positions = ['year', 'month', 'time']
-    const natalRelations = facts.filter(fact => fact.scope === 'natal' && fact.sourceRelationIds.length)
+    const natalRelations = facts.filter(fact => fact.scope === 'natal' && fact.semanticType === 'relationship_palace_relation')
 
     for (const fact of facts) {
       const snapshot = snapshots.get(fact.scopeId)
@@ -87,16 +87,26 @@ try {
           && fact.sourceRelationIds.includes(state.event.sourceRelationFactId)))
       }
       for (const id of fact.sourceRelationIds) {
+        if (fact.semanticType === 'relationship_pressure') {
+          assert.ok(snapshot.stemFacts.some(relation => relation.id === id && relation.action === 'control'
+            && fact.sourceParticipantIds.includes(relation.target.id)))
+          continue
+        }
         const relation = [...snapshot.branchFacts, ...snapshot.formationFacts].find(item => item.id === id)
         assert.ok(relation?.participants.includes(palaceId))
         assert.equal(relation.kind, fact.relationKind)
-        assert.deepEqual(fact.sourceParticipantIds, sorted(relation.participants))
+        if (fact.semanticType === 'relationship_formation') {
+          assert.ok(relation.participants.every(participant => fact.sourceParticipantIds.includes(participant)))
+          assert.equal(fact.certainty, 'confirmed')
+        } else {
+          assert.deepEqual(fact.sourceParticipantIds, sorted(relation.participants))
+          if (fact.scope !== 'natal') assert.notEqual(fact.certainty, 'confirmed')
+        }
         assert.ok(relation.participants.some(participant => participant !== palaceId && participants.get(participant)?.scope === snapshot.scope))
         assert.ok(relationKinds.includes(relation.kind))
         if (fact.semanticType === 'relationship_contact_signal') assert.deepEqual(fact.possibleInterpretations, ['contact', 'change'])
         if (fact.semanticType === 'relationship_change_signal') assert.deepEqual(fact.possibleInterpretations, ['change'])
         if (relation.kind === 'half') assert.equal(fact.semanticType, 'relationship_palace_relation')
-        if (fact.scope !== 'natal') assert.notEqual(fact.certainty, 'confirmed')
       }
       if (fact.semanticType === 'relationship_significator') {
         const [entity] = fact.sourceParticipantIds
@@ -195,7 +205,8 @@ try {
       const occurrences = premium.chapters.flatMap(section => section.placements.filter(item => item.unitId === unit.id)
         .map(item => [section.id, item.role]))
       assert.deepEqual(occurrences, [['CH-06', 'conclusion'], ...(unit.scope === 'sewoon' ? [['CH-09', 'timing']]
-        : unit.scope === 'month' ? [['CH-09', 'context'], ['CH-10', 'timing']] : [])])
+        : unit.scope === 'month' ? [['CH-09', 'context'], ['CH-10', 'timing']]
+          : unit.scope === 'daewoon' && 'result' in fact ? [['CH-08', 'timing']] : [])])
       if (unit.scope === 'sewoon') tallies.reusedAnnual++
       if (unit.scope === 'month') tallies.reusedMonth++
     }

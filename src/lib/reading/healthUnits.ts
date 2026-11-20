@@ -26,6 +26,7 @@ export function collectHealthUnits(facts: readonly HealthOutcomeFact[], referenc
       topic: 'health', scope: fact.scope, certainty: fact.certainty,
       sourceStatus: fact.temporalStatus, lifecycle: fact.lifecycle,
       ...('direction' in fact && { direction: fact.direction, currentFunction: fact.currentFunction }),
+      ...('lifeMeanings' in fact && { healthLifeMeanings: structuredClone(fact.lifeMeanings) }),
       meaningRef: { producer: 'outcome', kind: 'outcome_fact', recordId: fact.id, scopeId: fact.scopeId },
       period: fact.period,
       sourceFactIds: [...fact.sourceJudgmentIds, ...fact.sourceRelationIds, ...fact.sourceParticipantIds,
