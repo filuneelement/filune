@@ -2,6 +2,8 @@ import type { CalculatedChart } from '../canonical/types'
 import { chapterRegistry, conclusionRoutes } from './chapterRegistry'
 import { collectReadingUnits } from './deduplication'
 import { chapterGaps, gap, selectionKinds } from './gaps'
+import { collectMoneyUnits } from './moneyUnits'
+import { collectHealthUnits } from './healthUnits'
 import { collectLuck, collectNatalJudgment, scopeNames } from './judgmentUnits'
 import { collectCurrentPersonality, collectNatalPersonality } from './personalityUnits'
 import { collectRelationshipUnits } from './relationshipUnits'
@@ -56,6 +58,8 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
       ...(current?.effectHistory.map(effect => effect.id) ?? []),
     ])
     collectRelationshipUnits(input.relationshipOutcomes ?? [], referenceTime, out)
+    collectHealthUnits(input.healthOutcomes ?? [], referenceTime, out)
+    collectMoneyUnits(input.moneyOutcomes ?? [], referenceTime, out)
     if (current) collectCurrentPersonality(current, natalIds, referenceTime, out)
   }
   const semanticUnits = out.units()
@@ -68,7 +72,19 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
   const chapterResults = chapters.map(entry => {
     const placements = out.placements(entry.id)
     const relationshipEnabled = entry.id === 'CH-06' && input.relationshipOutcomes !== undefined
-    const gaps = [...chapterGaps.filter(item => item.chapterId === entry.id && !relationshipEnabled)]
+    const healthEnabled = entry.id === 'CH-07' && input.healthOutcomes !== undefined
+    const moneyEnabled = entry.id === 'CH-05' && input.moneyOutcomes !== undefined
+    const gaps = [...chapterGaps.filter(item => item.chapterId === entry.id && !relationshipEnabled && !healthEnabled && !moneyEnabled)]
+    if (moneyEnabled) {
+      gaps.push(gap(entry.id, 'money-coverage', 'source_gap',
+        'Contract, business, spending and collaboration timing remains deferred.', 'B CH-5', 'OUT-MONEY-06'))
+    }
+    if (healthEnabled) {
+      gaps.push(gap(entry.id, 'health-coverage', 'source_gap',
+        'Independent attention relief timing remains deferred.', 'B CH-7', 'OUT-HEALTH-02'))
+      if (!placements.length) gaps.push(gap(entry.id, 'health-input', 'engine_gap',
+        'Evaluated Health facts are unavailable.', 'OUT-HEALTH-01', 'OUT-HEALTH-02'))
+    }
     if (relationshipEnabled) {
       gaps.push(gap(entry.id, 'relationship-coverage', 'source_gap',
         'Relationship development and commitment timing remain deferred.', 'B CH-6', 'OUT-REL-03', 'OUT-REL-05'))
@@ -104,7 +120,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
       gaps.push(gap(entry.id, 'input', 'engine_gap', 'Source results are unavailable.', `B ${entry.sourceSection}`))
     }
     return {
-      id: entry.id, readiness: relationshipEnabled ? 'partial' as const : entry.readiness, placements, gaps, selections,
+      id: entry.id, readiness: relationshipEnabled || healthEnabled || moneyEnabled ? 'partial' as const : entry.readiness, placements, gaps, selections,
       availableUnitIds: uniqueIds(placements.filter(item => item.visibility === 'available').map(item => item.unitId)),
       customerRenderable: false as const,
       ...(entry.id === 'F-LINK' && { navigationChapterIds: ['CH-04', 'CH-05', 'CH-06', 'CH-07', 'CH-08', 'CH-10'] as const }),
