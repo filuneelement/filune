@@ -1,0 +1,6 @@
+export { buildCompatibilityFacts } from './buildCompatibilityFacts'
+export type * from './types'
+export { buildStructuralCompatibility } from './structuralPolicy'
+export type { CompatibilityStructuralEffect, DirectionalCompatibilityResult, DirectionalVerdict } from './structuralPolicy'
+export { buildPersonalityInteraction } from './personalityInteraction'
+export type { PersonalityInteractionFact, PersonalityInteractionPerson } from './personalityInteraction'

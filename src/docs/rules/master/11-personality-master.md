@@ -578,3 +578,12 @@ DayPillar
 어떤 구조적 역할을 하는가
 를 함께 보아 성격을 구성한다.
 
+
+## 인성 우세와 표현 발현
+
+- 기존 Personality의 확정된 `prominent`·`very_prominent` 또는 Judgment에 전달된 검증된 인성 과다 근거는 인성 우세를 확인한다. 인성 우세가 확인되면 식상 기능 억제와 원국 표현 억제를 각각 확정한다. 출현, 글자 수, 고객 문구로 우세 등급을 생성하지 않는다.
+- 현재 표현은 원국 표현과 별개로 보존한다. 유효한 동일 현재 범위에서 기존 Judgment가 인성 기능 약화와 실제 작동하는 식상 기능 강화를 모두 확인하면 `current_expression_relief`를 확정한다. 원국의 표현 억제 기록은 유지한다.
+- 기존 표현 억제 경로가 실제 강화되면 `current_expression_constraint_strengthened`를 기록한다. 기존 Judgment가 확인한 인성 강화와 식상 약화, 또는 기존 억제 경로에 연결된 인성의 실제 식상 기능 약화가 근거가 된다. 운에 글자만 등장하거나 만료된 근거는 효과를 만들지 않는다.
+- 발현 효과는 원국 Personality Fact, 원국과 현재 Judgment 및 작용 근거 ID, 현재 범위를 추적한다. 우세나 작용 근거가 부족한 항목은 유보한다. 이 규칙은 우세 등급을 새로 계산하거나 기간을 생성하는 기준을 정의하지 않는다.
+
+[Compatibility-03 사용자 승인](../../codex/compatibility-03-personality-interaction-decision.md)
