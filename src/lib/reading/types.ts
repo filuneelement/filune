@@ -96,6 +96,9 @@ export interface ReadingSemanticUnit extends ReadingProvenance {
   readonly healthLifeMeanings?: Extract<HealthOutcomeFact, { lifeMeanings: unknown }>['lifeMeanings']
   readonly eventType?: EventTimingFact['eventType']
   readonly eventDirection?: EventTimingFact['direction']
+  readonly originScope?: EventTimingFact['originScope']
+  readonly scopeGanZhi?: EventTimingFact['scopeGanZhi']
+  readonly parentScopeGanZhi?: EventTimingFact['parentScopeGanZhi']
   readonly effectProjections?: readonly {
     readonly scope: ReadingScope
     readonly scopeId: string

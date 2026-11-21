@@ -3,6 +3,8 @@ import type { createBasicChartViewModel } from './lib/basicChartViewModel'
 import type { GreatLuckGender, GreatLuckResult } from './lib/calculateGreatLuck'
 import type { FourPillars, ThreePillars } from './lib/calculateEightChar'
 import LuneVisual from './components/LuneVisual'
+import type { EventDomain } from './lib/eventTiming'
+import type { ReadingAssembly } from './lib/reading'
 import type { Birthplace } from './lib/timeCorrection'
 import {
   getDefaultCountryForLocale,
@@ -23,6 +25,7 @@ const BasicChartResult = lazy(() => import('./components/BasicChartResult'))
 
 type ResultRouteData = {
   pillars: PillarResult
+  reading?: ReadingAssembly
   name: string
   gender: string
   year: string
@@ -44,6 +47,18 @@ type ResultHistoryState = {
 }
 
 type WizardStep = number | 'permission' | 'lune-intro'
+
+const eventContextOptions = [
+  { value: 'contract', ja: '契約手続き中', ko: '계약 절차 진행 중', en: 'A contract process in progress' },
+  { value: 'business_start', ja: '事業の立ち上げ', ko: '사업 시작 준비', en: 'Preparing to start a business' },
+  { value: 'business_expansion', ja: '既存事業の拡大', ko: '운영 중인 사업 확장', en: 'Expanding an existing business' },
+] as const satisfies readonly ({ value: EventDomain } & Record<Locale, string>)[]
+
+const eventContextLabels = {
+  ja: { label: '相談する予定（任意）', none: '指定しない' },
+  ko: { label: '살펴볼 계획 (선택)', none: '선택 안 함' },
+  en: { label: 'Plans to consider (optional)', none: 'None selected' },
+}
 
 const topicQuestionConfig = {
   love: { statusQuestion: 'relationshipStatus', durationWhenStatus: 'dating' },
@@ -74,6 +89,7 @@ function App() {
   const [relationshipStatus, setRelationshipStatus] = useState(initialResult?.relationshipStatus ?? '')
   const [relationshipDuration, setRelationshipDuration] = useState(initialResult?.relationshipDuration ?? '')
   const [optionalQuestion, setOptionalQuestion] = useState(initialResult?.optionalQuestion ?? '')
+  const [eventContext, setEventContext] = useState<EventDomain>()
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [name, setName] = useState(initialResult?.name ?? '')
   const [gender, setGender] = useState(initialResult?.gender ?? '')
@@ -269,7 +285,7 @@ function App() {
     setWizardStep(4)
   }
 
-  async function calculateAndShowResult() {
+  async function calculateAndShowResult(context?: EventDomain) {
     setPillars(null)
     if (!validateBirth()) {
       setWizardStep(3)
@@ -280,21 +296,16 @@ function App() {
     const numericMonth = Number(month)
     const numericDay = Number(day)
     try {
-      const { calculateEightChar, calculateEightCharWithoutBirthTime } = await import('./lib/calculateEightChar')
-      const calculatedPillars = timeUnknown
-        ? calculateEightCharWithoutBirthTime({ year: numericYear, month: numericMonth, day: numericDay })
-        : calculateEightChar({
-            year: numericYear,
-            month: numericMonth,
-            day: numericDay,
-            hour: Number(hour),
-            minute: Number(minute),
-          }, {
-            mode: timeCorrectionEnabled && birthplace ? 'longitude' : 'none',
-            birthplace,
-          })
+      const { prepareProductResult } = await import('./lib/product/prepareProductResult')
+      const result = await prepareProductResult({
+        date: { year: numericYear, month: numericMonth, day: numericDay },
+        time: timeUnknown ? { known: false } : { known: true, value: { hour: Number(hour), minute: Number(minute) } },
+        gender: selectedGender ?? undefined,
+        birthplace,
+        timeCorrectionMode: timeCorrectionEnabled && birthplace ? 'longitude' : 'none',
+      }, { eventContext: context })
       const routeData: ResultRouteData = {
-        pillars: calculatedPillars,
+        ...result,
         name,
         gender,
         year,
@@ -311,7 +322,7 @@ function App() {
         optionalQuestion,
       }
       window.history.pushState({ filuneResult: routeData } satisfies ResultHistoryState, '', '/result')
-      setPillars(calculatedPillars)
+      setPillars(result.pillars)
       setIsResultPage(true)
       setIsTransitioning(false)
       setError('')
@@ -326,10 +337,10 @@ function App() {
     setWizardStep(6)
   }
 
-  async function beginReading() {
+  async function beginReading(context?: EventDomain) {
     setWizardStep(7)
     setIsTransitioning(true)
-    await calculateAndShowResult()
+    await calculateAndShowResult(context)
   }
 
   return (
@@ -545,7 +556,15 @@ function App() {
       </div>}
       {!isResultPage && wizardStep === 4 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(3)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.topicEyebrow}</p><h1>{t.flow.topicQuestion}</h1><div className="story-options">{t.flow.topics.map((topic, i) => <button key={i} type="button" className={interestTopic === ['self','love','work','money','future'][i] ? 'selected' : ''} onClick={() => { setInterestTopic(['self','love','work','money','future'][i]); setRelationshipStatus(''); setRelationshipDuration('') }}>{topic}</button>)}</div><button type="button" className="story-cta story-cta--navy" disabled={!interestTopic} onClick={() => setWizardStep(interestTopic in topicQuestionConfig ? 5 : 6)}>{t.flow.next}</button></div></section>}
       {!isResultPage && wizardStep === 5 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(4)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.followUp}</p><h1>{interestTopic in topicQuestionConfig ? t.flow.relationshipQuestion : t.flow.topicQuestion}</h1>{interestTopic in topicQuestionConfig ? <><div className="story-options">{t.flow.relationshipStatuses.map((v, i) => <button key={i} type="button" className={relationshipStatus === ['single','dating','married'][i] ? 'selected' : ''} onClick={() => { setRelationshipStatus(['single','dating','married'][i]); setRelationshipDuration('') }}>{v}</button>)}</div>{relationshipStatus === topicQuestionConfig.love.durationWhenStatus && <><h2>{t.flow.durationQuestion}</h2><div className="story-options">{t.flow.durations.map((v,i) => <button key={i} type="button" className={relationshipDuration === String(i) ? 'selected' : ''} onClick={() => setRelationshipDuration(String(i))}>{v}</button>)}</div></>}</> : <p className="story-note">{t.flow.noQuestions}</p>}<button type="button" className="story-cta story-cta--navy" disabled={interestTopic in topicQuestionConfig && (!relationshipStatus || (relationshipStatus === topicQuestionConfig.love.durationWhenStatus && !relationshipDuration))} onClick={nextAfterConditional}>{t.flow.next}</button></div></section>}
-      {!isResultPage && wizardStep === 6 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(interestTopic in topicQuestionConfig ? 5 : 4)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.optional}</p><h1>{t.flow.optionalQuestion}</h1><textarea maxLength={200} value={optionalQuestion} placeholder={t.flow.optionalPlaceholder} onChange={(event) => setOptionalQuestion(event.target.value)}/><small className="story-counter">{optionalQuestion.length}/200</small><button type="button" className="story-cta story-cta--navy" onClick={beginReading}>{t.flow.next}</button><button type="button" className="story-skip" onClick={beginReading}>{t.flow.skip}</button></div></section>}
+      {!isResultPage && wizardStep === 6 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(interestTopic in topicQuestionConfig ? 5 : 4)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.optional}</p><h1>{t.flow.optionalQuestion}</h1><textarea maxLength={200} value={optionalQuestion} placeholder={t.flow.optionalPlaceholder} onChange={(event) => setOptionalQuestion(event.target.value)}/><small className="story-counter">{optionalQuestion.length}/200</small>
+        <label className="story-event-context">
+          {eventContextLabels[locale].label}
+          <select value={eventContext ?? ''} onChange={(event) => setEventContext(eventContextOptions.find(option => option.value === event.target.value)?.value)}>
+            <option value="">{eventContextLabels[locale].none}</option>
+            {eventContextOptions.map(option => <option key={option.value} value={option.value}>{option[locale]}</option>)}
+          </select>
+        </label>
+        <button type="button" className="story-cta story-cta--navy" onClick={() => void beginReading(eventContext)}>{t.flow.next}</button><button type="button" className="story-skip" onClick={() => void beginReading()}>{t.flow.skip}</button></div></section>}
       {!isResultPage && wizardStep === 7 && <section className="story-step story-step--navy"><LuneVisual className="story-lune"/><p className="story-copy">{t.flow.transition}</p>{isTransitioning && <span className="story-loader" aria-label={t.flow.loading}/>}</section>}
 
       {isResultPage && pillars && chart && fullAge !== null && (

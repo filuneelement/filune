@@ -158,6 +158,48 @@ try {
   assert.equal(projected.projections[0].status, 'projected')
   assert.equal(projected.facts[0].originScope, 'natal', 'projection preserves source origin scope')
   assert.equal(projected.facts[0].scopeGanZhi, decision.scopeGanZhi, 'projection preserves named scope identity')
+  // Replay the exact projected Fact that exposed the Assembly provenance loss in P4-N.
+  const { collectEventTimingUnits } = await load('reading/eventTimingUnits')
+  const originAssemblyInput = { judgment, eventTimingFacts: projected.facts, productScope: 'premium', referenceTime: at }
+  const originReading = assembleReading(originAssemblyInput)
+  validateReadingAssembly(originReading)
+  const projectedFact = projected.facts[0]
+  const assembledEvent = originReading.semanticUnits.find(unit => unit.meaningRef.recordId === projectedFact.id)
+  assert.ok(assembledEvent, 'projected Fact reaches Reading Assembly')
+  let convertedEvent
+  collectEventTimingUnits(originAssemblyInput.eventTimingFacts, at, { add: unit => { convertedEvent = unit } })
+  const identity = unit => ({
+    factId: unit.meaningRef.recordId, originScope: unit.originScope, scope: unit.scope,
+    scopeId: unit.meaningRef.scopeId, scopeGanZhi: unit.scopeGanZhi, parentScopeGanZhi: unit.parentScopeGanZhi,
+    sourceFactIds: [...new Set(unit.sourceFactIds)].sort(),
+    sourceRoleIds: [...new Set(unit.sourceRoleIds)].sort(),
+    sourceEffectIds: [...new Set(unit.sourceEffectIds)].sort(),
+    evidenceIds: [...new Set(unit.evidenceIds)].sort(),
+  })
+  const expectedIdentity = fact => ({
+    factId: fact.id, originScope: fact.originScope, scope: fact.scope,
+    scopeId: fact.scopeId, scopeGanZhi: fact.scopeGanZhi, parentScopeGanZhi: fact.parentScopeGanZhi,
+    sourceFactIds: [fact.decisionId, ...fact.sourceJudgmentIds, ...fact.sourceRelationIds,
+      ...fact.sourceOutcomeIds, ...fact.sourceEvidenceIds, ...fact.sourcePatternContextIds].sort(),
+    sourceRoleIds: fact.sourceRoleIds, sourceEffectIds: fact.sourceLuckEffectIds, evidenceIds: fact.provenance,
+  })
+  assert.deepEqual(identity(convertedEvent), expectedIdentity(projectedFact), 'eventTimingUnits preserves projected origin, scope identity and source IDs')
+  assert.deepEqual(identity(assembledEvent), expectedIdentity(projectedFact), 'final Unit preserves projected origin, scope identity and source IDs')
+  assert.equal(originReading.chapters.find(chapter => chapter.id === 'CH-09')
+    .placements.some(placement => placement.unitId === assembledEvent.id), true)
+  const freeOriginReading = assembleReading({ ...originAssemblyInput, productScope: 'free' })
+  assert.ok(freeOriginReading.semanticUnits.every(unit => unit.meaningRef.recordId !== projectedFact.id))
+
+  const annualSupport = contractCases.find(test => test.expected === 'contract_favorable')
+  const annualDecision = buildEventTimingDecisions(annualSupport.evidence)[0]
+  const annualProjection = projectEventTimingDecisions([{ ...annualDecision, scopeId: productionYear.id }], [projectionScope], at)
+  const annualFact = annualProjection.facts[0]
+  assert.equal(annualFact.originScope, 'sewoon')
+  const annualReading = assembleReading({ ...originAssemblyInput, eventTimingFacts: annualProjection.facts })
+  const annualEvent = annualReading.semanticUnits.find(unit => unit.meaningRef.recordId === annualFact.id)
+  assert.ok(annualEvent, 'existing annual contract support reaches Assembly')
+  assert.deepEqual(identity(annualEvent), expectedIdentity(annualFact), 'Assembly preserves a non-natal origin and its scope and sources')
+
   const mismatchedScope = projectEventTimingDecisions([projectedDecision], [{ ...projectionScope,
     snapshot: { ...productionYear, scope: 'greatLuck' } }], at)
   assert.equal(mismatchedScope.facts.length, 0)
@@ -175,7 +217,10 @@ try {
     policyViolations: 0, inventedGregorianDates: 0, sourceSnapshotTimingFacts: 0,
     sourceSnapshotDecisions: result.sourceCases.reduce((total, item) => total + item.decisions.length, 0),
     noIntervalDecision: 'confirmed/not_projectable', contractProjection: 'PASS', productionCalendarWiring: 'PASS',
-    productionEventFacts: productionTiming.facts.length }, null, 2))
+    productionEventFacts: productionTiming.facts.length, assemblyOriginPreservation: 'PASS',
+    assemblyEventOrigin: { originScope: assembledEvent.originScope, scope: assembledEvent.scope, scopeGanZhi: assembledEvent.scopeGanZhi,
+      parentScopeGanZhi: assembledEvent.parentScopeGanZhi, sameFactId: assembledEvent.meaningRef.recordId === projectedFact.id },
+    assemblyAnnualOrigin: annualEvent.originScope }, null, 2))
   if (!sourceNegativeReady) process.exitCode = 1
 } catch (error) {
   console.error(error)

@@ -21,9 +21,13 @@ export function collectEventTimingUnits(facts: readonly EventTimingFact[], refer
       topic: 'event_timing', scope: fact.scope, certainty: fact.certainty,
       sourceStatus: fact.temporalStatus, lifecycle: fact.currentLifecycle,
       eventType: fact.eventType, eventDirection: fact.direction,
+      originScope: fact.originScope,
+      ...(fact.scopeGanZhi !== undefined && { scopeGanZhi: fact.scopeGanZhi }),
+      ...(fact.parentScopeGanZhi !== undefined && { parentScopeGanZhi: fact.parentScopeGanZhi }),
       meaningRef: { producer: 'event_timing', kind: 'event_timing_fact', recordId: fact.id, scopeId: fact.scopeId },
       period: fact.period,
-      sourceFactIds: [...fact.sourceJudgmentIds, ...fact.sourceRelationIds, ...fact.sourceOutcomeIds, ...fact.sourceEvidenceIds],
+      sourceFactIds: [fact.decisionId, ...fact.sourceJudgmentIds, ...fact.sourceRelationIds,
+        ...fact.sourceOutcomeIds, ...fact.sourceEvidenceIds, ...(fact.sourcePatternContextIds ?? [])],
       sourceRoleIds: fact.sourceRoleIds, sourceEffectIds: fact.sourceLuckEffectIds, evidenceIds: fact.provenance,
     }, conclusion, ...repeats)
   }

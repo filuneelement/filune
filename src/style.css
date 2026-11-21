@@ -877,6 +877,8 @@ main:has(.story-step), main:has(.story-form-screen) { width: 100%; max-width: no
 .story-panel .story-cta { width: 100%; margin-top: 1rem; }
 .story-panel textarea { display: block; width: 100%; min-height: 150px; resize: vertical; padding: .9rem; border: 1px solid var(--silver-line); border-radius: 8px; background: white; color: var(--deep-navy); font: inherit; }
 .story-counter { display: block; margin-top: .35rem; color: var(--muted-navy); text-align: right; }
+.story-event-context { display: grid; gap: .45rem; margin-top: 1rem; }
+.story-event-context select { width: 100%; padding: .7rem .9rem; border: 1px solid var(--silver-line); border-radius: 8px; background: white; color: var(--deep-navy); font: inherit; }
 .story-skip { display: block; margin: .8rem auto 0; padding: .5rem 1rem; border: 0; background: transparent; color: var(--muted-navy); text-decoration: underline; cursor: pointer; font: inherit; }
 .story-note { margin: 1rem 0 2rem; color: var(--muted-navy); }
 .story-loader { width: 18px; height: 18px; border: 1px solid #b59a60; border-top-color: transparent; border-radius: 50%; animation: story-spin .7s linear infinite; }
