@@ -13,13 +13,16 @@ export type EventEvidenceType =
   | 'business_activity_support' | 'business_result_support' | 'business_start_support'
   | 'business_expansion_support' | 'business_adjustment_need' | 'business_restructure_trigger'
   | 'business_execution_obstruction'
+  | 'spouse_palace_contact' | 'spouse_palace_change' | 'partner_activation' | 'food_god_activation'
+  | 'day_master_combine' | 'relationship_support' | 'relationship_damage' | 'communication_change'
+  | 'spouse_relationship_axis' | 'spouse_event_activation' | 'spouse_palace_disruption'
 
 export interface EventEvidenceFact {
   readonly id: string
-  readonly eventDomain: EventDomain
+  readonly eventDomain: EventDomain | 'relationship'
   readonly evidenceType: EventEvidenceType
   readonly functionType: EventEvidenceFunction
-  readonly direction: 'favorable' | 'unfavorable' | 'deferred'
+  readonly direction: 'favorable' | 'unfavorable' | 'neutral' | 'deferred'
   readonly scope: EventScope
   /** Scope where the structural path first originated. */
   readonly originScope: EventScope
@@ -49,8 +52,10 @@ export type EventTimingType =
   | 'contract_favorable' | 'contract_delay' | 'contract_process_trouble' | 'contract_termination_or_restructure'
   | 'business_start_favorable' | 'business_start_delay'
   | 'business_expansion_favorable' | 'business_adjustment' | 'business_restructure'
+  | 'relationship_formation' | 'relationship_change' | 'marriage_opportunity' | 'marriage_favorable'
+  | 'marriage_caution' | 'relationship_strain' | 'relationship_relief' | 'relationship_breakdown_risk'
 
-export type EventTimingDirection = 'favorable' | 'delay' | 'trouble' | 'adjustment' | 'restructure' | 'disruption'
+export type EventTimingDirection = 'favorable' | 'delay' | 'trouble' | 'adjustment' | 'restructure' | 'disruption' | 'opportunity' | 'change' | 'caution' | 'strain' | 'relief' | 'risk'
 
 /** Semantic event assertion in a named Judgment scope, independent of Gregorian dates. */
 export type EventTimingDecision = {
@@ -70,6 +75,7 @@ export type EventTimingDecision = {
   readonly currentLifecycle: 'active' | 'reduced'
   /** Effective within this source/Judgment scope; not a statement about today's calendar. */
   readonly currentlyEffective: boolean
+  readonly breakdownPathIds?: readonly string[]
   readonly sourceEvidenceIds: readonly string[]
   readonly sourceJudgmentIds: readonly string[]
   readonly sourceRelationIds: readonly string[]
@@ -97,6 +103,7 @@ export type EventTimingFact = {
   readonly currentLifecycle: 'active' | 'reduced' | 'expired'
   readonly temporalStatus: 'current' | 'future' | 'expired'
   readonly currentlyEffective: boolean
+  readonly breakdownPathIds?: readonly string[]
   readonly sourceEvidenceIds: readonly string[]
   readonly sourceJudgmentIds: readonly string[]
   readonly sourceRelationIds: readonly string[]

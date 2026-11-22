@@ -18,7 +18,7 @@ const byType = (facts: readonly EventEvidenceFact[], type: EventEvidenceFact['ev
     && fact.temporalStatus !== 'expired' && fact.certainty !== 'deferred')
 const samePath = (left: EventEvidenceFact, right: EventEvidenceFact) => left.sourcePathId === right.sourcePathId
 
-function makeDecision(type: EventTimingType, direction: EventTimingDecision['direction'], scope: EventEvidenceFact,
+export function createEventTimingDecision(type: EventTimingType, direction: EventTimingDecision['direction'], scope: EventEvidenceFact,
   supporting: readonly EventEvidenceFact[]): EventTimingDecision {
   const evidence = [...supporting].sort((a, b) => a.id.localeCompare(b.id))
   const classes = new Set(evidence.map(item => item.provenanceClass))
@@ -107,7 +107,7 @@ function applyBusinessTimingPolicy(evidence: readonly EventEvidenceFact[], add: 
 export function buildEventTimingDecisions(evidence: readonly EventEvidenceFact[]): readonly EventTimingDecision[] {
   const decisions: EventTimingDecision[] = []
   const add: AddDecision = (type, direction, anchor, sources) => {
-    if (timed(anchor.scope) && sources.length) decisions.push(makeDecision(type, direction, anchor, sources))
+    if (timed(anchor.scope) && sources.length) decisions.push(createEventTimingDecision(type, direction, anchor, sources))
   }
   applyContractTimingPolicy(evidence, add)
   applyBusinessTimingPolicy(evidence, add)
@@ -130,6 +130,7 @@ function projectDecision(decision: EventTimingDecision, period: Validity, refere
     certainty: decision.certainty, provenanceClass: decision.provenanceClass,
     currentLifecycle: temporalStatus === 'expired' ? 'expired' : decision.currentLifecycle,
     temporalStatus, currentlyEffective: status === 'effective' && decision.currentlyEffective,
+    ...(decision.breakdownPathIds && { breakdownPathIds: decision.breakdownPathIds }),
     sourceEvidenceIds: decision.sourceEvidenceIds, sourceJudgmentIds: decision.sourceJudgmentIds,
     sourceRelationIds: decision.sourceRelationIds, sourceRoleIds: decision.sourceRoleIds,
     sourcePatternContextIds: decision.sourcePatternContextIds,

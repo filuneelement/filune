@@ -932,6 +932,22 @@ excessiveExpression
 
 ---
 
+# 38-A. ResourceDominanceFact
+
+Master 11의 RD-01·RD-02에 따라 원국 인성 family의 우세를 계산한다. `TenGodProminence`는 별도의 기존 계약을 유지한다.
+
+| 필드 | 의미 |
+|---|---|
+| `id`, `sourcePerson`, `dayMaster` | 결과, 출처 인물 및 일간 |
+| `scope`, `scopeId` | 원국과 사용한 Judgment 범위 |
+| `certainty` | `confirmed`, `not_confirmed`, `deferred` |
+| `evidencePath` | 확정 시 `branch_layer_dominant` 또는 `month_resource_reinforced` |
+| `branchPositions`, `occurrenceIds` | 인성 본기 자리와 판정에 사용한 출현 근거. 출현별 정인·편인 구분은 원래 사실에 보존 |
+| `sourcePersonalityFactIds`, `sourceJudgmentFactIds` | 원래 성격과 구조 근거 ID |
+| `stemFactIds`, `formationFactIds` | 천간 관계와 유효한 국의 근거 ID. 통근 근거는 Judgment ID에 포함 |
+
+---
+
 # 39. PersonalityEvidence
 
 ## PK-080

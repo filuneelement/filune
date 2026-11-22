@@ -29,22 +29,14 @@ export interface BirthReadingOptions {
   monthlyWindowStart?: InternalReadingInput['monthlyWindowStart']
 }
 
-/** The product reading owner. Assembly receives projected facts from the existing Event Timing engine. */
-export function readBirthChart(birth: BirthInput, options: BirthReadingOptions) {
-  const { eventContext, referenceTime, productScope, monthlyWindowStart } = options
-  if (eventContext !== undefined && (typeof eventContext !== 'string' || !Object.hasOwn(contextKeys, eventContext))) {
-    throw new TypeError('Unsupported event context')
-  }
-
+export function birthReadingContext(referenceTime: string) {
   const at = new Date(referenceTime)
   const instant = at.toISOString()
   const jstYear = getCurrentJstYear(at)
   const firstJie = findJieBoundariesForGregorianYear(jstYear)[0]
   const monthlyLuckYear = at < firstJie.instant ? jstYear - 1 : jstYear
-  const evaluated = runInternalReading({
-    birth,
+  return {
     calculation: { referenceTime: instant, calculationVersion: CURRENT_CALCULATION_VERSION, monthlyLuckYear },
-    executionId: 'product-birth-reading',
     // The Judgment runtime requires a natal inspection window. Event projection uses Luck periods only.
     natalInspectionPeriod: {
       periodId: 'product-natal-inspection',
@@ -52,7 +44,20 @@ export function readBirthChart(birth: BirthInput, options: BirthReadingOptions) 
       to: { kind: 'exact', instant: new Date(at.getTime() + 1).toISOString() },
     },
     sources: { A, draftA, C, D, approval },
-    monthlyWindowStart,
+  } satisfies Pick<InternalReadingInput, 'calculation' | 'natalInspectionPeriod' | 'sources'>
+}
+
+/** The product reading owner. Assembly receives projected facts from the existing Event Timing engine. */
+export function readBirthChart(birth: BirthInput, options: BirthReadingOptions) {
+  const { eventContext, referenceTime, productScope, monthlyWindowStart } = options
+  if (eventContext !== undefined && (typeof eventContext !== 'string' || !Object.hasOwn(contextKeys, eventContext))) {
+    throw new TypeError('Unsupported event context')
+  }
+
+  const context = birthReadingContext(referenceTime)
+  const instant = context.calculation.referenceTime
+  const evaluated = runInternalReading({
+    ...context, birth, executionId: 'product-birth-reading', monthlyWindowStart,
   })
   const judgment: ReadingJudgmentResult = {
     ...evaluated,
@@ -76,7 +81,7 @@ export function readBirthChart(birth: BirthInput, options: BirthReadingOptions) 
   })
 }
 
-function collectEventScopes(judgment: ReadingJudgmentResult, referenceTime: string) {
+export function collectEventScopes(judgment: ReadingJudgmentResult, referenceTime: string) {
   const scopes = new Map<string, EvaluatedEventScope>(judgment.judgmentCore.map(snapshot =>
     [snapshot.id, { snapshot, evaluatedAt: referenceTime }]))
   for (const month of judgment.luck.monthlyWindow ?? []) {

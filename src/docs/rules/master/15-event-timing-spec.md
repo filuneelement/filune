@@ -344,3 +344,13 @@ P4-M implementation must prove, on source-backed existing fixtures or mark `NOT_
 9. No prohibited output, numerical weighting, customer-visible Saju jargon, unsupported outcome or domain recalculation appears.
 
 [Luck Master 08](./08-luck-master.md) · [Engine Integration 09](./09-engine-integration-spec.md) · [Outcome Semantic 14](./14-outcome-semantic-spec.md) · [Reading Assembly 13](./13-reading-assembly-spec.md)
+
+## 13. Compatibility 관계 시기 매핑
+
+Compatibility C4는 기존 Event Evidence → Decision → Calendar Projection → TimingFact 계약을 사용한다. 관계의 독립 결과는 `relationship_formation`, `relationship_change`, `marriage_opportunity`, `marriage_favorable`, `marriage_caution`, `relationship_strain`, `relationship_relief`, `relationship_breakdown_risk`다.
+
+결혼 기회와 유리함·주의는 별도 근거로 발행한다. 위험 확정은 구조 위험에 대한 확정도를 표현한다. Relationship Outcome, Judgment 및 C3에서 확인된 범위와 근거를 연결한다. 원자료에서 이름만 알려진 범위는 의미 판정을 보존하고 달력 투영을 유보한다. Day는 기존 평가 및 투영 지원을 따르며 장기·연·월 결과에 영향을 주지 않는다.
+
+[Compatibility Master 16](16-compatibility-spec.md)
+
+Master 16의 `BREAKDOWN-B`가 확인되면 배우자 축, 현재 배우자 사건 활성화, 배우자궁 교란의 근거와 경로 ID를 `relationship_breakdown_risk` Decision 및 달력 TimingFact에 연결한다. 같은 범위의 `BREAKDOWN-A` 근거도 보존한다.

@@ -184,10 +184,17 @@ function roleInteractions(people: readonly Person[], stems: readonly CrossStemIn
   return facts
 }
 
+/** Identity uses C1's canonical ordering of the two person IDs. */
+export function compatibilityPairIdentity(a: string, b: string) {
+  if (!a || !b || a === b) throw new TypeError('Compatibility requires distinct person IDs')
+  const canonicalOrder = a < b ? [a, b] as const : [b, a] as const
+  return { pairId: recordId('compatibility-pair', canonicalOrder), canonicalOrder }
+}
+
 /** Evaluates two independent natal snapshots; no personal states are written or re-evaluated. */
 export function buildCompatibilityFacts(a: CompatibilityPerson, b: CompatibilityPerson): CompatibilityFacts {
-  if (!a.id || !b.id || a.id === b.id) throw new TypeError('Compatibility requires distinct person IDs')
-  const [first, second] = inOrder([members(a), members(b)])
+  const { canonicalOrder } = compatibilityPairIdentity(a.id, b.id)
+  const [first, second] = canonicalOrder[0] === a.id ? [members(a), members(b)] : [members(b), members(a)]
   const stems = stemInteractions(first, second)
   const roots = [...rootSupport(first, second), ...rootSupport(second, first)]
   return {

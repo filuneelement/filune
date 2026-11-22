@@ -9,6 +9,7 @@ const census = { effects: 0, AtoB: 0, BtoA: 0, deferredRoleIds: 0, mixed: 0, asy
 const participant = (personId, entityId, value) => ({ personId, judgmentId: `natal:${personId}`, entityId, position: 'month', value })
 const empty = () => ({ stemInteractions: [], branchInteractions: [], rootSupport: [], roleInteractions: [] })
 const fixtureReferences = new WeakMap()
+export const structuralContractFixtures = {}
 
 // Synthetic C2 contracts supply independently verified path observations. This does
 // not stand in for the producer assertions over C1's unchanged source snapshots.
@@ -143,7 +144,9 @@ try {
   const asymmetric = empty()
   add(asymmetric, 'relief')
   add(asymmetric, 'damage-stopped', { classification: 'required', reverse: true })
-  assert.deepEqual(run(asymmetric).map(d => d.verdict), ['favorable', 'unfavorable'])
+  const asymmetricDirections = run(asymmetric)
+  assert.deepEqual(asymmetricDirections.map(d => d.verdict), ['favorable', 'unfavorable'])
+  structuralContractFixtures.asymmetric = { crossChart: { ...asymmetric, diagnostics: [] }, structural: asymmetricDirections }
 
   const favorableDominant = empty()
   add(favorableDominant, 'core-relief')
@@ -159,7 +162,9 @@ try {
   add(balanced, 'balanced-relief')
   add(balanced, 'balanced-damage', { classification: 'required' })
   add(balanced, 'extra-support', { action: 'root_support', classification: 'required' })
-  const [both] = run(balanced)
+  const balancedDirections = run(balanced)
+  structuralContractFixtures.balanced = { crossChart: { ...balanced, diagnostics: [] }, structural: balancedDirections }
+  const [both] = balancedDirections
   assert.equal(both.verdict, 'balanced_mixed')
   assert.ok(both.supportEffects.some(effect => effect.effectType === 'relieves_byeong'))
   assert.ok(both.damageEffects.some(effect => effect.effectType === 'damages_required_function'))
