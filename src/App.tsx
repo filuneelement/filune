@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react'
 import type { createBasicChartViewModel } from './lib/basicChartViewModel'
 import type { GreatLuckGender, GreatLuckResult } from './lib/calculateGreatLuck'
 import type { FourPillars, ThreePillars } from './lib/calculateEightChar'
@@ -6,6 +6,8 @@ import LuneVisual from './components/LuneVisual'
 import type { EventDomain } from './lib/eventTiming'
 import type { ReadingAssembly } from './lib/reading'
 import type { Birthplace } from './lib/timeCorrection'
+import type { BirthInput } from './lib/canonical/types'
+import type { CompatibilityRouteHistoryData, CompatibilityPersonInput, CompatibilityCustomerResult } from './lib/product/prepareCompatibilityProductResult'
 import {
   getDefaultCountryForLocale,
   getSavedCountry,
@@ -22,6 +24,8 @@ type PillarResult = FourPillars | ThreePillars
 type ChartViewModel = ReturnType<typeof createBasicChartViewModel>
 
 const BasicChartResult = lazy(() => import('./components/BasicChartResult'))
+const CompatibilityInput = lazy(() => import('./components/compatibility/CompatibilityInput'))
+const CompatibilityResult = lazy(() => import('./components/compatibility/CompatibilityResult'))
 
 type ResultRouteData = {
   pillars: PillarResult
@@ -44,9 +48,67 @@ type ResultRouteData = {
 
 type ResultHistoryState = {
   filuneResult?: ResultRouteData
+  filuneCompatibilityResult?: CompatibilityRouteHistoryData
+  filuneCompatibilityInput?: { version: 1; kind: 'compatibility-input' }
 }
 
-type WizardStep = number | 'permission' | 'lune-intro'
+type WizardStep = number | 'permission' | 'lune-intro' | 'compatibility'
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isBirthInput(value: unknown): value is BirthInput {
+  if (!isRecord(value) || !isRecord(value.date) || !isRecord(value.time)) return false
+  const { year, month, day } = value.date
+  if (![year, month, day].every(item => typeof item === 'number' && Number.isInteger(item))) return false
+  const calendar = new Date(0)
+  calendar.setUTCHours(0, 0, 0, 0)
+  calendar.setUTCFullYear(year as number, (month as number) - 1, day as number)
+  if ((year as number) < 1 || calendar.getUTCFullYear() !== year || calendar.getUTCMonth() !== (month as number) - 1
+    || calendar.getUTCDate() !== day) return false
+  const timeValid = value.time.known === false || (value.time.known === true && isRecord(value.time.value)
+    && Number.isInteger(value.time.value.hour) && Number(value.time.value.hour) >= 0 && Number(value.time.value.hour) <= 23
+    && Number.isInteger(value.time.value.minute) && Number(value.time.value.minute) >= 0 && Number(value.time.value.minute) <= 59)
+  if (!timeValid || !['none', 'longitude', 'trueSolarTime'].includes(String(value.timeCorrectionMode))) return false
+  if (value.gender !== undefined && value.gender !== '女性' && value.gender !== '男性') return false
+  if (value.birthplace === undefined) return true
+  return isRecord(value.birthplace) && typeof value.birthplace.code === 'string'
+    && typeof value.birthplace.countryCode === 'string' && typeof value.birthplace.region === 'string'
+    && typeof value.birthplace.city === 'string' && typeof value.birthplace.displayName === 'string'
+    && typeof value.birthplace.timezone === 'string' && typeof value.birthplace.latitude === 'number'
+    && typeof value.birthplace.longitude === 'number'
+}
+
+function isCustomerResult(value: unknown): value is CompatibilityCustomerResult {
+  if (!isRecord(value) || !Array.isArray(value.sections) || !Array.isArray(value.timeline)) return false
+  const statementsValid = (items: unknown) => Array.isArray(items) && items.every(statement => isRecord(statement)
+    && typeof statement.text === 'string' && Array.isArray(statement.provenanceRefs)
+    && (statement.periods === undefined || Array.isArray(statement.periods) && statement.periods.every(period =>
+      isRecord(period) && (period.intervalLabel === undefined || typeof period.intervalLabel === 'string'))))
+  return (value.headline === undefined || typeof value.headline === 'string')
+    && value.sections.every(section => isRecord(section) && typeof section.key === 'string'
+      && typeof section.heading === 'string' && statementsValid(section.statements))
+    && value.timeline.every(window => isRecord(window) && typeof window.temporal === 'string'
+      && typeof window.heading === 'string' && Array.isArray(window.provenanceRefs) && statementsValid(window.statements))
+}
+
+function isCompatibilityRouteData(value: unknown): value is CompatibilityRouteHistoryData {
+  if (!isRecord(value) || value.version !== 1 || value.kind !== 'compatibility'
+    || !['ja', 'ko', 'en'].includes(String(value.locale)) || typeof value.referenceTime !== 'string'
+    || !Number.isFinite(Date.parse(value.referenceTime)) || !isRecord(value.first) || !isRecord(value.second)
+    || !isBirthInput(value.first.birth) || !isBirthInput(value.second.birth) || !isCustomerResult(value.customerResult)) return false
+  const statuses = ['single', 'dating', 'partnered', 'married']
+  return (value.first.name === undefined || typeof value.first.name === 'string')
+    && (value.second.name === undefined || typeof value.second.name === 'string')
+    && (value.relationshipStatus === undefined || statuses.includes(String(value.relationshipStatus)))
+}
+
+function readCompatibilityRouteData(): CompatibilityRouteHistoryData | null {
+  const state = window.history.state as ResultHistoryState | null
+  const value = state?.filuneCompatibilityResult
+  return isCompatibilityRouteData(value) ? value : null
+}
 
 const eventContextOptions = [
   { value: 'contract', ja: '契約手続き中', ko: '계약 절차 진행 중', en: 'A contract process in progress' },
@@ -73,7 +135,8 @@ function readResultHistoryState(): ResultRouteData | null {
 
 function App() {
   const [initialResult] = useState(() => window.location.pathname === '/result' ? readResultHistoryState() : null)
-  const [locale, setLocale] = useState<Locale>(getSavedLocale)
+  const [initialCompatibilityResult] = useState(() => window.location.pathname === '/compatibility/result' ? readCompatibilityRouteData() : null)
+  const [locale, setLocale] = useState<Locale>(() => initialCompatibilityResult?.locale ?? getSavedLocale())
   const [countrySelectionSource, setCountrySelectionSource] = useState<CountrySelectionSource>(getSavedCountrySelectionSource)
   const [countryCode, setCountryCode] = useState<CountryCode>(() => {
     const savedCountry = getSavedCountry(getDefaultCountryForLocale(locale))
@@ -84,7 +147,19 @@ function App() {
   })
   const t = messages[locale]
   const [isResultPage, setIsResultPage] = useState(() => initialResult !== null)
-  const [wizardStep, setWizardStep] = useState<WizardStep>(1)
+  const [isCompatibilityResultPage, setIsCompatibilityResultPage] = useState(() => initialCompatibilityResult !== null)
+  const [compatibilityRouteData, setCompatibilityRouteData] = useState<CompatibilityRouteHistoryData | null>(initialCompatibilityResult)
+  const [compatibilityInputMounted, setCompatibilityInputMounted] = useState(() =>
+    window.location.pathname === '/compatibility' || window.location.pathname === '/compatibility/result')
+  const [compatibilityStatus, setCompatibilityStatus] = useState<'idle' | 'calculating' | 'success' | 'error'>(() =>
+    initialCompatibilityResult ? 'success' : 'idle')
+  const [compatibilityError, setCompatibilityError] = useState('')
+  const compatibilitySubmitLock = useRef(false)
+  const compatibilityOriginRef = useRef(window.location.pathname === '/compatibility'
+    || window.location.pathname === '/compatibility/result')
+  const compatibilityReturnStepRef = useRef<WizardStep>(1)
+  const [wizardStep, setWizardStep] = useState<WizardStep>(() =>
+    window.location.pathname === '/compatibility' || initialCompatibilityResult ? 'compatibility' : 1)
   const [interestTopic, setInterestTopic] = useState(initialResult?.interestTopic ?? '')
   const [relationshipStatus, setRelationshipStatus] = useState(initialResult?.relationshipStatus ?? '')
   const [relationshipDuration, setRelationshipDuration] = useState(initialResult?.relationshipDuration ?? '')
@@ -126,7 +201,7 @@ function App() {
   useEffect(() => { localStorage.setItem('filune:birthCountry', countryCode) }, [countryCode])
   useEffect(() => {
     localStorage.setItem('filune:birthCountrySource', countrySelectionSource)
-    if (countrySelectionSource === 'manual' || isResultPage) return
+    if (countrySelectionSource === 'manual' || isResultPage || isCompatibilityResultPage) return
 
     const nextCountry = resolveCountryForLocale(locale, countryCode, countrySelectionSource)
     if (nextCountry === countryCode) return
@@ -135,7 +210,7 @@ function App() {
     setBirthplaceQuery('')
     setBirthplaceMatches([])
     setBirthplaceOptionsOpen(false)
-  }, [locale, countryCode, countrySelectionSource, isResultPage])
+  }, [locale, countryCode, countrySelectionSource, isResultPage, isCompatibilityResultPage])
   useEffect(() => {
     let active = true
     if (!pillars) {
@@ -188,10 +263,29 @@ function App() {
 
   useEffect(() => {
     function restoreHistoryPage() {
-      const result = readResultHistoryState()
-      const shouldShowResult = window.location.pathname === '/result' && result !== null
+      let path = window.location.pathname
+      const result = path === '/result' ? readResultHistoryState() : null
+      let compatibilityResult = path === '/compatibility/result' ? readCompatibilityRouteData() : null
+      if (path === '/result' && !result || path === '/compatibility/result' && !compatibilityResult) {
+        window.history.replaceState(null, '', '/')
+        path = '/'
+        compatibilityResult = null
+      }
+      const shouldShowResult = path === '/result' && result !== null
+      const shouldShowCompatibilityResult = path === '/compatibility/result' && compatibilityResult !== null
       setIsResultPage(shouldShowResult)
-      if (!shouldShowResult) setWizardStep(6)
+      setIsCompatibilityResultPage(shouldShowCompatibilityResult)
+      setCompatibilityRouteData(compatibilityResult)
+      setCompatibilityStatus(shouldShowCompatibilityResult ? 'success' : 'idle')
+      setCompatibilityError('')
+      if (path === '/compatibility' || shouldShowCompatibilityResult) {
+        setCompatibilityInputMounted(true)
+        setWizardStep('compatibility')
+      } else if (path === '/') {
+        setWizardStep(compatibilityOriginRef.current ? compatibilityReturnStepRef.current : 6)
+        compatibilityOriginRef.current = false
+      }
+      if (compatibilityResult) setLocale(compatibilityResult.locale)
 
       if (result) {
         setInterestTopic(result.interestTopic ?? '')
@@ -217,10 +311,13 @@ function App() {
     if (window.location.pathname === '/result' && !initialResult) {
       window.history.replaceState(null, '', '/')
     }
+    if (window.location.pathname === '/compatibility/result' && !initialCompatibilityResult) {
+      window.history.replaceState(null, '', '/')
+    }
 
     window.addEventListener('popstate', restoreHistoryPage)
     return () => window.removeEventListener('popstate', restoreHistoryPage)
-  }, [initialResult])
+  }, [initialResult, initialCompatibilityResult])
 
   useEffect(() => {
     if (!birthplaceOptionsOpen || !birthplaceQuery.trim()) {
@@ -333,6 +430,62 @@ function App() {
     }
   }
 
+  function beginCompatibility() {
+    compatibilityReturnStepRef.current = wizardStep === 'compatibility' ? 1 : wizardStep
+    compatibilityOriginRef.current = true
+    window.history.pushState({ filuneCompatibilityInput: { version: 1, kind: 'compatibility-input' } }, '', '/compatibility')
+    setCompatibilityInputMounted(true)
+    setCompatibilityStatus('idle')
+    setCompatibilityError('')
+    setIsResultPage(false)
+    setIsCompatibilityResultPage(false)
+    setCompatibilityRouteData(null)
+    setWizardStep('compatibility')
+  }
+
+  function returnToCompatibilityHome() {
+    window.history.replaceState(null, '', '/')
+    compatibilityOriginRef.current = false
+    setIsCompatibilityResultPage(false)
+    setCompatibilityRouteData(null)
+    setCompatibilityInputMounted(false)
+    setCompatibilityStatus('idle')
+    setCompatibilityError('')
+    setWizardStep(1)
+  }
+
+  async function calculateCompatibility(first: CompatibilityPersonInput, second: CompatibilityPersonInput,
+    relationshipStatus?: 'single' | 'dating' | 'partnered' | 'married') {
+    if (compatibilitySubmitLock.current || compatibilityStatus === 'calculating') return
+    compatibilitySubmitLock.current = true
+    const calculationLocale = locale
+    setCompatibilityStatus('calculating')
+    setCompatibilityError('')
+    try {
+      const { prepareCompatibilityProductResult } = await import('./lib/product/prepareCompatibilityProductResult')
+      const productResult = await prepareCompatibilityProductResult({ first, second, locale: calculationLocale,
+        ...(relationshipStatus && { relationshipStatus }) })
+      const routeData: CompatibilityRouteHistoryData = {
+        version: 1, kind: 'compatibility', first, second,
+        ...(relationshipStatus && { relationshipStatus }),
+        locale: productResult.locale, referenceTime: productResult.referenceTime,
+        customerResult: productResult.customerResult,
+      }
+      window.history.pushState({ filuneCompatibilityResult: routeData }, '', '/compatibility/result')
+      setCompatibilityRouteData(routeData)
+      setLocale(productResult.locale)
+      setIsResultPage(false)
+      setIsCompatibilityResultPage(true)
+      setCompatibilityStatus('success')
+      setWizardStep('compatibility')
+    } catch {
+      setCompatibilityError(messages[calculationLocale].compatibility.error)
+      setCompatibilityStatus('error')
+    } finally {
+      compatibilitySubmitLock.current = false
+    }
+  }
+
   function nextAfterConditional() {
     setWizardStep(6)
   }
@@ -345,11 +498,11 @@ function App() {
 
   return (
     <main>
-      {!isResultPage && wizardStep === 1 && <section className="story-step story-step--hero">
+      {!isResultPage && !isCompatibilityResultPage && wizardStep === 1 && <section className="story-step story-step--hero">
         <div className="story-topbar"><div className="story-brand">FILUNE</div><div className="language-picker"><label htmlFor="ui-language">{t.language}</label><select id="ui-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div></div>
-        <div className="story-hero__content"><LuneVisual className="story-hero__lune" name={t.flow.luneName}/>{t.flow.guideLine && <p className="story-character-description">{t.flow.guideLine}</p>}{t.flow.heroMain && <p className="story-hero__main-copy">{t.flow.heroMain}</p>}<p className={t.flow.heroMain ? 'story-hero__subline' : 'story-hero__headline'}>{t.flow.hero}</p><button type="button" className="story-cta" onClick={() => setWizardStep('permission')}>{t.flow.start}</button></div>
+        <div className="story-hero__content"><LuneVisual className="story-hero__lune" name={t.flow.luneName}/>{t.flow.guideLine && <p className="story-character-description">{t.flow.guideLine}</p>}{t.flow.heroMain && <p className="story-hero__main-copy">{t.flow.heroMain}</p>}<p className={t.flow.heroMain ? 'story-hero__subline' : 'story-hero__headline'}>{t.flow.hero}</p><button type="button" className="story-cta" onClick={() => setWizardStep('permission')}>{t.flow.start}</button><button type="button" className="story-skip" onClick={beginCompatibility}>{t.compatibility.entry}</button></div>
       </section>}
-      {!isResultPage && wizardStep !== 1 && <div className={`story-language${wizardStep === 'permission' || wizardStep === 'lune-intro' ? ' story-language--dark' : ''}`}><label htmlFor="wizard-language">{t.language}</label><select id="wizard-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div>}
+      {!isResultPage && !isCompatibilityResultPage && wizardStep !== 1 && <div className={`story-language${wizardStep === 'permission' || wizardStep === 'lune-intro' ? ' story-language--dark' : ''}`}><label htmlFor="wizard-language">{t.language}</label><select id="wizard-language" value={locale} disabled={compatibilityStatus === 'calculating'} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div>}
       {!isResultPage && wizardStep === 'permission' && <section className="story-step story-step--navy onboarding-scene">
         <button type="button" className="story-back story-back--light" onClick={() => setWizardStep(1)} aria-label={t.flow.back}>‹</button>
         <LuneVisual className="onboarding-scene__lune" name={t.flow.luneName}/>
@@ -566,6 +719,23 @@ function App() {
         </label>
         <button type="button" className="story-cta story-cta--navy" onClick={() => void beginReading(eventContext)}>{t.flow.next}</button><button type="button" className="story-skip" onClick={() => void beginReading()}>{t.flow.skip}</button></div></section>}
       {!isResultPage && wizardStep === 7 && <section className="story-step story-step--navy"><LuneVisual className="story-lune"/><p className="story-copy">{t.flow.transition}</p>{isTransitioning && <span className="story-loader" aria-label={t.flow.loading}/>}</section>}
+
+      {compatibilityInputMounted && <div hidden={wizardStep !== 'compatibility' || isCompatibilityResultPage}>
+        <Suspense fallback={<p className="compatibility-loading" role="status">{t.compatibility.calculating}</p>}>
+          <CompatibilityInput locale={locale} messages={t} disabled={compatibilityStatus === 'calculating'}
+            error={compatibilityStatus === 'error' ? compatibilityError : undefined}
+            initialPeople={compatibilityRouteData ? [compatibilityRouteData.first, compatibilityRouteData.second] : undefined}
+            initialRelationshipStatus={compatibilityRouteData?.relationshipStatus}
+            onSubmit={(first, second, status) => void calculateCompatibility(first, second, status)}
+            onBack={() => window.history.back()} />
+        </Suspense>
+      </div>}
+
+      {isCompatibilityResultPage && compatibilityRouteData && <Suspense fallback={<p className="compatibility-loading" role="status">{messages[compatibilityRouteData.locale].compatibility.calculating}</p>}>
+        <CompatibilityResult locale={compatibilityRouteData.locale} result={compatibilityRouteData.customerResult}
+          messages={messages[compatibilityRouteData.locale]} onBack={() => window.history.back()}
+          onHome={returnToCompatibilityHome} />
+      </Suspense>}
 
       {isResultPage && pillars && chart && fullAge !== null && (
         <Suspense fallback={null}>
