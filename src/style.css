@@ -631,6 +631,12 @@ button:hover {
   overflow-wrap: anywhere;
 }
 
+@media (width > 640px) {
+  .compatibility-flow__header h1 {
+    max-width: none;
+  }
+}
+
 .compatibility-flow__back {
   min-height: 44px;
   margin-bottom: 0.75rem;
@@ -644,6 +650,7 @@ button:hover {
 }
 
 .compatibility-form {
+  --compatibility-column-gap: 1rem;
   display: grid;
   max-width: 720px;
   margin: 0 auto;
@@ -653,7 +660,7 @@ button:hover {
 .compatibility-form__people {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--compatibility-column-gap);
 }
 
 .compatibility-person {
@@ -679,6 +686,12 @@ button:hover {
   gap: 0.35rem;
   color: var(--form-label);
   font-size: 0.88rem;
+}
+
+.compatibility-date {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
 }
 
 .compatibility-field input,
@@ -757,8 +770,15 @@ button:hover {
   font-size: 0.84rem;
 }
 
-.compatibility-form__status {
-  max-width: 420px;
+.compatibility-form__actions {
+  display: grid;
+  gap: inherit;
+}
+
+@media (width > 640px) {
+  .compatibility-form__actions {
+    max-width: calc((100% - var(--compatibility-column-gap)) / 2);
+  }
 }
 
 .compatibility-form__error {

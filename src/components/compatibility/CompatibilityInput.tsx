@@ -8,7 +8,7 @@ export type CompatibilityPersonInputValue = { readonly name?: string; readonly b
 
 type ParticipantDraft = {
   name: string
-  date: string
+  date: { year: string; month: string; day: string }
   time: string
   timeUnknown: boolean
   gender: GreatLuckGender | ''
@@ -33,13 +33,13 @@ type CompatibilityInputProps = {
 
 function draftFrom(person: CompatibilityPersonInputValue | undefined, locale: Locale): ParticipantDraft {
   const birth = person?.birth
-  const year = birth?.date.year
-  const month = birth?.date.month
-  const day = birth?.date.day
-  const date = year && month && day
-    ? `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` : ''
   return {
-    name: person?.name ?? '', date,
+    name: person?.name ?? '',
+    date: birth ? {
+      year: String(birth.date.year).padStart(4, '0'),
+      month: String(birth.date.month).padStart(2, '0'),
+      day: String(birth.date.day).padStart(2, '0'),
+    } : { year: '', month: '', day: '' },
     time: birth?.time.known ? `${String(birth.time.value.hour).padStart(2, '0')}:${String(birth.time.value.minute).padStart(2, '0')}` : '',
     timeUnknown: birth ? !birth.time.known : false,
     gender: birth?.gender ?? '',
@@ -52,7 +52,11 @@ function draftFrom(person: CompatibilityPersonInputValue | undefined, locale: Lo
   }
 }
 
-function validDate(value: string): { year: number; month: number; day: number } | undefined {
+function validDate({ year: yearInput, month: monthInput, day: dayInput }: ParticipantDraft['date']): {
+  year: number; month: number; day: number
+} | undefined {
+  if (!monthInput || !dayInput) return undefined
+  const value = `${yearInput}-${monthInput.padStart(2, '0')}-${dayInput.padStart(2, '0')}`
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!match) return undefined
   const [, yearText, monthText, dayText] = match
@@ -108,10 +112,19 @@ function ParticipantFields({ label, idSuffix, value, t, onChange }: {
       <input type="text" autoComplete="name" maxLength={40} value={value.name}
         onChange={event => patch({ name: event.target.value })} />
     </label>
-    <label className="compatibility-field">
-      <span>{t.birthDateTime}</span>
-      <input type="date" required value={value.date} onChange={event => patch({ date: event.target.value })} />
-    </label>
+    <div className="compatibility-field" role="group" aria-labelledby={`compatibility-date-${idSuffix}`}>
+      <span id={`compatibility-date-${idSuffix}`}>{t.birthDate}</span>
+      <div className="compatibility-date">
+        {(['year', 'month', 'day'] as const).map(part => (
+          <label className="compatibility-field" key={part}>
+            <span>{t[part]}</span>
+            <input type="text" inputMode="numeric" autoComplete="off" required
+              maxLength={part === 'year' ? 4 : 2} value={value.date[part]}
+              onChange={event => patch({ date: { ...value.date, [part]: event.target.value.replace(/\D/g, '') } })} />
+          </label>
+        ))}
+      </div>
+    </div>
     <label className="compatibility-field">
       <span>{t.birthTime}</span>
       <input type="time" step={60} disabled={value.timeUnknown} value={value.time}
@@ -195,20 +208,22 @@ export default function CompatibilityInput({ locale, messages: t, disabled, erro
         <ParticipantFields label={t.compatibility.personA} idSuffix="first" value={first} t={t} onChange={setFirst} />
         <ParticipantFields label={t.compatibility.personB} idSuffix="second" value={second} t={t} onChange={setSecond} />
       </div>
-      <label className="compatibility-field compatibility-form__status">
-        <span>{t.compatibility.relationshipStatus}</span>
-        <select value={relationshipStatus} onChange={event => setRelationshipStatus(event.target.value as typeof relationshipStatus)}>
-          <option value="">{t.compatibility.noRelationshipStatus}</option>
-          <option value="single">{t.compatibility.single}</option>
-          <option value="dating">{t.compatibility.dating}</option>
-          <option value="partnered">{t.compatibility.partnered}</option>
-          <option value="married">{t.compatibility.married}</option>
-        </select>
-      </label>
-      {(validationError || error) && <p className="compatibility-form__error" role="alert">{validationError || error}</p>}
-      <button type="submit" className="compatibility-form__submit" disabled={disabled}>
-        {disabled ? t.compatibility.calculating : t.compatibility.calculate}
-      </button>
+      <div className="compatibility-form__actions">
+        <label className="compatibility-field">
+          <span>{t.compatibility.relationshipStatus}</span>
+          <select value={relationshipStatus} onChange={event => setRelationshipStatus(event.target.value as typeof relationshipStatus)}>
+            <option value="">{t.compatibility.noRelationshipStatus}</option>
+            <option value="single">{t.compatibility.single}</option>
+            <option value="dating">{t.compatibility.dating}</option>
+            <option value="partnered">{t.compatibility.partnered}</option>
+            <option value="married">{t.compatibility.married}</option>
+          </select>
+        </label>
+        {(validationError || error) && <p className="compatibility-form__error" role="alert">{validationError || error}</p>}
+        <button type="submit" className="compatibility-form__submit" disabled={disabled}>
+          {disabled ? t.compatibility.calculating : t.compatibility.calculate}
+        </button>
+      </div>
     </form>
   </section>
 }
