@@ -61,6 +61,11 @@ try {
     const lifecycle = input.relationshipLifecycle
     const projected = [...lifecycle.people.flatMap(person => person.facts),
       ...lifecycle.windows, ...lifecycle.oneSidedWindows, ...lifecycle.communicationWindows]
+    const decisionByIdForAudit = new Map(lifecycle.people.flatMap(person => person.decisions.map(item => [item.id, item])))
+    const individualByIdForAudit = new Map(lifecycle.people.flatMap(person => person.facts.map(fact => [fact.id, {
+      ...fact, personIds: [person.personId],
+      parentScopeId: decisionByIdForAudit.get(fact.decisionId)?.parentScopeId ?? null,
+    }])) )
     const effects = input.structural.flatMap(direction => [...direction.supportEffects, ...direction.damageEffects])
     const interactions = [...input.personality.natal.facts, ...input.personality.current.facts]
     const decisions = lifecycle.people.flatMap(person => person.decisions)
@@ -95,6 +100,15 @@ try {
         assert.equal(window.from, original.from)
         assert.equal(window.to, original.to)
         assert.ok(window.scopes.length && window.scopes.every(scope => scope.scopeId))
+        for (const sourceId of window.sourceFactIds) {
+          const source = individualByIdForAudit.get(sourceId)
+          if (!source) continue
+          assert.ok(window.scopes.some(scope => scope.personId === source.personIds[0]
+            && scope.scope === source.scope && scope.scopeId === source.scopeId
+            && scope.originScope === source.originScope && scope.parentScopeId === source.parentScopeId
+            && scope.scopeGanZhi === source.scopeGanZhi
+            && scope.parentScopeGanZhi === source.parentScopeGanZhi))
+        }
       }
     }
     assert.doesNotMatch(JSON.stringify(final), /"(compatibilityScore|weightedScore|overallScore|score|percentage)":/)

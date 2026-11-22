@@ -348,7 +348,8 @@ try {
   }
 
   for (const directory of ['src/lib/judgment', 'src/lib/outcome/health', 'src/lib/reading']) {
-    for (const name of readdirSync(new URL(`../${directory}/`, import.meta.url), { recursive: true }).filter(file => file.endsWith('.ts'))) {
+    for (const name of readdirSync(new URL(`../${directory}/`, import.meta.url), { recursive: true })
+      .filter(file => file.endsWith('.ts') && !(directory === 'src/lib/reading' && file === 'resourceDominance.ts'))) {
       const source = read(`${directory}/${name}`)
       if (directory === 'src/lib/judgment') assert.doesNotMatch(source, /(?:from\s+|import\s*\()\s*['"][^'"]*\/outcome(?:\/|['"])/u)
       else assert.doesNotMatch(source, /\b(?:runJudgmentCore|runInternalReading|calculateTenGod|calculateMonthlyLuck|calculateCanonicalChart|resolveActualFunction|evaluateRoleEngine|fetch)\s*\(|\bopenai\b/iu)

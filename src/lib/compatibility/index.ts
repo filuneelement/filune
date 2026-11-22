@@ -12,4 +12,8 @@ export type { FinalCompatibilityInput, FinalCompatibilityResult } from './final/
 export { buildCustomerCompatibility } from './customer/customerCompatibility'
 export { renderCompatibilityKo } from './customer/renderCompatibilityKo'
 export type { CompatibilityCustomerResultKO, CompatibilityRendererInput } from './customer/renderCompatibilityKo'
+export { renderCompatibilityJa } from './customer/renderCompatibilityJa'
+export type { CompatibilityCustomerResultJA, CompatibilityRendererInputJA } from './customer/renderCompatibilityJa'
+export { renderCompatibilityEn } from './customer/renderCompatibilityEn'
+export type { CompatibilityCustomerResultEN, CompatibilityRendererInputEN } from './customer/renderCompatibilityEn'
 export type { CustomerCompatibilityUnit, CustomerSectionKind, CustomerSemantic } from './customer/customerCompatibility'

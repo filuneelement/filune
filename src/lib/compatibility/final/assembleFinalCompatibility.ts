@@ -43,6 +43,7 @@ function timingIndex(lifecycle: Lifecycle, personality: Personality, referenceTi
     sourceFactIds: sortedUnique([fact.decisionId, ...fact.sourceEvidenceIds, ...(fact.breakdownPathIds ?? [])]),
   })))
   const individualById = new Map(individual.map(fact => [fact.id, fact]))
+  const decisionById = new Map(lifecycle.people.flatMap(person => person.decisions.map(decision => [decision.id, decision] as const)))
   const interactionById = new Map(personality.current.facts.map(fact => [fact.id, fact]))
   const pair = [...lifecycle.oneSidedWindows, ...lifecycle.windows, ...lifecycle.communicationWindows]
     .flatMap((window: PairTiming) => {
@@ -55,7 +56,11 @@ function timingIndex(lifecycle: Lifecycle, personality: Personality, referenceTi
         personIds: 'personId' in window ? [window.personId] : window.personIds,
         scopes: window.sourceFactIds.flatMap(id => {
           const individualFact = individualById.get(id)
-          if (individualFact) return [{ personId: individualFact.personIds[0], scope: individualFact.scope, scopeId: individualFact.scopeId }]
+          if (individualFact) return [{ personId: individualFact.personIds[0], scope: individualFact.scope,
+            originScope: individualFact.originScope, scopeId: individualFact.scopeId,
+            parentScopeId: decisionById.get(individualFact.decisionId)?.parentScopeId ?? null,
+            ...(individualFact.scopeGanZhi && { scopeGanZhi: individualFact.scopeGanZhi }),
+            ...(individualFact.parentScopeGanZhi && { parentScopeGanZhi: individualFact.parentScopeGanZhi }) }]
           return (interactionById.get(id)?.scopes ?? []).map(({ personId, scope, scopeId }) => ({ personId, scope, scopeId }))
         }) }]
     })
