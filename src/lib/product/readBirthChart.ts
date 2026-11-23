@@ -24,6 +24,7 @@ const contextKeys = {
 
 export interface BirthReadingOptions {
   eventContext?: EventDomain
+  customerContext?: ReadingAssemblyInput['customerContext']
   productScope: ReadingAssemblyInput['productScope']
   referenceTime: string
   monthlyWindowStart?: InternalReadingInput['monthlyWindowStart']
@@ -49,7 +50,7 @@ export function birthReadingContext(referenceTime: string) {
 
 /** The product reading owner. Assembly receives projected facts from the existing Event Timing engine. */
 export function readBirthChart(birth: BirthInput, options: BirthReadingOptions) {
-  const { eventContext, referenceTime, productScope, monthlyWindowStart } = options
+  const { eventContext, customerContext, referenceTime, productScope, monthlyWindowStart } = options
   if (eventContext !== undefined && (typeof eventContext !== 'string' || !Object.hasOwn(contextKeys, eventContext))) {
     throw new TypeError('Unsupported event context')
   }
@@ -76,7 +77,7 @@ export function readBirthChart(birth: BirthInput, options: BirthReadingOptions) 
   })
 
   return assembleReading({
-    judgment, moneyOutcomes, healthOutcomes, relationshipOutcomes, productScope,
+    judgment, moneyOutcomes, healthOutcomes, relationshipOutcomes, productScope, customerContext,
     ...(eventTiming && { eventTimingFacts: eventTiming.facts }),
   })
 }

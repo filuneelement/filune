@@ -1,3 +1,5 @@
+import { resolveCustomerReadingContext } from './customerContext'
+import { projectNatalPersonalityChapters } from './personalityChapterProjection'
 import type { CalculatedChart } from '../canonical/types'
 import { chapterRegistry, conclusionRoutes } from './chapterRegistry'
 import { collectReadingUnits } from './deduplication'
@@ -36,6 +38,7 @@ function collectCanonical(chart: Readonly<CalculatedChart>, input: ReadingAssemb
 
 export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
   const { judgment, personality, productScope } = input
+  const customerReadingContext = resolveCustomerReadingContext(input.customerContext)
   const canonical = input.canonical ?? judgment?.canonical
   const referenceTime = canonical?.context.referenceTime ?? input.referenceTime
   const natal = personality && ('natal' in personality ? personality.natal : personality)
@@ -139,7 +142,9 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
   if (canonical || natal) availableScopes.add('natal')
   if (judgment?.luck.monthlyWindow?.length) availableScopes.add('month')
   return {
-    version: '1', productScope, ...(productScope === 'premium' && referenceTime && { referenceTime }),
+    version: '1', productScope,
+    ...(Object.keys(customerReadingContext).length > 0 && { customerReadingContext }),
+    ...(natal && { natalPersonalityChapters: projectNatalPersonalityChapters(natal, unknownHour) }), ...(productScope === 'premium' && referenceTime && { referenceTime }),
     source: { canonical: Boolean(canonical), judgment: Boolean(judgment || snapshots.length || input.evaluatedLuckScopes?.length),
       personality: Boolean(personality) },
     chapters: chapterResults, semanticUnits,

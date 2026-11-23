@@ -1,3 +1,5 @@
+import type { CustomerReadingContext } from './customerContext'
+import type { NatalPersonalityChapterProjection } from './personalityChapterProjection'
 import type { HealthOutcomeFact, MoneyOutcomeFact, RelationshipOutcomeFact } from '../outcome'
 import type { CalculatedChart } from '../canonical/types'
 import type { Validity } from '../judgment/contracts'
@@ -144,6 +146,8 @@ export interface ReadingChapterAssembly {
 
 export interface ReadingAssembly {
   readonly version: '1'
+  readonly customerReadingContext?: CustomerReadingContext
+  readonly natalPersonalityChapters?: NatalPersonalityChapterProjection
   readonly productScope: ProductScope
   readonly source: { readonly canonical: boolean; readonly judgment: boolean; readonly personality: boolean }
   readonly referenceTime?: string

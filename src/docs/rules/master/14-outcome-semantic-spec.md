@@ -62,7 +62,7 @@ Health Outcome Source Contract READY. Batch 1 supplies structural evidence and t
 
 ### Health publication gate
 
-A verified traditional area plus a currently affected, independently verified target and an approved source link supports increased burden as an internal nonclinical meaning. Preserve A I-16 specificity and omit the area when local evidence is conditional. The broad possibility of Health difficulty is a semantic distinction from structural evidence. Customer wording remains subject to B W-30–35 and D Q10. In particular, W-30 allows naming the traditional area and identifying a time to pay attention. It does not authorize stating an organ is weak, a symptom will appear, or publishing unrestricted `건강 문제가 나타날 수 있음` copy. Preserve the result and interval in the semantic layer. Any change to the fixed customer wording requires publication authority.
+A verified traditional area plus a currently affected, independently verified target and an approved source link supports increased burden as an internal nonclinical meaning. Preserve A I-16 specificity and omit the area when local evidence is conditional. The broad possibility of Health difficulty is a semantic distinction from structural evidence. Customer wording follows the [P4 Health Publication Contract](22-health-publication-contract.md), which specifies the restricted H2/H3 extension to B W-30 and retains W-31–35 and D Q10. Adequate, matched H2 evidence can express a traditional tendency for burden in the verified area. H3 adds an independently established time to pay attention. Preserve the result and interval in the semantic layer. Medical weakness, symptoms and unrestricted health difficulty copy remain outside the publication contract.
 
 ### Health life meanings
 
@@ -98,7 +98,7 @@ Preserve source categories in provenance: A I-16 approved traditional correspond
 
 ## Exclusions and deferred gates
 
-- Work: position acquisition and retention, work difficulty, means of resolution, self/external credit and organizational influence require a follow-up source audit. Preserve case evidence as candidates for mapping.
+- Work: position acquisition and retention, work difficulty, means of resolution, self/external credit and organizational influence require a follow-up source audit. Preserve case evidence as candidates for mapping. The [Work/Study audit](21-work-study-outcome-source-audit.md) documents candidate conditions and scope. The runtime producers remain deferred.
 - Money: exact income, asset amounts, asset protection inferred from Resource, contract/business/spending/collaboration timing and selection of principles remain deferred pending specific support. Investment and borrowing instructions are excluded.
 - Relationship: relationship style and guaranteed partner quality, marriage/divorce and compatibility are excluded from these projections. I-22 forms ③ and ④ remain deferred. Form ④ requires the approved favorable judgment of the same period and verified absence of damage to both the partner significator and SangShen. A missing check cannot satisfy this condition.
 - Health: generalized timing and a separate relief-period semantic remain deferred. See the Health source contract for supported timing and prohibited outputs.

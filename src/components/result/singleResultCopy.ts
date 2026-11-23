@@ -8,7 +8,10 @@ import { traitPhraseEn } from '../../lib/personality/render/en/wording'
 import { isCustomerSafeKo } from '../../lib/personality/render/ko/guardrails'
 import { isCustomerSafeJa } from '../../lib/personality/render/ja/guardrails'
 import { isCustomerSafeEn } from '../../lib/personality/render/en/guardrails'
+import { customerContextFromSingleResult } from '../../lib/reading/customerContext'
 import { assembleReading } from '../../lib/reading/assembleReading'
+import { buildCustomerReadingPlan } from '../../lib/reading/customer/buildCustomerReadingPlan'
+import { renderCustomerReadingKo } from '../../lib/reading/customer/renderCustomerReadingKo'
 import type { ReadingSemanticUnit } from '../../lib/reading/types'
 import { currentFlowNarrative, employedNarrative, natalNarratives, type NarrativePart, type PersonalityAxis } from './singleResultNarratives'
 import { personalTopics, type Locale, type Messages } from '../../i18n'
@@ -192,7 +195,8 @@ function broaderFreeReading(blocks: (RenderedPersonalityBlock | undefined)[], fa
 export function synthesizeSingleResult(natal: NatalPersonalityResult, current: CurrentPersonalityResult | undefined,
   referenceTime: string, context: SelectionContext, locale: Locale, t: Messages) {
   const reading = renderSinglePersonality[locale]({ natal })
-  const assembly = assembleReading({ personality: natal, referenceTime, productScope: 'premium' })
+  const customerContext = customerContextFromSingleResult(context)
+  const assembly = assembleReading({ personality: natal, referenceTime, customerContext, productScope: 'premium' })
   const natalUnits = assembly.semanticUnits.filter(unit => unit.meaningRef.kind === 'personality_fact')
   const eligibleFacts = new Set(Object.values(reading).flatMap(block => 'sourceFactIds' in block ? block.sourceFactIds : []))
   const facts = natal.facts.filter(fact => eligibleFacts.has(fact.id))
@@ -203,7 +207,25 @@ export function synthesizeSingleResult(natal: NatalPersonalityResult, current: C
     { title: t.reading.freePatterns, recipe: natalNarratives.patterns,
       blocks: [reading.decision, reading.emotion, reading.cautions, reading.closeRelations] },
   ]
-  const free = specs.map(({ title, recipe, blocks }, index) => {
+  const free = locale === 'ko' ? renderCustomerReadingKo(buildCustomerReadingPlan({
+    natal, referenceTime,
+    assembly: assembleReading({ personality: natal, referenceTime, customerContext, productScope: 'free' }),
+  }), natal).map(chapter => {
+    const paragraphs = chapter.paragraphs.map(({ text, plan }): CustomerParagraph => ({
+      text, sourceFactIds: [...plan.sourcePersonalityFactIds, ...plan.sourceFactIds],
+      semanticIds: [...plan.semanticUnitIds], evidenceIds: [...plan.evidenceIds],
+      sourceEffectIds: [...plan.sourceEffectIds], axesUsed: [],
+    }))
+    return {
+      title: chapter.title, paragraphs, readiness: chapter.readiness,
+      debug: {
+        section: chapter.title,
+        sourceFactIds: [...new Set(paragraphs.flatMap(item => item.sourceFactIds))],
+        semanticIds: [...new Set(paragraphs.flatMap(item => item.semanticIds))],
+        axesUsed: [],
+      },
+    }
+  }) : specs.map(({ title, recipe, blocks }, index) => {
     const authored = resolveNarrative(recipe, facts, natalUnits, locale)
     const paragraphs = authored.length ? authored : broaderFreeReading(blocks, facts, natalUnits, locale, t, index)
     const debug = {
@@ -217,7 +239,7 @@ export function synthesizeSingleResult(natal: NatalPersonalityResult, current: C
 
   const paid: Partial<Record<PaidChapterKey, PaidPreview>> = {}
   const currentUnits = current
-    ? assembleReading({ personality: current, referenceTime, productScope: 'premium' }).semanticUnits.filter(unit =>
+    ? assembleReading({ personality: current, referenceTime, customerContext, productScope: 'premium' }).semanticUnits.filter(unit =>
       unit.meaningRef.kind === 'current_personality_fact'
       && (unit.sourceStatus === 'active' || unit.sourceStatus === 'contextual'))
     : []

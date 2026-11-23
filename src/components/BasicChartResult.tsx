@@ -87,8 +87,9 @@ export default function BasicChartResult({
 
       <div className="result-content">
         <div className="result-chapters">
-          {reading.free.map(({ title, paragraphs }, index) => (
-            <ResultChapter key={title} number={index + 1} title={title} paragraphs={paragraphs} />
+          {reading.free.map((chapter, index) => (
+            <ResultChapter key={chapter.title} number={index + 1} title={chapter.title} paragraphs={chapter.paragraphs}
+              emptyMessage={locale === 'ko' && !chapter.paragraphs.length ? '이 장에서 설명할 수 있는 근거가 아직 충분하지 않습니다.' : undefined} />
           ))}
         </div>
         <ResultChartDisclosure pillars={pillars} calculation={calculation} messages={t}

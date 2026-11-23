@@ -4,6 +4,7 @@ import type { BirthReadingOptions } from './readBirthChart'
 
 export async function prepareProductResult(birth: BirthInput, options: {
   eventContext?: EventDomain
+  customerContext?: BirthReadingOptions['customerContext']
   referenceTime?: string
   productScope?: BirthReadingOptions['productScope']
   monthlyWindowStart?: BirthReadingOptions['monthlyWindowStart']
@@ -17,6 +18,7 @@ export async function prepareProductResult(birth: BirthInput, options: {
   const { readBirthChart } = await import('./readBirthChart')
   const reading = readBirthChart(birth, {
     eventContext: options.eventContext,
+    customerContext: options.customerContext,
     productScope: options.productScope ?? 'free',
     referenceTime: options.referenceTime ?? new Date().toISOString(),
     monthlyWindowStart: options.monthlyWindowStart,
