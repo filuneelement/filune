@@ -1,0 +1,794 @@
+{
+  "birth": {
+    "date": {
+      "year": 1985,
+      "month": 1,
+      "day": 22
+    },
+    "time": {
+      "known": true,
+      "value": {
+        "hour": 14,
+        "minute": 22
+      }
+    },
+    "gender": "女性",
+    "timeCorrectionMode": "none"
+  },
+  "birthplaceVerified": false,
+  "referenceTime": "2026-11-23T12:00:00Z",
+  "context": {
+    "topic": "work",
+    "careerStatus": "employed"
+  },
+  "previousFree": [
+    {
+      "title": "나의 기본 성향",
+      "paragraphs": [
+        {
+          "text": "일의 완성도를 판단할 때는 남에게 요구하는 것보다 자신에게 더 높은 기준을 적용합니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::core:active:%EC%9E%90%EA%B8%B0%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%EC%97%84%EA%B2%A9%ED%95%A8",
+            "fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::core:active:%EC%9E%90%EA%B8%B0%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%EC%97%84%EA%B2%A9%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:coreNature",
+            "knowledge:day_stem:辛:decisionStyle"
+          ],
+          "sourceEffectIds": []
+        },
+        {
+          "text": "작업을 마친 뒤에도 이미 잘된 부분보다 아직 손볼 곳이 먼저 눈에 들어옵니다. 끝냈다는 사실만으로는 마음이 놓이지 않는 이유입니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:innerExpression"
+          ],
+          "sourceEffectIds": []
+        },
+        {
+          "text": "이 기준을 그대로 밀고 가면 충분히 잘한 결과도 부족하게 느껴질 수 있습니다. 결과를 돌아볼 때는 고칠 점만큼 이미 해낸 부분도 함께 확인해 보세요.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:shadowTraits"
+          ],
+          "sourceEffectIds": []
+        }
+      ]
+    },
+    {
+      "title": "나의 강점",
+      "paragraphs": [
+        {
+          "text": "일을 끝낸 뒤 한 번 더 확인하는 힘이 있습니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:strengths"
+          ],
+          "sourceEffectIds": []
+        },
+        {
+          "text": "수치나 자료를 맞춰 보거나, 여러 부분이 빠짐없이 들어갔는지 확인해야 하는 일에 이 힘을 쓸 수 있습니다. 마감 직전에도 세부를 한 번 더 볼 사람이 필요할 때 맡기 좋은 역할입니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8",
+            "fact:ten_god:year_stem:正財::strength:contextual:%EA%BC%BC%EA%BC%BC%ED%95%A8",
+            "fact:ten_god:year_stem:正財::core:active:%EC%A0%95%ED%99%95%EC%84%B1"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_stem:正財::strength:contextual:%EA%BC%BC%EA%BC%BC%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_stem:正財::core:active:%EC%A0%95%ED%99%95%EC%84%B1\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:strengths",
+            "knowledge:position:stem:expressionDomain",
+            "knowledge:position:stem:interpretationRules",
+            "knowledge:ten_god:正財:coreStrengths",
+            "knowledge:ten_god:正財:coreDrive"
+          ],
+          "sourceEffectIds": []
+        },
+        {
+          "text": "다만 모든 항목에 같은 시간을 쓰기보다는, 틀리면 영향이 큰 항목부터 다시 보세요. 어디까지 확인하면 넘길지 정해 두면 점검하는 힘을 필요한 곳에 쓸 수 있습니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8",
+            "fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:strengths",
+            "knowledge:day_stem:辛:shadowTraits"
+          ],
+          "sourceEffectIds": []
+        }
+      ]
+    },
+    {
+      "title": "반복되는 행동 패턴",
+      "paragraphs": [
+        {
+          "text": "조언을 받아도 바로 움직이기보다, 먼저 자신이 납득할 근거를 확인하는 쪽에 가깝습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84",
+            "fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:比肩:decisionStyle",
+            "knowledge:ten_god:偏印:decisionStyle"
+          ],
+          "sourceEffectIds": []
+        },
+        {
+          "text": "처음에는 제안이 왜 타당한지 살펴보는 과정입니다. 그러나 스스로 받아들일 기준만 남게 되면, 다른 사람이 제시한 근거를 충분히 검토하기 전에 결론을 굳힐 수 있습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84",
+            "fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:比肩:decisionStyle",
+            "knowledge:day_pillar:辛酉:shadowPatterns"
+          ],
+          "sourceEffectIds": []
+        },
+        {
+          "text": "의견이 엇갈릴 때는 무엇을 확인하면 판단을 바꿀 수 있을지 먼저 정해 보세요. 자기 기준을 지키면서도 다른 의견을 검토할 여지가 생깁니다.",
+          "sourceFactIds": [
+            "fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_pillar:辛酉:shadowPatterns"
+          ],
+          "sourceEffectIds": []
+        }
+      ]
+    }
+  ],
+  "free": [
+    {
+      "title": "나의 기본 성향",
+      "paragraphs": [
+        {
+          "text": "무엇을 믿고 어디까지 받아들일지 스스로 정하는 편입니다. 들어온 정보는 한 번 걸러 보고, 자신의 결과를 평가할 때는 다른 사람에게 요구하는 것보다 높은 기준을 적용합니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8",
+            "fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:decisionStyle",
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:偏印:ordinaryExpression"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "judgment",
+            "observation"
+          ]
+        },
+        {
+          "text": "낯선 방법도 궁금한 점이 생기면 파고들어 볼 수 있습니다. 원리를 이해하고 나면, 배운 방식을 그대로 가져오기보다 지금 상황에 맞게 바꿔 쓸 길을 찾는 쪽에 가깝습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:month_branch:食神::core:active:%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC",
+            "fact:ten_god:year_branch:傷官::core:contextual:%EC%9D%91%EC%9A%A9%EC%84%B1",
+            "fact:ten_god:year_branch:傷官::core:contextual:%ED%98%81%EC%8B%A0%EC%84%B1"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:食神::core:active:%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::core:contextual:%EC%9D%91%EC%9A%A9%EC%84%B1\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::core:contextual:%ED%98%81%EC%8B%A0%EC%84%B1\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:食神:coreDrive",
+            "knowledge:position:year_branch:interpretationRules",
+            "knowledge:ten_god:傷官:coreDrive"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "observation",
+            "adaptation"
+          ]
+        },
+        {
+          "text": "생각을 발전시키는 시간과 의견을 밖으로 내놓는 순간은 구분하는 편입니다. 혼자서는 궁금한 것을 더 파고들 수 있지만, 여럿이 있는 자리에서는 누구 앞에서 언제 이야기할지도 살핍니다.",
+          "sourceFactIds": [
+            "fact:ten_god:month_branch:偏印::inner:contextual:%ED%98%BC%EC%9E%90%EB%A7%8C%EC%9D%98%20%ED%83%90%EC%83%89",
+            "fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::inner:contextual:%ED%98%BC%EC%9E%90%EB%A7%8C%EC%9D%98%20%ED%83%90%EC%83%89\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:偏印:innerExpression",
+            "knowledge:day_pillar:辛酉:interpersonalStyle"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "observation",
+            "relationship",
+            "expression"
+          ]
+        },
+        {
+          "text": "함께 하는 일에서는 무엇을 이루려는지에 비춰 판단하기도 합니다. 실제로 얻는 것과 감수할 것이 분명하다면, 모든 선택지를 오래 붙들기보다 결론을 빠르게 낼 때도 있습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:hour_branch:偏官::decision:contextual:%EB%8C%80%EC%9D%98%EB%AA%85%EB%B6%84%EA%B3%BC%20%EA%B3%B5%EB%8F%99%20%EB%AA%A9%ED%91%9C%EB%A5%BC%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%ED%8C%90%EB%8B%A8%ED%95%A8",
+            "fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:hour_branch:偏官::decision:contextual:%EB%8C%80%EC%9D%98%EB%AA%85%EB%B6%84%EA%B3%BC%20%EA%B3%B5%EB%8F%99%20%EB%AA%A9%ED%91%9C%EB%A5%BC%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%ED%8C%90%EB%8B%A8%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:hour_branch:expressionDomain",
+            "knowledge:position:hour_branch:interpretationRules",
+            "knowledge:ten_god:偏官:decisionStyle",
+            "knowledge:ten_god:偏財:decisionStyle"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "judgment",
+            "action"
+          ]
+        },
+        {
+          "text": "부담은 이 기준을 자기 일에 돌릴 때 생깁니다. 일을 마쳐도 잘된 부분보다 부족한 곳이 먼저 보이기 때문에, 결과가 충분히 좋아도 마쳤다는 안도감은 늦게 따라올 수 있습니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::core:active:%EC%9E%90%EA%B8%B0%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%EC%97%84%EA%B2%A9%ED%95%A8",
+            "fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84",
+            "fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::core:active:%EC%9E%90%EA%B8%B0%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%EC%97%84%EA%B2%A9%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:coreNature",
+            "knowledge:day_stem:辛:innerExpression",
+            "knowledge:day_stem:辛:shadowTraits"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "judgment",
+            "emotion"
+          ]
+        }
+      ],
+      "debug": {
+        "section": "나의 기본 성향",
+        "sourceFactIds": [
+          "fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8",
+          "fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8",
+          "fact:ten_god:month_branch:食神::core:active:%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC",
+          "fact:ten_god:year_branch:傷官::core:contextual:%EC%9D%91%EC%9A%A9%EC%84%B1",
+          "fact:ten_god:year_branch:傷官::core:contextual:%ED%98%81%EC%8B%A0%EC%84%B1",
+          "fact:ten_god:month_branch:偏印::inner:contextual:%ED%98%BC%EC%9E%90%EB%A7%8C%EC%9D%98%20%ED%83%90%EC%83%89",
+          "fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8",
+          "fact:ten_god:hour_branch:偏官::decision:contextual:%EB%8C%80%EC%9D%98%EB%AA%85%EB%B6%84%EA%B3%BC%20%EA%B3%B5%EB%8F%99%20%EB%AA%A9%ED%91%9C%EB%A5%BC%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%ED%8C%90%EB%8B%A8%ED%95%A8",
+          "fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8",
+          "fact:day_stem:day_stem:::core:active:%EC%9E%90%EA%B8%B0%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%EC%97%84%EA%B2%A9%ED%95%A8",
+          "fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84",
+          "fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:食神::core:active:%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::core:contextual:%EC%9D%91%EC%9A%A9%EC%84%B1\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::core:contextual:%ED%98%81%EC%8B%A0%EC%84%B1\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::inner:contextual:%ED%98%BC%EC%9E%90%EB%A7%8C%EC%9D%98%20%ED%83%90%EC%83%89\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:hour_branch:偏官::decision:contextual:%EB%8C%80%EC%9D%98%EB%AA%85%EB%B6%84%EA%B3%BC%20%EA%B3%B5%EB%8F%99%20%EB%AA%A9%ED%91%9C%EB%A5%BC%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%ED%8C%90%EB%8B%A8%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::core:active:%EC%9E%90%EA%B8%B0%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%EC%97%84%EA%B2%A9%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80\"]"
+        ],
+        "axesUsed": [
+          "judgment",
+          "observation",
+          "adaptation",
+          "relationship",
+          "expression",
+          "action",
+          "emotion"
+        ]
+      }
+    },
+    {
+      "title": "나의 강점",
+      "paragraphs": [
+        {
+          "text": "첫 번째 강점은 결과를 넘기기 전에 놓친 부분을 다시 발견하는 힘입니다. 일단 끝냈다는 데 만족하기보다 부족한 곳을 먼저 보기 때문에, 틀린 숫자나 빠진 절차처럼 뒤에서 문제가 될 세부를 바로잡는 데 이 힘을 쓸 수 있습니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8",
+            "fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84",
+            "fact:ten_god:year_stem:正財::core:active:%EC%A0%95%ED%99%95%EC%84%B1"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_stem:正財::core:active:%EC%A0%95%ED%99%95%EC%84%B1\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:strengths",
+            "knowledge:day_stem:辛:innerExpression",
+            "knowledge:position:stem:expressionDomain",
+            "knowledge:position:stem:interpretationRules",
+            "knowledge:ten_god:正財:coreDrive"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "observation",
+            "persistence"
+          ]
+        },
+        {
+          "text": "두 번째 강점은 자료가 많을 때 중요한 정보와 아직 확인할 정보를 가려 보는 힘입니다. 여러 설명이 섞여 있어도 무엇을 근거로 삼을 수 있는지 따져 보면, 판단해야 할 문제가 조금 더 선명해질 수 있습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:year_branch:食神::strength:contextual:%EB%B6%84%EC%84%9D%EB%A0%A5",
+            "fact:ten_god:month_branch:偏印::strength:contextual:%EB%85%BC%EB%A6%AC%EC%A0%81%20%EC%82%AC%EA%B3%A0",
+            "fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:食神::strength:contextual:%EB%B6%84%EC%84%9D%EB%A0%A5\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::strength:contextual:%EB%85%BC%EB%A6%AC%EC%A0%81%20%EC%82%AC%EA%B3%A0\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:year_branch:interpretationRules",
+            "knowledge:ten_god:食神:coreStrengths",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:偏印:productiveExpression",
+            "knowledge:ten_god:偏印:ordinaryExpression"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "judgment",
+            "observation"
+          ]
+        },
+        {
+          "text": "계획이 틀어졌을 때는 빠르게 대안을 생각해 내는 능력도 쓰일 수 있습니다. 원래 방법에 매달리기보다 그 자리에서 실제로 가능한 선택지를 추리면, 세부를 다 맞추기 어려운 상황에서도 일을 이어갈 길이 보입니다.",
+          "sourceFactIds": [
+            "fact:ten_god:year_branch:食神::strength:contextual:%EC%9E%84%EA%B8%B0%EC%9D%91%EB%B3%80",
+            "fact:ten_god:year_branch:傷官::strength:contextual:%EC%88%9C%EB%B0%9C%EB%A0%A5",
+            "fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:食神::strength:contextual:%EC%9E%84%EA%B8%B0%EC%9D%91%EB%B3%80\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::strength:contextual:%EC%88%9C%EB%B0%9C%EB%A0%A5\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:year_branch:interpretationRules",
+            "knowledge:ten_god:食神:productiveExpression",
+            "knowledge:ten_god:傷官:coreStrengths",
+            "knowledge:position:hour_branch:expressionDomain",
+            "knowledge:position:hour_branch:interpretationRules",
+            "knowledge:ten_god:偏財:decisionStyle"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "adaptation",
+            "action"
+          ]
+        },
+        {
+          "text": "예를 들어 마감을 앞두고 자료에 오류를 발견하면, 먼저 어떤 결과에 영향이 있는지 가려낸 뒤 가능한 수정과 나중에 확인할 일을 나눌 수 있습니다. 점검력과 판단력, 대처력이 한꺼번에 쓰이는 장면입니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8",
+            "fact:ten_god:year_branch:食神::strength:contextual:%EB%B6%84%EC%84%9D%EB%A0%A5",
+            "fact:ten_god:year_branch:食神::strength:contextual:%EC%9E%84%EA%B8%B0%EC%9D%91%EB%B3%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:食神::strength:contextual:%EB%B6%84%EC%84%9D%EB%A0%A5\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:食神::strength:contextual:%EC%9E%84%EA%B8%B0%EC%9D%91%EB%B3%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:strengths",
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:year_branch:interpretationRules",
+            "knowledge:ten_god:食神:coreStrengths",
+            "knowledge:ten_god:食神:productiveExpression"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "observation",
+            "judgment",
+            "adaptation"
+          ]
+        },
+        {
+          "text": "다만 자기 결과에만 기준을 계속 높이면, 중요한 오류를 잡는 일과 이미 잘된 부분을 다시 만지는 일이 구분되지 않을 수 있습니다. 이때는 점검 자체보다 결과를 넘기는 데 부담이 커집니다.",
+          "sourceFactIds": [
+            "fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8",
+            "fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_stem:辛:decisionStyle",
+            "knowledge:day_stem:辛:shadowTraits"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "judgment",
+            "persistence"
+          ]
+        }
+      ],
+      "debug": {
+        "section": "나의 강점",
+        "sourceFactIds": [
+          "fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8",
+          "fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84",
+          "fact:ten_god:year_stem:正財::core:active:%EC%A0%95%ED%99%95%EC%84%B1",
+          "fact:ten_god:year_branch:食神::strength:contextual:%EB%B6%84%EC%84%9D%EB%A0%A5",
+          "fact:ten_god:month_branch:偏印::strength:contextual:%EB%85%BC%EB%A6%AC%EC%A0%81%20%EC%82%AC%EA%B3%A0",
+          "fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8",
+          "fact:ten_god:year_branch:食神::strength:contextual:%EC%9E%84%EA%B8%B0%EC%9D%91%EB%B3%80",
+          "fact:ten_god:year_branch:傷官::strength:contextual:%EC%88%9C%EB%B0%9C%EB%A0%A5",
+          "fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8",
+          "fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8",
+          "fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::strength:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EC%9E%91%EC%97%85%EB%8F%84%20%EB%8B%A4%EC%8B%9C%20%EC%A0%90%EA%B2%80%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::inner:active:%EC%99%84%EB%A3%8C%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%B6%80%EC%A1%B1%ED%95%9C%20%EC%A0%90%EC%9D%84%20%EB%A8%BC%EC%A0%80%20%EB%8F%8C%EC%95%84%EB%B4%84\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_stem:正財::core:active:%EC%A0%95%ED%99%95%EC%84%B1\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:食神::strength:contextual:%EB%B6%84%EC%84%9D%EB%A0%A5\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::strength:contextual:%EB%85%BC%EB%A6%AC%EC%A0%81%20%EC%82%AC%EA%B3%A0\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::expression:active:%EC%A0%95%EB%B3%B4%EB%A5%BC%20%EB%B9%84%ED%8C%90%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%84%A0%EB%B3%84%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:食神::strength:contextual:%EC%9E%84%EA%B8%B0%EC%9D%91%EB%B3%80\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::strength:contextual:%EC%88%9C%EB%B0%9C%EB%A0%A5\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:hour_branch:偏財::decision:contextual:%EC%8B%A4%EB%A6%AC%EB%A5%BC%20%EB%94%B0%EC%A0%B8%20%EC%8B%A0%EC%86%8D%ED%95%98%EA%B2%8C%20%ED%8C%90%EB%8B%A8%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::decision:active:%EC%9E%90%EC%8B%A0%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EC%97%90%20%ED%83%80%EC%9D%B8%EC%9D%98%20%EA%B2%B0%EA%B3%BC%EB%AC%BC%EB%B3%B4%EB%8B%A4%20%EB%86%92%EC%9D%80%20%EA%B8%B0%EC%A4%80%EC%9D%84%20%EC%A0%81%EC%9A%A9%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_stem:day_stem:::shadow:active:%EC%9E%98%ED%95%9C%20%EA%B2%B0%EA%B3%BC%EC%97%90%EB%8F%84%20%EB%A7%8C%EC%A1%B1%ED%95%98%EA%B8%B0%20%EC%96%B4%EB%A0%A4%EC%9B%80\"]"
+        ],
+        "axesUsed": [
+          "observation",
+          "persistence",
+          "judgment",
+          "adaptation",
+          "action"
+        ]
+      }
+    },
+    {
+      "title": "반복되는 행동 패턴",
+      "paragraphs": [
+        {
+          "text": "새 제안을 받으면 곧바로 따르기보다, 스스로 납득할 근거가 있는지 먼저 확인하는 흐름이 반복되기 쉽습니다. 아직 의견을 말하지 않았어도, 그 제안이 상황에 맞는지 살피고 있을 때가 있습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84",
+            "fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:比肩:decisionStyle",
+            "knowledge:ten_god:偏印:decisionStyle"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "judgment",
+            "independence"
+          ]
+        },
+        {
+          "text": "이 과정은 제안의 허점을 찾는 데 도움이 됩니다. 다만 검토가 자신의 기준 안에서만 이어지면, 상대가 다른 근거를 제시해도 이미 결론이 난 문제처럼 다루게 될 수 있습니다. 상대에게는 의견을 낼 여지가 줄어든 것처럼 느껴질 수 있습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84",
+            "fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:偏印:decisionStyle",
+            "knowledge:day_pillar:辛酉:shadowPatterns"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "observation",
+            "judgment",
+            "relationship"
+          ]
+        },
+        {
+          "text": "또 하나는 의견을 표현할 자리를 고르는 방식입니다. 공적인 일과 개인적인 감정을 구분해 말을 아끼는 자리가 있는 반면, 이야기해도 된다고 판단한 자리에서는 느낀 점이나 의견을 말과 행동으로 분명히 나타낼 수 있습니다.",
+          "sourceFactIds": [
+            "fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8",
+            "fact:ten_god:month_branch:食神::expression:active:%EB%A7%90%EA%B3%BC%20%ED%96%89%EB%8F%99%EC%9C%BC%EB%A1%9C%20%EA%B0%90%EC%A0%95%EA%B3%BC%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%B0%9C%EC%82%B0%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:食神::expression:active:%EB%A7%90%EA%B3%BC%20%ED%96%89%EB%8F%99%EC%9C%BC%EB%A1%9C%20%EA%B0%90%EC%A0%95%EA%B3%BC%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%B0%9C%EC%82%B0%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:day_pillar:辛酉:interpersonalStyle",
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:食神:ordinaryExpression"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "emotion",
+            "expression",
+            "relationship"
+          ]
+        },
+        {
+          "text": "마찰이 커지면 표현의 초점이 달라질 수 있습니다. 처음에는 의견 하나를 조율하던 일이, 시간이 지나면서 그 결정을 내리는 방식 자체에 문제를 제기하는 쪽으로 옮겨갈 수 있습니다. 내용에 대한 이견과 절차에 대한 이견이 섞이면 대화가 길어지기 쉽습니다.",
+          "sourceFactIds": [
+            "fact:ten_god:year_branch:傷官::stress:contextual:%EC%82%AC%ED%9A%8C%EC%A0%81%20%EB%A7%88%EC%B0%B0%EC%9D%B4%20%EC%BB%A4%EC%A7%80%EB%A9%B4%20%EB%B0%98%ED%95%AD%EC%9D%B4%20%EA%B0%95%ED%95%B4%EC%A7%90",
+            "fact:ten_god:year_branch:傷官::expression:contextual:%EA%B8%B0%EC%A1%B4%20%EC%B2%B4%EA%B3%84%EC%97%90%20%EB%8F%84%EC%A0%84%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::stress:contextual:%EC%82%AC%ED%9A%8C%EC%A0%81%20%EB%A7%88%EC%B0%B0%EC%9D%B4%20%EC%BB%A4%EC%A7%80%EB%A9%B4%20%EB%B0%98%ED%95%AD%EC%9D%B4%20%EA%B0%95%ED%95%B4%EC%A7%90\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::expression:contextual:%EA%B8%B0%EC%A1%B4%20%EC%B2%B4%EA%B3%84%EC%97%90%20%EB%8F%84%EC%A0%84%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:year_branch:interpretationRules",
+            "knowledge:ten_god:傷官:stressResponse",
+            "knowledge:ten_god:傷官:ordinaryExpression"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "adaptation",
+            "expression",
+            "relationship"
+          ]
+        },
+        {
+          "text": "비슷한 논의가 되풀이된다면, 제안의 근거를 더 확인하고 싶은 것인지 결정 방식에 이의를 제기하는 것인지를 먼저 나눠 말해 보세요.",
+          "sourceFactIds": [
+            "fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84",
+            "fact:ten_god:year_branch:傷官::expression:contextual:%EA%B8%B0%EC%A1%B4%20%EC%B2%B4%EA%B3%84%EC%97%90%20%EB%8F%84%EC%A0%84%ED%95%A8"
+          ],
+          "semanticIds": [
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84\"]",
+            "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::expression:contextual:%EA%B8%B0%EC%A1%B4%20%EC%B2%B4%EA%B3%84%EC%97%90%20%EB%8F%84%EC%A0%84%ED%95%A8\"]"
+          ],
+          "evidenceIds": [
+            "knowledge:position:branch:expressionDomain",
+            "knowledge:position:branch:interpretationRules",
+            "knowledge:position:month_branch:expressionDomain",
+            "knowledge:position:month_branch:interpretationRules",
+            "knowledge:ten_god:偏印:decisionStyle",
+            "knowledge:position:year_branch:interpretationRules",
+            "knowledge:ten_god:傷官:ordinaryExpression"
+          ],
+          "sourceEffectIds": [],
+          "axesUsed": [
+            "judgment",
+            "expression"
+          ]
+        }
+      ],
+      "debug": {
+        "section": "반복되는 행동 패턴",
+        "sourceFactIds": [
+          "fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84",
+          "fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84",
+          "fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80",
+          "fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8",
+          "fact:ten_god:month_branch:食神::expression:active:%EB%A7%90%EA%B3%BC%20%ED%96%89%EB%8F%99%EC%9C%BC%EB%A1%9C%20%EA%B0%90%EC%A0%95%EA%B3%BC%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%B0%9C%EC%82%B0%ED%95%A8",
+          "fact:ten_god:year_branch:傷官::stress:contextual:%EC%82%AC%ED%9A%8C%EC%A0%81%20%EB%A7%88%EC%B0%B0%EC%9D%B4%20%EC%BB%A4%EC%A7%80%EB%A9%B4%20%EB%B0%98%ED%95%AD%EC%9D%B4%20%EA%B0%95%ED%95%B4%EC%A7%90",
+          "fact:ten_god:year_branch:傷官::expression:contextual:%EA%B8%B0%EC%A1%B4%20%EC%B2%B4%EA%B3%84%EC%97%90%20%EB%8F%84%EC%A0%84%ED%95%A8"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:比肩::decision:contextual:%EC%A1%B0%EC%96%B8%EC%9D%84%20%EB%93%A4%EC%96%B4%EB%8F%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%EB%82%A9%EB%93%9D%ED%95%9C%20%EB%92%A4%20%EC%9B%80%EC%A7%81%EC%9E%84\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:偏印::decision:contextual:%ED%83%80%EB%8B%B9%EC%84%B1%EC%9D%84%20%EC%8A%A4%EC%8A%A4%EB%A1%9C%20%ED%99%95%EC%9D%B8%ED%95%98%EA%B3%A0%20%EC%9B%80%EC%A7%81%EC%9E%84\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:shadow:active:%EC%9E%90%EA%B8%B0%20%ED%8C%90%EB%8B%A8%EC%9D%84%20%EC%9C%A0%EC%9D%BC%ED%95%9C%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EC%82%BC%EA%B8%B0%20%EC%89%AC%EC%9B%80\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:day_pillar:::辛酉:interpersonal:active:%EB%95%8C%EC%99%80%20%EC%9E%A5%EC%86%8C%EB%A5%BC%20%EA%B0%80%EB%A0%A4%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%82%B4%EA%B3%A0%20%EA%B3%B5%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EA%B3%BC%20%EC%82%AC%EC%A0%81%EC%9D%B8%20%EC%9D%BC%EC%9D%84%20%EA%B5%AC%EB%B6%84%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:month_branch:食神::expression:active:%EB%A7%90%EA%B3%BC%20%ED%96%89%EB%8F%99%EC%9C%BC%EB%A1%9C%20%EA%B0%90%EC%A0%95%EA%B3%BC%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%B0%9C%EC%82%B0%ED%95%A8\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::stress:contextual:%EC%82%AC%ED%9A%8C%EC%A0%81%20%EB%A7%88%EC%B0%B0%EC%9D%B4%20%EC%BB%A4%EC%A7%80%EB%A9%B4%20%EB%B0%98%ED%95%AD%EC%9D%B4%20%EA%B0%95%ED%95%B4%EC%A7%90\"]",
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_branch:傷官::expression:contextual:%EA%B8%B0%EC%A1%B4%20%EC%B2%B4%EA%B3%84%EC%97%90%20%EB%8F%84%EC%A0%84%ED%95%A8\"]"
+        ],
+        "axesUsed": [
+          "judgment",
+          "independence",
+          "observation",
+          "relationship",
+          "emotion",
+          "expression",
+          "adaptation"
+        ]
+      }
+    }
+  ],
+  "selectedTopicPreview": {
+    "title": "지금 가장 궁금한 일·커리어",
+    "paragraphs": [
+      {
+        "text": "재직 중이라면 지금 맡은 일에서 계획을 따라 끝까지 완성할 여지가 있는지, 관심 있는 분야를 더 깊게 맡을 수 있는지부터 살펴보세요.",
+        "sourceFactIds": [
+          "fact:ten_god:year_stem:正財::work:contextual:%EA%B3%84%ED%9A%8D%EB%8C%80%EB%A1%9C%20%EA%BC%BC%EA%BC%BC%ED%95%98%EA%B2%8C%20%EC%99%84%EC%84%B1%ED%95%A8",
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22work%22%2C%22%EA%B4%80%EC%8B%AC%20%EB%B6%84%EC%95%BC%EB%A5%BC%20%EA%BE%B8%EC%A4%80%ED%9E%88%20%ED%8C%8C%EA%B3%A0%EB%93%A6%22%5D",
+          "entity:[\"/greatLuck/value/cards/3/pillar\",\"stem\"]"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_stem:正財::work:contextual:%EA%B3%84%ED%9A%8D%EB%8C%80%EB%A1%9C%20%EA%BC%BC%EA%BC%BC%ED%95%98%EA%B2%8C%20%EC%99%84%EC%84%B1%ED%95%A8\"]",
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22work%22%2C%22%EA%B4%80%EC%8B%AC%20%EB%B6%84%EC%95%BC%EB%A5%BC%20%EA%BE%B8%EC%A4%80%ED%9E%88%20%ED%8C%8C%EA%B3%A0%EB%93%A6%22%5D\"]"
+        ],
+        "evidenceIds": [
+          "knowledge:position:stem:expressionDomain",
+          "knowledge:position:stem:interpretationRules",
+          "knowledge:ten_god:正財:workStyle"
+        ],
+        "sourceEffectIds": [
+          "effect:personality:temporary:[\"daewoon\",\"canonical-period:/greatLuck/value/cards/3\",\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\",\"outward\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]",
+          "luck-effect:[\"[\\\"greatLuck\\\",\\\"canonical-period:/greatLuck/value/cards/3\\\",1598764920000,1914297720000]\",\"manifests_yongshen\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]"
+        ],
+        "axesUsed": []
+      },
+      {
+        "text": "지금 자리를 유지할지 변화를 알아볼지 고민된다면, 원하는 일이 부족한 것인지 지금의 역할에 그 일을 맡을 여지가 적은 것인지 나눠 보는 것이 첫 판단 기준입니다.",
+        "sourceFactIds": [
+          "fact:ten_god:year_stem:正財::work:contextual:%EA%B3%84%ED%9A%8D%EB%8C%80%EB%A1%9C%20%EA%BC%BC%EA%BC%BC%ED%95%98%EA%B2%8C%20%EC%99%84%EC%84%B1%ED%95%A8",
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22work%22%2C%22%EA%B4%80%EC%8B%AC%20%EB%B6%84%EC%95%BC%EB%A5%BC%20%EA%BE%B8%EC%A4%80%ED%9E%88%20%ED%8C%8C%EA%B3%A0%EB%93%A6%22%5D",
+          "entity:[\"/greatLuck/value/cards/3/pillar\",\"stem\"]"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"personality_fact\",\"natal\",null,null,null,\"fact:ten_god:year_stem:正財::work:contextual:%EA%B3%84%ED%9A%8D%EB%8C%80%EB%A1%9C%20%EA%BC%BC%EA%BC%BC%ED%95%98%EA%B2%8C%20%EC%99%84%EC%84%B1%ED%95%A8\"]",
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22work%22%2C%22%EA%B4%80%EC%8B%AC%20%EB%B6%84%EC%95%BC%EB%A5%BC%20%EA%BE%B8%EC%A4%80%ED%9E%88%20%ED%8C%8C%EA%B3%A0%EB%93%A6%22%5D\"]"
+        ],
+        "evidenceIds": [
+          "knowledge:position:stem:expressionDomain",
+          "knowledge:position:stem:interpretationRules",
+          "knowledge:ten_god:正財:workStyle"
+        ],
+        "sourceEffectIds": [
+          "effect:personality:temporary:[\"daewoon\",\"canonical-period:/greatLuck/value/cards/3\",\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\",\"outward\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]",
+          "luck-effect:[\"[\\\"greatLuck\\\",\\\"canonical-period:/greatLuck/value/cards/3\\\",1598764920000,1914297720000]\",\"manifests_yongshen\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]"
+        ],
+        "axesUsed": []
+      }
+    ],
+    "continuationHints": []
+  },
+  "paidPreview": {
+    "title": "지금 나는 어떤 흐름 안에 있는가",
+    "paragraphs": [
+      {
+        "text": "지금의 큰 흐름에서는 마음이 가는 문제를 깊이 살피는 일과, 살펴본 내용을 새로운 방식으로 풀어내는 일이 함께 중요해질 수 있습니다.",
+        "sourceFactIds": [
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC%22%5D",
+          "entity:[\"/greatLuck/value/cards/3/pillar\",\"stem\"]",
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%B0%BD%EC%A1%B0%EC%84%B1%22%5D"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC%22%5D\"]",
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%B0%BD%EC%A1%B0%EC%84%B1%22%5D\"]"
+        ],
+        "evidenceIds": [],
+        "sourceEffectIds": [
+          "effect:personality:temporary:[\"daewoon\",\"canonical-period:/greatLuck/value/cards/3\",\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\",\"outward\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]",
+          "luck-effect:[\"[\\\"greatLuck\\\",\\\"canonical-period:/greatLuck/value/cards/3\\\",1598764920000,1914297720000]\",\"manifests_yongshen\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]"
+        ],
+        "axesUsed": []
+      },
+      {
+        "text": "혼자 답을 찾는 데서 끝내기보다, 생각이 정리되면 무엇을 확인했고 왜 그렇게 보는지 말이나 행동으로 보여주는 것도 이 흐름을 써 볼 방법입니다.",
+        "sourceFactIds": [
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC%22%5D",
+          "entity:[\"/greatLuck/value/cards/3/pillar\",\"stem\"]",
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22expression%22%2C%22%EB%A7%90%EA%B3%BC%20%ED%96%89%EB%8F%99%EC%9C%BC%EB%A1%9C%20%EA%B0%90%EC%A0%95%EA%B3%BC%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%B0%9C%EC%82%B0%ED%95%A8%22%5D"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC%22%5D\"]",
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22expression%22%2C%22%EB%A7%90%EA%B3%BC%20%ED%96%89%EB%8F%99%EC%9C%BC%EB%A1%9C%20%EA%B0%90%EC%A0%95%EA%B3%BC%20%EC%9D%98%EA%B2%AC%EC%9D%84%20%EB%B0%9C%EC%82%B0%ED%95%A8%22%5D\"]"
+        ],
+        "evidenceIds": [],
+        "sourceEffectIds": [
+          "effect:personality:temporary:[\"daewoon\",\"canonical-period:/greatLuck/value/cards/3\",\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\",\"outward\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]",
+          "luck-effect:[\"[\\\"greatLuck\\\",\\\"canonical-period:/greatLuck/value/cards/3\\\",1598764920000,1914297720000]\",\"manifests_yongshen\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]"
+        ],
+        "axesUsed": []
+      }
+    ],
+    "continuationHints": [
+      {
+        "text": "이 해석은 현재 계산된 장기 흐름(2020년 ~ 2030년)을 기준으로 합니다.",
+        "sourceFactIds": [
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC%22%5D",
+          "entity:[\"/greatLuck/value/cards/3/pillar\",\"stem\"]",
+          "fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%B0%BD%EC%A1%B0%EC%84%B1%22%5D"
+        ],
+        "semanticIds": [
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%97%B0%EA%B5%AC%C2%B7%ED%83%90%EA%B5%AC%22%5D\"]",
+          "reading:[\"personality\",\"current_personality_fact\",\"daewoon\",\"p0-scope:[\\\"single-result-preview\\\",\\\"[\\\\\\\"greatLuck\\\\\\\",\\\\\\\"canonical-period:/greatLuck/value/cards/3\\\\\\\",1598764920000,1914297720000]\\\"]\",\"canonical-period:/greatLuck/value/cards/3\",[\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\"],\"fact:current:%5B%22outward%22%2C%22%E9%A3%9F%E7%A5%9E%22%2C%22core%22%2C%22%EC%B0%BD%EC%A1%B0%EC%84%B1%22%5D\"]"
+        ],
+        "evidenceIds": [],
+        "sourceEffectIds": [
+          "effect:personality:temporary:[\"daewoon\",\"canonical-period:/greatLuck/value/cards/3\",\"2020-08-30T05:22:00.000Z\",\"2030-08-30T05:22:00.000Z\",\"outward\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]",
+          "luck-effect:[\"[\\\"greatLuck\\\",\\\"canonical-period:/greatLuck/value/cards/3\\\",1598764920000,1914297720000]\",\"manifests_yongshen\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\",\"entity:[\\\"/greatLuck/value/cards/3/pillar\\\",\\\"stem\\\"]\"]"
+        ],
+        "axesUsed": []
+      }
+    ]
+  }
+}

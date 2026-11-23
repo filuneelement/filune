@@ -1,22 +1,15 @@
-import { useEffect, useMemo, useRef } from 'react'
-import type { GreatLuckCard } from '../lib/calculateGreatLuck'
-import { calculateYearlyLuck } from '../lib/calculateYearlyLuck'
+import { useEffect, useRef } from 'react'
+import type { CanonicalYearlyLuckResult } from '../lib/canonical/types'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
-import type { Messages, Locale } from '../i18n'
+import type { Messages } from '../i18n'
 
 type YearlyLuckSectionProps = {
-  dayStem: string
-  greatLuckPeriods: GreatLuckCard[]
+  result: CanonicalYearlyLuckResult
   messages: Messages
-  locale: Locale
 }
 
-function YearlyLuckSection({ dayStem, greatLuckPeriods, messages: t }: YearlyLuckSectionProps) {
+function YearlyLuckSection({ result, messages: t }: YearlyLuckSectionProps) {
   const cardsRef = useRef<HTMLDivElement>(null)
-  const result = useMemo(
-    () => calculateYearlyLuck(dayStem, new Date(), greatLuckPeriods),
-    [dayStem, greatLuckPeriods],
-  )
 
   useEffect(() => {
     const container = cardsRef.current

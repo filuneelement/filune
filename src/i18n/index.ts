@@ -1,6 +1,7 @@
 import ja from './ja'
 import ko from './ko'
 import en from './en'
+export const personalTopics = ['self', 'love', 'work', 'money'] as const
 export type Locale = 'ja' | 'ko' | 'en'
 export type CountryCode = 'JP' | 'KR' | 'US'
 export type CountrySelectionSource = 'default' | 'manual'

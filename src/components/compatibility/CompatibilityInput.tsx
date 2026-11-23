@@ -200,13 +200,13 @@ export default function CompatibilityInput({ locale, messages: t, disabled, erro
 
   return <section className="compatibility-flow">
     <header className="compatibility-flow__header">
-      <button type="button" className="compatibility-flow__back" onClick={onBack}>{t.flow.back}</button>
-      <h1>{t.compatibility.title}</h1><p>{t.compatibility.description}</p>
+      <button type="button" className="story-back" onClick={onBack} aria-label={t.compatibility.inputBack}>‹</button>
+      <h1>{t.compatibility.title}</h1>
     </header>
     <form className="compatibility-form" noValidate onSubmit={submit}>
       <div className="compatibility-form__people">
-        <ParticipantFields label={t.compatibility.personA} idSuffix="first" value={first} t={t} onChange={setFirst} />
-        <ParticipantFields label={t.compatibility.personB} idSuffix="second" value={second} t={t} onChange={setSecond} />
+        <ParticipantFields label={t.compatibility.inputYou} idSuffix="first" value={first} t={t} onChange={setFirst} />
+        <ParticipantFields label={t.compatibility.inputOtherPerson} idSuffix="second" value={second} t={t} onChange={setSecond} />
       </div>
       <div className="compatibility-form__actions">
         <label className="compatibility-field">

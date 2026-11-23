@@ -1,14 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { calculateMonthlyLuck, getCurrentJstYear } from '../lib/calculateMonthlyLuck'
+import { calculateMonthlyLuck } from '../lib/calculateMonthlyLuck'
+import type { CalculatedChart } from '../lib/canonical/types'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
 import type { Messages, Locale } from '../i18n'
 
-type MonthlyLuckSectionProps = { dayStem: string; messages: Messages; locale: Locale }
+type MonthlyLuckSectionProps = {
+  dayStem: string
+  calculation: Pick<CalculatedChart, 'monthlyLuck' | 'context'>
+  messages: Messages
+  locale: Locale
+}
 
-function MonthlyLuckSection({ dayStem, messages: t, locale }: MonthlyLuckSectionProps) {
-  const [year, setYear] = useState(() => getCurrentJstYear())
+function MonthlyLuckSection({ dayStem, calculation, messages: t, locale }: MonthlyLuckSectionProps) {
+  const { monthlyLuck, context: { monthlyLuckYear, referenceTime } } = calculation
+  const [year, setYear] = useState(monthlyLuckYear)
   const cardsRef = useRef<HTMLDivElement>(null)
-  const result = useMemo(() => calculateMonthlyLuck(year, dayStem), [year, dayStem])
+  const result = useMemo(() => year === monthlyLuckYear ? monthlyLuck : calculateMonthlyLuck(year, dayStem, new Date(referenceTime)),
+    [year, monthlyLuckYear, monthlyLuck, dayStem, referenceTime])
 
   useEffect(() => {
     const currentIndex = result.currentIndex

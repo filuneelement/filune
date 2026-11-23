@@ -1,19 +1,17 @@
 import { useEffect, useRef } from 'react'
-import type { GreatLuckResult } from '../lib/calculateGreatLuck'
-import { calculateTwelveStage, type EarthlyBranch, type HeavenlyStem } from '../lib/twelveStages'
+import type { CanonicalGreatLuckResult } from '../lib/canonical/types'
 import { FIVE_ELEMENTS } from './fiveElementDisplay'
 import type { Messages, Locale } from '../i18n'
 import { formatAgeLabel } from '../i18n'
 
 type GreatLuckSectionProps = {
-  result: GreatLuckResult | null
+  result?: CanonicalGreatLuckResult
   message?: string
-  dayStem: string
   messages: Messages
   locale: Locale
 }
 
-function GreatLuckSection({ result, message, dayStem, messages: t, locale }: GreatLuckSectionProps) {
+function GreatLuckSection({ result, message, messages: t, locale }: GreatLuckSectionProps) {
   const cardsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -62,7 +60,7 @@ function GreatLuckSection({ result, message, dayStem, messages: t, locale }: Gre
                     <span className={FIVE_ELEMENTS[card.branch] ? `great-luck__symbol great-luck__symbol--${FIVE_ELEMENTS[card.branch].className}` : 'great-luck__symbol'}>{card.branch}</span>
                   </span>
                   <span className="great-luck__card-meta">{t.tenGods[card.stemTenGod as keyof typeof t.tenGods] ?? card.stemTenGod} · {t.tenGods[card.branchTenGod as keyof typeof t.tenGods] ?? card.branchTenGod}</span>
-                  <span className="luck-card__twelve-stage">{t.stages[calculateTwelveStage(dayStem as HeavenlyStem, card.branch as EarthlyBranch) as keyof typeof t.stages]}</span>
+                  <span className="luck-card__twelve-stage">{t.stages[card.twelveStage]}</span>
                 </article>
               )
             })}

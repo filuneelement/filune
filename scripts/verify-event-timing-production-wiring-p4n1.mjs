@@ -42,7 +42,9 @@ try {
   const [{ prepareProductResult }, legacy, { validateReadingAssembly }] = await Promise.all([
     load('product/prepareProductResult'), load('calculateEightChar'), load('reading/validateReadingAssembly'),
   ])
-  assert.match(read('src/App.tsx'), /await prepareProductResult\([\s\S]*?\}, \{ eventContext: context \}\)/)
+  const app = read('src/App.tsx')
+  assert.match(app, /await prepareProductResult\(birth\)/)
+  assert.doesNotMatch(app, /eventContext/)
 
   const fixture = JSON.parse(read('scripts/fixtures/byeong-judgment-inputs.json'))['CS-127']
   const birth = { date: fixture.date, time: { known: true, value: fixture.time },
@@ -120,7 +122,7 @@ try {
 
   console.log(JSON.stringify({
     result: 'PASS',
-    entrypoint: 'App.calculateAndShowResult → prepareProductResult → readBirthChart',
+    entrypoint: 'App → context-free prepareProductResult; explicit service context → readBirthChart',
     productionFixtures: 3, contractContext: 2, businessContext: 1,
     eventTimingInvocations: observed.event.length, assemblyHandoffs: observed.assembly.length,
     contextlessLegacy: 'PASS (known and unknown birth hour)',

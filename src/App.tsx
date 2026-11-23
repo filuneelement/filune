@@ -1,9 +1,7 @@
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react'
-import type { createBasicChartViewModel } from './lib/basicChartViewModel'
-import type { GreatLuckGender, GreatLuckResult } from './lib/calculateGreatLuck'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import type { GreatLuckGender } from './lib/calculateGreatLuck'
 import type { FourPillars, ThreePillars } from './lib/calculateEightChar'
 import LuneVisual from './components/LuneVisual'
-import type { EventDomain } from './lib/eventTiming'
 import type { ReadingAssembly } from './lib/reading'
 import type { Birthplace } from './lib/timeCorrection'
 import type { BirthInput } from './lib/canonical/types'
@@ -14,6 +12,7 @@ import {
   getSavedCountrySelectionSource,
   getSavedLocale,
   messages,
+  personalTopics,
   resolveCountryForLocale,
   type CountryCode,
   type CountrySelectionSource,
@@ -21,7 +20,6 @@ import {
 } from './i18n'
 
 type PillarResult = FourPillars | ThreePillars
-type ChartViewModel = ReturnType<typeof createBasicChartViewModel>
 
 const BasicChartResult = lazy(() => import('./components/BasicChartResult'))
 const CompatibilityInput = lazy(() => import('./components/compatibility/CompatibilityInput'))
@@ -42,17 +40,22 @@ type ResultRouteData = {
   timeCorrectionEnabled: boolean
   interestTopic?: string
   relationshipStatus?: string
-  relationshipDuration?: string
-  optionalQuestion?: string
+  careerStatus?: string
 }
 
 type ResultHistoryState = {
   filuneResult?: ResultRouteData
   filuneCompatibilityResult?: CompatibilityRouteHistoryData
   filuneCompatibilityInput?: { version: 1; kind: 'compatibility-input' }
+  filuneCompatibilityIntro?: true
 }
 
-type WizardStep = number | 'permission' | 'lune-intro' | 'compatibility'
+type WizardStep = number | 'permission' | 'compatibility-intro' | 'compatibility'
+
+function isCompatibilityIntroPage() {
+  return window.location.pathname === '/'
+    && (window.history.state as ResultHistoryState | null)?.filuneCompatibilityIntro === true
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -110,21 +113,18 @@ function readCompatibilityRouteData(): CompatibilityRouteHistoryData | null {
   return isCompatibilityRouteData(value) ? value : null
 }
 
-const eventContextOptions = [
-  { value: 'contract', ja: '契約手続き中', ko: '계약 절차 진행 중', en: 'A contract process in progress' },
-  { value: 'business_start', ja: '事業の立ち上げ', ko: '사업 시작 준비', en: 'Preparing to start a business' },
-  { value: 'business_expansion', ja: '既存事業の拡大', ko: '운영 중인 사업 확장', en: 'Expanding an existing business' },
-] as const satisfies readonly ({ value: EventDomain } & Record<Locale, string>)[]
+const relationshipStatuses = ['single', 'dating', 'married'] as const
+const careerStatuses = ['job_seeking', 'employed', 'business'] as const
 
-const eventContextLabels = {
-  ja: { label: '相談する予定（任意）', none: '指定しない' },
-  ko: { label: '살펴볼 계획 (선택)', none: '선택 안 함' },
-  en: { label: 'Plans to consider (optional)', none: 'None selected' },
+function restoreCareerStatus(value?: string) {
+  if (value === 'job-seeking') return 'job_seeking'
+  if (value === 'business-owner') return 'business'
+  return value ?? ''
 }
 
-const topicQuestionConfig = {
-  love: { statusQuestion: 'relationshipStatus', durationWhenStatus: 'dating' },
-} as const
+function needsTopicStatus(topic?: string) {
+  return topic === 'love' || topic === 'work'
+}
 
 function readResultHistoryState(): ResultRouteData | null {
   const result = (window.history.state as ResultHistoryState | null)?.filuneResult
@@ -150,21 +150,31 @@ function App() {
   const [isCompatibilityResultPage, setIsCompatibilityResultPage] = useState(() => initialCompatibilityResult !== null)
   const [compatibilityRouteData, setCompatibilityRouteData] = useState<CompatibilityRouteHistoryData | null>(initialCompatibilityResult)
   const [compatibilityInputMounted, setCompatibilityInputMounted] = useState(() =>
-    window.location.pathname === '/compatibility' || window.location.pathname === '/compatibility/result')
+    window.location.pathname === '/compatibility' || window.location.pathname === '/compatibility/result'
+    || isCompatibilityIntroPage())
   const [compatibilityStatus, setCompatibilityStatus] = useState<'idle' | 'calculating' | 'success' | 'error'>(() =>
     initialCompatibilityResult ? 'success' : 'idle')
   const [compatibilityError, setCompatibilityError] = useState('')
   const compatibilitySubmitLock = useRef(false)
   const compatibilityOriginRef = useRef(window.location.pathname === '/compatibility'
-    || window.location.pathname === '/compatibility/result')
+    || window.location.pathname === '/compatibility/result' || isCompatibilityIntroPage())
   const compatibilityReturnStepRef = useRef<WizardStep>(1)
-  const [wizardStep, setWizardStep] = useState<WizardStep>(() =>
-    window.location.pathname === '/compatibility' || initialCompatibilityResult ? 'compatibility' : 1)
+  const [wizardStep, setWizardStep] = useState<WizardStep>(() => {
+    if (window.location.pathname === '/compatibility' || initialCompatibilityResult) return 'compatibility'
+    return isCompatibilityIntroPage() ? 'compatibility-intro' : 1
+  })
+  const isCompatibilityIntro = wizardStep === 'compatibility-intro'
+  const isOnboarding = wizardStep === 'permission' || isCompatibilityIntro
   const [interestTopic, setInterestTopic] = useState(initialResult?.interestTopic ?? '')
   const [relationshipStatus, setRelationshipStatus] = useState(initialResult?.relationshipStatus ?? '')
-  const [relationshipDuration, setRelationshipDuration] = useState(initialResult?.relationshipDuration ?? '')
-  const [optionalQuestion, setOptionalQuestion] = useState(initialResult?.optionalQuestion ?? '')
-  const [eventContext, setEventContext] = useState<EventDomain>()
+  const [careerStatus, setCareerStatus] = useState(restoreCareerStatus(initialResult?.careerStatus))
+  const personalResultReturnStep = useRef<4 | 5 | null>(
+    initialResult ? (needsTopicStatus(initialResult.interestTopic) ? 5 : 4) : null,
+  )
+  const isRelationshipTopic = interestTopic === 'love'
+  const topicStatus = isRelationshipTopic ? relationshipStatus : careerStatus
+  const topicStatusOptions = isRelationshipTopic ? relationshipStatuses : careerStatuses
+  const hasTopicStatus = topicStatusOptions.some(value => value === topicStatus)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [name, setName] = useState(initialResult?.name ?? '')
   const [gender, setGender] = useState(initialResult?.gender ?? '')
@@ -180,24 +190,18 @@ function App() {
   const [birthplaceMatches, setBirthplaceMatches] = useState<Birthplace[]>([])
   const [timeCorrectionEnabled, setTimeCorrectionEnabled] = useState(initialResult?.timeCorrectionEnabled ?? true)
   const [pillars, setPillars] = useState<PillarResult | null>(initialResult?.pillars ?? null)
-  const [chart, setChart] = useState<ChartViewModel | null>(null)
-  const [greatLuck, setGreatLuck] = useState<GreatLuckResult | null>(null)
   const [fullAge, setFullAge] = useState<number | null>(null)
   const [error, setError] = useState('')
   const selectedGender: GreatLuckGender | null = gender === '女性' || gender === '男性' ? gender : null
-  const greatLuckAmbiguous = pillars?.timeKnown === false && pillars.solarTermAmbiguous
-  const greatLuckMessage = greatLuckAmbiguous
-    ? t.ambiguousLuck
-    : selectedGender
-      ? undefined
-      : t.genderRequired
+  const birth = useMemo<BirthInput>(() => ({
+    date: { year: Number(year), month: Number(month), day: Number(day) },
+    time: timeUnknown ? { known: false } : { known: true, value: { hour: Number(hour), minute: Number(minute) } },
+    gender: selectedGender ?? undefined,
+    birthplace,
+    timeCorrectionMode: timeCorrectionEnabled && birthplace ? 'longitude' : 'none',
+  }), [year, month, day, timeUnknown, hour, minute, selectedGender, birthplace, timeCorrectionEnabled])
 
   useEffect(() => { localStorage.setItem('filune:locale', locale) }, [locale])
-  useEffect(() => {
-    if (wizardStep !== 'lune-intro') return
-    const timer = window.setTimeout(() => setWizardStep(3), 1200)
-    return () => window.clearTimeout(timer)
-  }, [wizardStep])
   useEffect(() => { localStorage.setItem('filune:birthCountry', countryCode) }, [countryCode])
   useEffect(() => {
     localStorage.setItem('filune:birthCountrySource', countrySelectionSource)
@@ -211,17 +215,6 @@ function App() {
     setBirthplaceMatches([])
     setBirthplaceOptionsOpen(false)
   }, [locale, countryCode, countrySelectionSource, isResultPage, isCompatibilityResultPage])
-  useEffect(() => {
-    let active = true
-    if (!pillars) {
-      setChart(null)
-      return () => { active = false }
-    }
-    import('./lib/basicChartViewModel').then(({ createBasicChartViewModel }) => {
-      if (active) setChart(createBasicChartViewModel(pillars))
-    })
-    return () => { active = false }
-  }, [pillars])
 
   useEffect(() => {
     let active = true
@@ -234,32 +227,6 @@ function App() {
     })
     return () => { active = false }
   }, [isResultPage, year, month, day])
-
-  useEffect(() => {
-    let active = true
-    if (!isResultPage || !pillars || !chart || !selectedGender || greatLuckAmbiguous) {
-      setGreatLuck(null)
-      return () => { active = false }
-    }
-    import('./lib/calculateGreatLuck').then(({ calculateGreatLuck }) => {
-      if (!active) return
-      setGreatLuck(calculateGreatLuck({
-        yearPillar: pillars.year,
-        monthPillar: pillars.month,
-        dayStem: pillars.dayRelationships.dayStem,
-        gender: selectedGender,
-        timeUnknown: pillars.timeKnown === false,
-        birthDateTime: pillars.timeKnown === false ? undefined : {
-          year: Number(year),
-          month: Number(month),
-          day: Number(day),
-          hour: Number(hour),
-          minute: Number(minute),
-        },
-      }))
-    })
-    return () => { active = false }
-  }, [isResultPage, pillars, chart, selectedGender, greatLuckAmbiguous, year, month, day, hour, minute])
 
   useEffect(() => {
     function restoreHistoryPage() {
@@ -281,8 +248,12 @@ function App() {
       if (path === '/compatibility' || shouldShowCompatibilityResult) {
         setCompatibilityInputMounted(true)
         setWizardStep('compatibility')
+      } else if (isCompatibilityIntroPage()) {
+        compatibilityOriginRef.current = true
+        setCompatibilityInputMounted(true)
+        setWizardStep('compatibility-intro')
       } else if (path === '/') {
-        setWizardStep(compatibilityOriginRef.current ? compatibilityReturnStepRef.current : 6)
+        setWizardStep(compatibilityOriginRef.current ? compatibilityReturnStepRef.current : personalResultReturnStep.current ?? 1)
         compatibilityOriginRef.current = false
       }
       if (compatibilityResult) setLocale(compatibilityResult.locale)
@@ -290,8 +261,8 @@ function App() {
       if (result) {
         setInterestTopic(result.interestTopic ?? '')
         setRelationshipStatus(result.relationshipStatus ?? '')
-        setRelationshipDuration(result.relationshipDuration ?? '')
-        setOptionalQuestion(result.optionalQuestion ?? '')
+        setCareerStatus(restoreCareerStatus(result.careerStatus))
+        personalResultReturnStep.current = needsTopicStatus(result.interestTopic) ? 5 : 4
         setName(result.name)
         setGender(result.gender)
         setYear(result.year)
@@ -382,25 +353,16 @@ function App() {
     setWizardStep(4)
   }
 
-  async function calculateAndShowResult(context?: EventDomain) {
+  async function calculateAndShowResult() {
     setPillars(null)
     if (!validateBirth()) {
       setWizardStep(3)
       setIsTransitioning(false)
       return
     }
-    const numericYear = Number(year)
-    const numericMonth = Number(month)
-    const numericDay = Number(day)
     try {
       const { prepareProductResult } = await import('./lib/product/prepareProductResult')
-      const result = await prepareProductResult({
-        date: { year: numericYear, month: numericMonth, day: numericDay },
-        time: timeUnknown ? { known: false } : { known: true, value: { hour: Number(hour), minute: Number(minute) } },
-        gender: selectedGender ?? undefined,
-        birthplace,
-        timeCorrectionMode: timeCorrectionEnabled && birthplace ? 'longitude' : 'none',
-      }, { eventContext: context })
+      const result = await prepareProductResult(birth)
       const routeData: ResultRouteData = {
         ...result,
         name,
@@ -414,10 +376,10 @@ function App() {
         birthplace,
         timeCorrectionEnabled,
         interestTopic,
-        relationshipStatus,
-        relationshipDuration,
-        optionalQuestion,
+        ...(isRelationshipTopic && relationshipStatus && { relationshipStatus }),
+        ...(interestTopic === 'work' && careerStatus && { careerStatus }),
       }
+      personalResultReturnStep.current = needsTopicStatus(interestTopic) ? 5 : 4
       window.history.pushState({ filuneResult: routeData } satisfies ResultHistoryState, '', '/result')
       setPillars(result.pillars)
       setIsResultPage(true)
@@ -430,9 +392,15 @@ function App() {
     }
   }
 
-  function beginCompatibility() {
-    compatibilityReturnStepRef.current = wizardStep === 'compatibility' ? 1 : wizardStep
+  function showCompatibilityIntro() {
+    compatibilityReturnStepRef.current = wizardStep
     compatibilityOriginRef.current = true
+    window.history.pushState({ filuneCompatibilityIntro: true }, '')
+    setCompatibilityInputMounted(true)
+    setWizardStep('compatibility-intro')
+  }
+
+  function beginCompatibility() {
     window.history.pushState({ filuneCompatibilityInput: { version: 1, kind: 'compatibility-input' } }, '', '/compatibility')
     setCompatibilityInputMounted(true)
     setCompatibilityStatus('idle')
@@ -486,35 +454,32 @@ function App() {
     }
   }
 
-  function nextAfterConditional() {
-    setWizardStep(6)
-  }
-
-  async function beginReading(context?: EventDomain) {
+  async function beginReading() {
+    if (needsTopicStatus(interestTopic) && !hasTopicStatus) return
     setWizardStep(7)
     setIsTransitioning(true)
-    await calculateAndShowResult(context)
+    await calculateAndShowResult()
   }
 
   return (
     <main>
       {!isResultPage && !isCompatibilityResultPage && wizardStep === 1 && <section className="story-step story-step--hero">
         <div className="story-topbar"><div className="story-brand">FILUNE</div><div className="language-picker"><label htmlFor="ui-language">{t.language}</label><select id="ui-language" value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div></div>
-        <div className="story-hero__content"><LuneVisual className="story-hero__lune" name="LUNE"/>{t.flow.guideLine && <p className="story-character-description">{t.flow.guideLine}</p>}{t.flow.heroMain && <p className="story-hero__main-copy">{t.flow.heroMain}</p>}<p className={t.flow.heroMain ? 'story-hero__subline' : 'story-hero__headline'}>{t.flow.hero}</p><button type="button" className="story-cta" onClick={() => setWizardStep('permission')}>{t.flow.start}</button><button type="button" className="story-cta story-cta--secondary" onClick={beginCompatibility}>{t.compatibility.entry}</button></div>
+        <div className="story-hero__content"><LuneVisual className="story-hero__lune" name="LUNE"/>{t.flow.guideLine && <p className="story-character-description">{t.flow.guideLine}</p>}<p className="story-hero__main-copy">{t.flow.heroMain}</p><button type="button" className="story-cta" onClick={() => setWizardStep('permission')}>{t.flow.start}</button><button type="button" className="story-cta story-cta--secondary" onClick={showCompatibilityIntro}>{t.compatibility.entry}</button></div>
       </section>}
-      {!isResultPage && !isCompatibilityResultPage && wizardStep !== 1 && <div className={`story-language${wizardStep === 'permission' || wizardStep === 'lune-intro' ? ' story-language--dark' : ''}`}><label htmlFor="wizard-language">{t.language}</label><select id="wizard-language" value={locale} disabled={compatibilityStatus === 'calculating'} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div>}
-      {!isResultPage && wizardStep === 'permission' && <section className="story-step story-step--navy onboarding-scene">
-        <button type="button" className="story-back story-back--light" onClick={() => setWizardStep(1)} aria-label={t.flow.back}>‹</button>
+      {!isResultPage && !isCompatibilityResultPage && wizardStep !== 1 && <div className={`story-language${isOnboarding || wizardStep === 3 || wizardStep === 4 || wizardStep === 5 ? ' story-language--dark' : ''}`}><label htmlFor="wizard-language">{t.language}</label><select id="wizard-language" value={locale} disabled={compatibilityStatus === 'calculating'} onChange={(event) => setLocale(event.target.value as Locale)}><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></div>}
+      {!isResultPage && isOnboarding && <section className={`story-step story-step--navy onboarding-scene${isCompatibilityIntro && locale === 'ja' ? ' compatibility-intro--ja' : ''}`}>
+        <button type="button" className="story-back story-back--light" onClick={() => isCompatibilityIntro ? window.history.back() : setWizardStep(1)} aria-label={t.flow.back}>‹</button>
         <LuneVisual className="onboarding-scene__lune" name={t.flow.luneName}/>
-        <h1 className="onboarding-scene__title">{t.flow.permissionTitle}</h1>
-        <p className="onboarding-scene__body">{t.flow.permissionBody}</p>
-        <button className="story-cta onboarding-scene__cta" type="button" onClick={() => setWizardStep('lune-intro')}>{t.flow.permissionAccept}</button>
-      </section>}
-      {!isResultPage && wizardStep === 'lune-intro' && <section className="story-step story-step--navy onboarding-scene onboarding-scene--intro" aria-live="polite">
-        <LuneVisual className="onboarding-scene__lune" name={t.flow.luneName}/>
-        <p className="onboarding-scene__intro-copy">{t.flow.introCopy}</p>
+        <h1 className="onboarding-scene__title">{isCompatibilityIntro ? t.compatibility.introTitle : t.flow.permissionTitle}</h1>
+        <p className={isCompatibilityIntro ? 'onboarding-scene__body' : 'onboarding-scene__body onboarding-scene__body--personal'}>{isCompatibilityIntro ? t.compatibility.introBody : t.flow.permissionBody}</p>
+        <button className="story-cta onboarding-scene__cta" type="button" onClick={isCompatibilityIntro ? beginCompatibility : () => setWizardStep(3)}>{t.flow.permissionAccept}</button>
       </section>}
       {!isResultPage && wizardStep === 3 && <div className="entry-screen story-form-screen">
+        <header className="story-form-screen__intro">
+          <LuneVisual className="story-form-screen__lune"/>
+          <h1>{t.flow.birthInputTitle}</h1>
+        </header>
         <div className="birth-step-top"><button type="button" className="story-back" onClick={() => setWizardStep('permission')} aria-label={t.flow.back}>‹</button></div>
         <form className="entry-form" noValidate onSubmit={handleSubmit}>
           <section className="entry-form__section entry-form__profile" aria-label={`${t.name} / ${t.gender}`}>
@@ -707,21 +672,56 @@ function App() {
           {error && <p role="alert">{error}</p>}
         </form>
       </div>}
-      {!isResultPage && wizardStep === 4 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(3)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.topicEyebrow}</p><h1>{t.flow.topicQuestion}</h1><div className="story-options">{t.flow.topics.map((topic, i) => <button key={i} type="button" className={interestTopic === ['self','love','work','money','future'][i] ? 'selected' : ''} onClick={() => { setInterestTopic(['self','love','work','money','future'][i]); setRelationshipStatus(''); setRelationshipDuration('') }}>{topic}</button>)}</div><button type="button" className="story-cta story-cta--navy" disabled={!interestTopic} onClick={() => setWizardStep(interestTopic in topicQuestionConfig ? 5 : 6)}>{t.flow.next}</button></div></section>}
-      {!isResultPage && wizardStep === 5 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(4)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.followUp}</p><h1>{interestTopic in topicQuestionConfig ? t.flow.relationshipQuestion : t.flow.topicQuestion}</h1>{interestTopic in topicQuestionConfig ? <><div className="story-options">{t.flow.relationshipStatuses.map((v, i) => <button key={i} type="button" className={relationshipStatus === ['single','dating','married'][i] ? 'selected' : ''} onClick={() => { setRelationshipStatus(['single','dating','married'][i]); setRelationshipDuration('') }}>{v}</button>)}</div>{relationshipStatus === topicQuestionConfig.love.durationWhenStatus && <><h2>{t.flow.durationQuestion}</h2><div className="story-options">{t.flow.durations.map((v,i) => <button key={i} type="button" className={relationshipDuration === String(i) ? 'selected' : ''} onClick={() => setRelationshipDuration(String(i))}>{v}</button>)}</div></>}</> : <p className="story-note">{t.flow.noQuestions}</p>}<button type="button" className="story-cta story-cta--navy" disabled={interestTopic in topicQuestionConfig && (!relationshipStatus || (relationshipStatus === topicQuestionConfig.love.durationWhenStatus && !relationshipDuration))} onClick={nextAfterConditional}>{t.flow.next}</button></div></section>}
-      {!isResultPage && wizardStep === 6 && <section className="story-step story-step--ivory"><div className="story-step-head"><button type="button" className="story-back" onClick={() => setWizardStep(interestTopic in topicQuestionConfig ? 5 : 4)} aria-label={t.flow.back}>‹</button><span>FILUNE</span></div><div className="story-panel"><p className="story-eyebrow">{t.flow.optional}</p><h1>{t.flow.optionalQuestion}</h1><textarea maxLength={200} value={optionalQuestion} placeholder={t.flow.optionalPlaceholder} onChange={(event) => setOptionalQuestion(event.target.value)}/><small className="story-counter">{optionalQuestion.length}/200</small>
-        <label className="story-event-context">
-          {eventContextLabels[locale].label}
-          <select value={eventContext ?? ''} onChange={(event) => setEventContext(eventContextOptions.find(option => option.value === event.target.value)?.value)}>
-            <option value="">{eventContextLabels[locale].none}</option>
-            {eventContextOptions.map(option => <option key={option.value} value={option.value}>{option[locale]}</option>)}
-          </select>
-        </label>
-        <button type="button" className="story-cta story-cta--navy" onClick={() => void beginReading(eventContext)}>{t.flow.next}</button><button type="button" className="story-skip" onClick={() => void beginReading()}>{t.flow.skip}</button></div></section>}
+      {!isResultPage && wizardStep === 4 && <section className="story-form-screen">
+        <header className="story-form-screen__intro">
+          <LuneVisual className="story-form-screen__lune"/>
+          <h1>{t.flow.topicIntroTitle}</h1>
+        </header>
+        <div className="birth-step-top"><button type="button" className="story-back" onClick={() => setWizardStep(3)} aria-label={t.flow.back}>‹</button></div>
+        <section className="story-form-screen__topics" aria-labelledby="interest-topic-label">
+          <h2 id="interest-topic-label" className="story-eyebrow">{t.flow.topicEyebrow}</h2>
+          <div className="story-options">
+            {personalTopics.map((value, i) => {
+              const selected = interestTopic === value
+              return <button key={value} type="button" className={selected ? 'selected' : ''}
+                aria-pressed={selected}
+                onClick={() => {
+                  if (selected) return
+                  setInterestTopic(value)
+                  setRelationshipStatus('')
+                  setCareerStatus('')
+                }}>{t.flow.topics[i]}</button>
+            })}
+          </div>
+          <button type="button" className="story-cta story-cta--navy" disabled={!personalTopics.some(topic => topic === interestTopic)}
+            onClick={() => needsTopicStatus(interestTopic) ? setWizardStep(5) : void beginReading()}>{t.flow.next}</button>
+        </section>
+      </section>}
+      {!isResultPage && wizardStep === 5 && <section className="story-form-screen">
+        <header className="story-form-screen__intro">
+          <LuneVisual className="story-form-screen__lune"/>
+          <h1>{t.flow.followUp}</h1>
+        </header>
+        <div className="birth-step-top"><button type="button" className="story-back" onClick={() => setWizardStep(4)} aria-label={t.flow.back}>‹</button></div>
+        <div className="story-form-screen__topics">
+          <h2 className="story-eyebrow">{isRelationshipTopic ? t.flow.relationshipQuestion : t.flow.careerQuestion}</h2>
+          <div className="story-options">
+            {topicStatusOptions.map((value, i) => {
+              const selected = topicStatus === value
+              return <button key={value} type="button" className={selected ? 'selected' : ''} aria-pressed={selected}
+                onClick={() => isRelationshipTopic ? setRelationshipStatus(value) : setCareerStatus(value)}>
+                {(isRelationshipTopic ? t.flow.relationshipStatuses : t.flow.careerStatuses)[i]}
+              </button>
+            })}
+          </div>
+          <button type="button" className="story-cta story-cta--navy" disabled={!hasTopicStatus}
+            onClick={() => void beginReading()}>{t.flow.next}</button>
+        </div>
+      </section>}
       {!isResultPage && wizardStep === 7 && <section className="story-step story-step--navy"><LuneVisual className="story-lune"/><p className="story-copy">{t.flow.transition}</p>{isTransitioning && <span className="story-loader" aria-label={t.flow.loading}/>}</section>}
 
       {compatibilityInputMounted && <div hidden={wizardStep !== 'compatibility' || isCompatibilityResultPage}>
-        <Suspense fallback={<p className="compatibility-loading" role="status">{t.compatibility.calculating}</p>}>
+        <Suspense fallback={null}>
           <CompatibilityInput locale={locale} messages={t} disabled={compatibilityStatus === 'calculating'}
             error={compatibilityStatus === 'error' ? compatibilityError : undefined}
             initialPeople={compatibilityRouteData ? [compatibilityRouteData.first, compatibilityRouteData.second] : undefined}
@@ -737,23 +737,35 @@ function App() {
           onHome={returnToCompatibilityHome} />
       </Suspense>}
 
-      {isResultPage && pillars && chart && fullAge !== null && (
+      {isResultPage && pillars && fullAge !== null && (
         <Suspense fallback={null}>
           <BasicChartResult
-            chart={chart}
+            birth={birth}
+            pillars={pillars}
+            interestTopic={interestTopic}
+            careerStatus={interestTopic === 'work' ? careerStatus : undefined}
+            relationshipStatus={isRelationshipTopic ? relationshipStatus : undefined}
+            selectedStatus={isRelationshipTopic
+              ? t.flow.relationshipStatuses[relationshipStatuses.findIndex(value => value === relationshipStatus)]
+              : interestTopic === 'work'
+                ? t.flow.careerStatuses[careerStatuses.findIndex(value => value === careerStatus)]
+                : undefined}
             messages={t}
             locale={locale}
             name={name}
-            profileSummary={`${name.trim() ? `${name.trim()}${locale === 'en' ? ' (' : '（'}` : ''}${fullAge}${t.yearsSuffix}${gender ? `${t.ageSeparator}${gender === '女性' ? t.female : t.male}` : ''}${name.trim() ? (locale === 'en' ? ')' : '）') : ''}`}
+            profileSummary={[name.trim(), `${fullAge}${t.yearsSuffix}`, selectedGender ? (selectedGender === '女性' ? t.female : t.male) : ''].filter(Boolean).join(' · ')}
             birthDateTime={`${year}.${month.padStart(2, '0')}.${day.padStart(2, '0')}${pillars.timeKnown === false ? `　${t.birthTimeUnknown}` : ` ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`}`}
-            timeCorrectionSummary={pillars.timeKnown !== false && pillars.timeCorrection && birthplace
-              ? `${t.correctionOriginal} ${pillars.timeCorrection.originalTime}　${t.correction} ${pillars.timeCorrection.correctionMinutes > 0 ? '+' : ''}${pillars.timeCorrection.correctionMinutes}${t.minuteUnit}　${t.calculationTime} ${pillars.timeCorrection.calculationTime}`
+            timeCorrectionSummary={pillars.timeKnown !== false && pillars.timeCorrection
+              ? [
+                `${t.correctionOriginal} ${pillars.timeCorrection.originalTime}`,
+                pillars.timeCorrection.mode === 'longitude'
+                  ? `${t.correction} ${pillars.timeCorrection.correctionMinutes > 0 ? '+' : ''}${pillars.timeCorrection.correctionMinutes}${t.minuteUnit}`
+                  : '',
+                `${t.calculationTime} ${pillars.timeCorrection.calculationTime}`,
+              ].filter(Boolean).join(' · ')
               : undefined}
             showSolarTermAmbiguity={pillars.timeKnown === false ? pillars.solarTermAmbiguous : false}
             onBack={() => window.history.back()}
-            greatLuck={greatLuck}
-            greatLuckMessage={greatLuckMessage}
-            interestTopic={interestTopic}
           />
         </Suspense>
       )}
