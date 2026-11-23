@@ -55,7 +55,10 @@ function pointsFor(
     && fact.traitType !== 'internal_conflict' && fact.traitType !== 'growth')
     .sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active')
       || sourceOrder.indexOf(a.sourceType) - sourceOrder.indexOf(b.sourceType))
-  const points: { phrase: string; key: string; qualified: boolean; unit: ReadingSemanticUnit; axis: PersonalityAxis }[] = []
+  const points: {
+    phrase: string; key: string; qualified: boolean; unit: ReadingSemanticUnit
+    axis: PersonalityAxis; sourceType: PersonalityFact['sourceType']
+  }[] = []
   const byRecord = new Map(units.map(unit => [unit.meaningRef.recordId, unit]))
   const usedGroups = new Set<string>()
   for (const fact of candidates) {
@@ -70,6 +73,7 @@ function pointsFor(
     points.push({
       phrase, key, qualified: fact.status !== 'active' || unit.certainty !== 'confirmed', unit,
       axis: axisByTrait.get(group) ?? axisByTraitType[fact.traitType],
+      sourceType: fact.sourceType,
     })
     if (!broader && points.length === 4) break
   }
@@ -154,14 +158,19 @@ function fallback(blocks: (RenderedPersonalityBlock | undefined)[], facts: reado
 function broaderFreeReading(blocks: (RenderedPersonalityBlock | undefined)[], facts: readonly PersonalityFact[],
   units: readonly ReadingSemanticUnit[], locale: Locale, t: Messages, chapter: number) {
   const points = pointsFor(blocks, facts, locale, units, true)
-  const axes = new Set<PersonalityAxis>()
-  const firstByAxis = points.filter(({ axis }) => {
+  const primary = points[0]
+  if (!primary) return []
+  const pillarContext = chapter === 0 ? points.find(point =>
+    point.sourceType === 'day_pillar' && point.axis !== primary.axis) : undefined
+  const preferred = [primary, ...(pillarContext ? [pillarContext] : [])]
+  const axes = new Set(preferred.map(point => point.axis))
+  const additionalAxes = points.filter(({ axis }) => {
     if (axes.has(axis)) return false
     axes.add(axis)
     return true
   })
+  const firstByAxis = [...preferred, ...additionalAxes]
   const [lead, ...support] = [...firstByAxis, ...points.filter(point => !firstByAxis.includes(point))].slice(0, 8)
-  if (!lead) return []
   const leadTemplates = t.resultChapterCopy[lead.qualified ? 'qualified' : 'supported'][chapter]
   const leadParagraph = paragraph(leadTemplates[0].replace('{trait}', () => lead.phrase), [lead.unit], [lead.axis])
   const groups = Math.min(4, support.length)
