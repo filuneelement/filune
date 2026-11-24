@@ -1,0 +1,88 @@
+[
+  {
+    "fixtureId": "SRC-07-0982",
+    "source": "src/docs/source/primary/07-사주풀이예시.md:982-990",
+    "pillars": { "year": "庚申", "month": "己丑", "day": "丙午", "time": "己未" },
+    "gender": "여성",
+    "sourceScope": { "kind": "natal" },
+    "expectation": {
+      "money_acquisition": "favorable",
+      "money_retention": "unresolved",
+      "money_pressure": "present",
+      "causalPaths": [
+        "source says 상관생재 supports wealth; peer/rob output pressure remains in the chart",
+        "source says wealth potential coexists with trouble from 상관 and 재성"
+      ],
+      "explicitEvent": null
+    }
+  },
+  {
+    "fixtureId": "SRC-07-0952",
+    "source": "src/docs/source/primary/07-사주풀이예시.md:952-961",
+    "pillars": { "year": "戊辰", "month": "癸亥", "day": "辛卯", "time": "戊子" },
+    "gender": "남성",
+    "sourceScope": { "kind": "daewoon+sewoon", "daewoon": "丁卯", "sewoon": "乙巳" },
+    "expectation": {
+      "money_acquisition": "unresolved",
+      "money_retention": "unfavorable",
+      "money_pressure": "present",
+      "causalPaths": [
+        "source says 乙財 and 巳官 arrive together; the 財 path is entangled with occupation change and adverse 七殺 activation",
+        "source explicitly says money-related difficulty may occur when the adverse pattern activates"
+      ],
+      "explicitEvent": null
+    }
+  },
+  {
+    "fixtureId": "SRC-07-0999",
+    "source": "src/docs/source/primary/07-사주풀이예시.md:999-1009",
+    "pillars": { "year": "丁卯", "month": "丁未", "day": "丙寅", "time": "壬申" },
+    "gender": "여성",
+    "sourceScope": { "kind": "daewoon+sewoon+month", "daewoon": "庚戌", "sewoon": "甲辰", "month": "庚午" },
+    "expectation": {
+      "money_acquisition": "unresolved",
+      "money_retention": "unfavorable",
+      "money_pressure": "present",
+      "causalPaths": [
+        "source says the luck 財 attacks 印, while peer plus output activates a competing path",
+        "source explicitly describes money tied up in documents and the financial flow blocked"
+      ],
+      "explicitEvent": null
+    }
+  },
+  {
+    "fixtureId": "SRC-07-1026",
+    "source": "src/docs/source/primary/07-사주풀이예시.md:1026-1031",
+    "pillars": { "year": "丁巳", "month": "庚戌", "day": "丁卯", "time": "戊申" },
+    "gender": "남성",
+    "sourceScope": { "kind": "natal" },
+    "expectation": {
+      "money_acquisition": "favorable",
+      "money_retention": "unfavorable",
+      "money_pressure": "present",
+      "causalPaths": [
+        "source says 戊傷官 generates 庚正財 despite 丁比肩 pressure on 財",
+        "income coexists with outflow and operating trouble"
+      ],
+      "explicitEvent": "source reports annual revenue near 10 billion KRW, employee error/theft losses, and income with financial volatility"
+    }
+  },
+  {
+    "fixtureId": "SRC-07-2328",
+    "source": "src/docs/source/primary/07-사주풀이예시.md:2328-2338",
+    "pillars": { "year": "乙巳", "month": "戊寅", "day": "乙未", "time": "丙戌" },
+    "gender": "남성",
+    "sourceScope": { "kind": "daewoon+sewoon", "daewoon": "丙辰", "sewoon": "癸卯", "laterDaewoon": "丁巳" },
+    "expectation": {
+      "money_acquisition": "favorable",
+      "money_retention": "unfavorable",
+      "money_pressure": "present",
+      "causalPaths": [
+        "丙辰: peer → output → 財 supports earning; source says earning through skill is possible",
+        "癸卯: 印 binds the 財; source says wealth can be financially damaged/delayed by documents",
+        "丁巳: 食神生財 improves earning while internal pressure remains"
+      ],
+      "explicitEvent": "source reports family hardship in 乙卯 luck; no specific later money event is asserted in these lines"
+    }
+  }
+]

@@ -226,7 +226,7 @@ export function evaluatePatternJudgment(input: PatternJudgmentInput) {
     assessment: confirmed ? 'confirmed' : inputAssessment === 'unknown' || inputAssessment === 'unsupported' ? inputAssessment : 'provisional', uncertainty: { blockingIds: [...blocking].sort(), contextIds: contextUncertainty },
     contextFactIds: contextFacts, contextEvidenceIds: contextEvidence, trace: traces, scopeId: context.scopeId, sourceScope: 'natal',
     provenance: { producerRef: producer.producerRef, ruleVersion: 'A179',
-      sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/A_rev179.md', section: 'A-8-1', location: 'I-01 / I-02 / I-02a / C-10' },
+      sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/authority/A_rev179.md', section: 'A-8-1', location: 'I-01 / I-02 / I-02a / C-10' },
       method: 'existing-confirmed-facts-and-candidates-only-structural-pattern-classification' } })
   return detach({ judgment, evidence: evidenceContextSchema.parse({ contractVersion: '1',
     evidenceContextId: recordId('pattern-judgment-evidence', [context.scopeId]), records: [...catalog.values()].sort((a, b) => a.evidenceId.localeCompare(b.evidenceId)) }), roleStates: [] })

@@ -54,7 +54,9 @@
     "verify:judgment-p1-fix": "node scripts/verify-judgment-p1-fix.mjs",
     "verify:judgment-p1-integration-audit": "node scripts/verify-judgment-p1-integration-audit.mjs",
     "verify:judgment-p1-closure": "node scripts/verify-judgment-p1-closure.mjs",
-    "verify:judgment-p1-lifecycle": "node scripts/verify-judgment-p1-lifecycle.mjs"
+    "verify:judgment-p1-lifecycle": "node scripts/verify-judgment-p1-lifecycle.mjs",
+    "verify:structural-explanation-phase1": "node scripts/verify-structural-explanation-phase1.mjs",
+    "verify:publication-boundary-evidence-context": "node scripts/verify-publication-boundary-evidence-context.mjs"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",

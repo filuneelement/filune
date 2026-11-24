@@ -1,4 +1,4 @@
-import { DOCUMENT_PINS, verifyDocumentClaim } from '../../systems/documentReceipt'
+import { canonicalDocumentPath, DOCUMENT_PINS, verifyDocumentClaim } from '../../systems/documentReceipt'
 import { BYEONG_RULE_SECTIONS } from './types'
 import type { ByeongRuleId } from './types'
 
@@ -10,7 +10,7 @@ export function issueByeongRuleReceipts(text: string, rawEvidenceId: string) {
     const quote = row?.split('\t')[1]
     if (!quote) throw new TypeError(`Current byeong rule missing: ${ruleId}`)
     return verifyDocumentClaim({
-      documentId: 'A', ...DOCUMENT_PINS.A, path: 'src/docs/source/A_rev179.md', text, rawEvidenceId,
+      documentId: 'A', ...DOCUMENT_PINS.A, path: canonicalDocumentPath('A', DOCUMENT_PINS.A.revision), text, rawEvidenceId,
     }, { evidenceId: `byeong:direct-rule:${ruleId}`, section, ruleId, quote, claimRef: `byeong:rule:${ruleId}` })
   })
 }

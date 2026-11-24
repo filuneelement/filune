@@ -159,7 +159,7 @@ export function evaluateYongShenJudgment(input: YongShenJudgmentInput) {
         exposureFactIds: source.roleBasis.exposureFactIds, handlingRequirement: source.roleBasis.handlingRequirement },
       runtimeState: state, roleStateRef: roleStateId, contextFactIds: contextFacts, contextEvidenceIds: contextEvidence,
       trace, scopeId: context.scopeId, sourceScope: 'natal', provenance: { producerRef: producer.producerRef, ruleVersion: 'A179',
-        sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/A_rev179.md', section: 'A-8-1 / A-8-2; A-2-2 I-03', location: 'I-01 / I-02 / I-02a / C-10 / I-03 / I-04-1' },
+        sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/authority/A_rev179.md', section: 'A-8-1 / A-8-2; A-2-2 I-03', location: 'I-01 / I-02 / I-02a / C-10 / I-03 / I-04-1' },
         method: 'existing-candidates-and-confirmed-structural-facts-only-visible-yongshen-role' } }))
   }
   const evidence = evidenceContextSchema.parse({ contractVersion: '1', evidenceContextId: recordId('yongshen-judgment-evidence', [context.scopeId]),

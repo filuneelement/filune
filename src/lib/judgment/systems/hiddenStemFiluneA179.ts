@@ -3,8 +3,8 @@ import type { HiddenStemEntry } from '../contracts'
 
 /** Authority is frozen; completeness is deliberately NOT asserted. No legacy fallback. */
 export const FILUNE_A179 = Object.freeze({ id: 'filune-a179', sourceDocument: 'A', revision: 179,
-  sourceSha256: '4d918e24854c5d48724779e2167cd2d0fa9b7c6140afb5ff8c076f067c40d80c',
-  status: 'frozen', path: 'src/docs/source/A_rev179.md',
+  sourceSha256: 'cfeb43c482f973b5f06bf73f58ed57cd1faf46c8d8c00241eaf9753f73b4f7d2',
+  status: 'frozen', path: 'src/docs/source/authority/A_rev179.md',
   evidenceId: 'producer-evidence:source-A179',
   systemName: '본기·중기·여기 체계', completeness: 'partial' } as const)
 export const A179_BRANCHES = Object.freeze(['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'] as const)

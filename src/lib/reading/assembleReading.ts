@@ -10,6 +10,7 @@ import { collectLuck, collectNatalJudgment, scopeNames } from './judgmentUnits'
 import { collectCurrentPersonality, collectNatalPersonality } from './personalityUnits'
 import { collectRelationshipUnits } from './relationshipUnits'
 import { collectEventTimingUnits } from './eventTimingUnits'
+import { buildStructuralExplanationUnits } from './structuralExplanation'
 import { bounds, compare, uniqueIds, withinPeriod, type RoutedUnits } from './semanticUnit'
 import type { ChapterId, ReadingAssembly, ReadingAssemblyInput, ReadingCertainty, ReadingScope, SelectionKind, TemporalSnapshot } from './types'
 
@@ -64,6 +65,8 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
   const chapters = chapterRegistry.filter(entry => productScope === 'premium' || entry.access === 'free')
   const out = collectReadingUnits(new Set<ChapterId>(chapters.map(entry => entry.id)))
   const snapshots = [...(judgment?.judgmentCore ?? []), ...(input.luckScopes ?? [])]
+  const explanationSnapshots = [...snapshots, ...(input.evaluatedLuckScopes ?? []).map(item => item.snapshot),
+    ...(judgment?.luck.monthlyWindow ?? []).flatMap(month => month.judgmentCore ? [month.judgmentCore] : [])]
   const natalSnapshot = snapshots.filter(item => item.scope === 'natal')
   if (new Set(natalSnapshot.map(item => item.id)).size > 1) {
     throw new TypeError('Expected snapshots for one natal judgment')
@@ -77,13 +80,25 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
       ...collectLuck(input, snapshots, referenceTime, out),
       ...(current?.effectHistory.map(effect => effect.id) ?? []),
     ])
-    collectRelationshipUnits(input.relationshipOutcomes ?? [], referenceTime, out)
-    collectHealthUnits(input.healthOutcomes ?? [], referenceTime, out)
-    collectMoneyUnits(input.moneyOutcomes ?? [], referenceTime, out)
+    collectRelationshipUnits(input.relationshipOutcomes ?? [], referenceTime, out, input.publicationConditions)
+    collectHealthUnits(input.healthOutcomes ?? [], referenceTime, out, input.publicationConditions)
+    collectMoneyUnits(input.moneyOutcomes ?? [], referenceTime, out, input.publicationConditions)
     collectEventTimingUnits(input.eventTimingFacts ?? [], referenceTime, out)
     if (current) collectCurrentPersonality(current, natalIds, referenceTime, out)
   }
-  const semanticUnits = out.units()
+  const explanationOutcomes = productScope === 'premium'
+    ? [...(input.moneyOutcomes ?? []), ...(input.relationshipOutcomes ?? [])] : []
+  const structuralExplanationUnits = buildStructuralExplanationUnits(explanationOutcomes, explanationSnapshots)
+  const explanationIdsByOutcome = new Map<string, string[]>()
+  for (const explanation of structuralExplanationUnits) {
+    const ids = explanationIdsByOutcome.get(explanation.outcomeFactId) ?? []
+    ids.push(explanation.id)
+    explanationIdsByOutcome.set(explanation.outcomeFactId, ids)
+  }
+  const semanticUnits = out.units().map(unit => {
+    const explanationIds = explanationIdsByOutcome.get(unit.meaningRef.recordId)
+    return explanationIds?.length ? { ...unit, structuralExplanationUnitIds: [...explanationIds].sort(compare) } : unit
+  })
   const months = semanticUnits.filter(unit => unit.month).map(unit => unit.month!)
   const fullWindow = months.length === 12 && months.every((month, index) =>
     month.startInstant < month.endInstant && (index === 0 || months[index - 1].endInstant === month.startInstant))
@@ -168,6 +183,11 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     .map(temporalProjection))
 
   return {
+    structuralExplanationUnits,
+    ...(productScope === 'premium' && input.publicationConditions && { publicationConditions: Object.fromEntries(Object.entries(input.publicationConditions)
+      .sort(([a], [b]) => compare(a, b)).map(([id, condition]) => [id, {
+        triggerConfirmed: condition.triggerConfirmed, evidenceIds: uniqueIds(condition.evidenceIds),
+      }])) }),
     ...(productScope === 'premium' && { temporalSnapshots: comparisonSnapshots,
       transitionOutcomes: sortedFacts(input.transitionOutcomes), temporalMoneyOutcomes: sortedFacts(input.moneyOutcomes),
       temporalRelationshipOutcomes: sortedFacts(input.relationshipOutcomes), temporalHealthOutcomes: sortedFacts(input.healthOutcomes) }),

@@ -7,6 +7,7 @@ import type { ReadingAssembly, ReadingProvenance, ReadingSemanticUnit } from '..
 import { buildBehaviorPatterns, hasBehaviorStages, type CustomerBehaviorPattern } from './behaviorLoops'
 import { mapMoney, mapRelationship, outcomeMeaningKey, outcomeSlots, outcomeTargetKey } from './outcomeMapping'
 import { customerChapterTitleKeys } from './types'
+import { buildCustomerEvidenceContext } from './evidenceContext'
 import type {
   RelationshipAxis, CustomerRelationshipSequence, CustomerChapterGap, CustomerChapterId, CustomerChapterPlan, CustomerReadingParagraphPlan,
   OutcomeActivation, OutcomeVoice, ParagraphExpression, ParagraphPurpose, PersonalityVoice,
@@ -167,6 +168,9 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
       ])
       const certainty = units.some(unit => unit.certainty === 'conditional') ? 'conditional'
         : units.some(unit => unit.certainty !== 'confirmed') ? 'contextual' : 'confirmed'
+      const explanationIds = uniqueIds(units.flatMap(unit => unit.structuralExplanationUnitIds ?? []))
+      const projectedExpression = expression.kind === 'outcome'
+        ? { ...expression, structuralExplanationUnitIds: explanationIds } : expression
       const causeAvailable = expression.kind === 'personality'
         ? Boolean(mapping && mechanism) : hasOutcomePath
       const lifeMappingAvailable = Boolean(mapping && mechanism)
@@ -185,7 +189,7 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
         sourceMappingIds: typeof mapping === 'string' ? [mapping] : mapping ?? [], lifeMechanismIds: mechanism ? [mechanism] : [],
         activations, contextKeys, contributionKeys: keys, scope: first.scope, periodRef: first.period?.periodId, certainty,
         causeAvailable, lifeMappingAvailable, reasonStatus: causeAvailable && lifeMappingAvailable ? 'complete' : 'partial',
-        expression,
+        expression: projectedExpression,
       })
     }
 
@@ -471,7 +475,16 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
     }
   })
   const timing = assembly.productScope === 'premium' ? buildTimingChapters(assembly, [...(moneyOutcomes ?? assembly.temporalMoneyOutcomes ?? []), ...(relationshipOutcomes ?? assembly.temporalRelationshipOutcomes ?? [])], usedUnits, referenceTime) : []
-  return { version: 'p4g-1' as const, referenceTime, temporalOverlapQuality: timingOverlapQuality(timing), chapters: [...chapters, ...timing].sort((a, b) => compare(a.chapterId, b.chapterId)), semanticUnits: [...usedUnits.values()].sort(compareUnits) }
+  const usedExplanationIds = new Set([...usedUnits.values()].flatMap(unit => unit.structuralExplanationUnitIds ?? []))
+  const structuralExplanationUnits = assembly.structuralExplanationUnits
+    .filter(unit => usedExplanationIds.has(unit.id)).sort((a, b) => compare(a.id, b.id))
+  const evidenceContext = buildCustomerEvidenceContext(assembly,
+    [...(moneyOutcomes ?? []), ...(relationshipOutcomes ?? [])],
+    new Set([...usedUnits.values()].filter(unit => unit.meaningRef.kind === 'outcome_fact')
+      .map(unit => unit.meaningRef.recordId)))
+  return { version: 'p4g-1' as const, referenceTime, temporalOverlapQuality: timingOverlapQuality(timing),
+    chapters: [...chapters, ...timing].sort((a, b) => compare(a.chapterId, b.chapterId)),
+    semanticUnits: [...usedUnits.values()].sort(compareUnits), structuralExplanationUnits, evidenceContext }
 }
 
 function compareUnitsByPeriod(a: ReadingSemanticUnit, b: ReadingSemanticUnit) {

@@ -24,6 +24,7 @@ try {
   const { buildNatalPersonality } = await load('personality/index')
   const { buildRelationshipOutcome } = await load('outcome/index')
   const { assembleReading, relationshipOutcomeFromReading, validateReadingAssembly } = await load('reading/index')
+  const { evaluateOutcomePublicationEligibility } = await load('reading/publicationEligibility')
   const births = JSON.parse(read('scripts/fixtures/byeong-judgment-inputs.json'))
   const currentReference = '2027-01-15T00:00:00.000Z'
   const period = (periodId, from, to) => ({ periodId, from: { kind: 'exact', instant: from }, to: { kind: 'exact', instant: to } })
@@ -216,7 +217,10 @@ try {
       for (const fact of [currentContact, currentChange]) {
         assert.ok(Date.parse(fact.period.from.instant) <= Date.parse(referenceTime)
           && Date.parse(referenceTime) < Date.parse(fact.period.to.instant))
-        assert.ok(units.some(unit => unit.meaningRef.recordId === fact.id && unit.scope === fact.scope))
+        const published = evaluateOutcomePublicationEligibility(fact).publishable
+        assert.equal(units.some(unit => unit.meaningRef.recordId === fact.id && unit.scope === fact.scope), published)
+        if (!published) assert.ok(premium.temporalRelationshipOutcomes?.some(item => item.id === fact.id),
+          'non-publishable relationship Outcome remains in internal temporal evidence')
       }
       if (currentContact.scope !== currentChange.scope) tallies.overlappingScopes++
     }
@@ -241,7 +245,9 @@ try {
           && JSON.stringify(sorted(relation.participants)) === JSON.stringify(fact.sourceParticipantIds))
         if (!samePair) continue
         assert.ok(facts.every(item => !item.sourceRelationIds.includes(samePair.id)))
-        assert.ok(units.some(unit => unit.meaningRef.recordId === fact.id))
+        const published = evaluateOutcomePublicationEligibility(fact).publishable
+        assert.equal(units.some(unit => unit.meaningRef.recordId === fact.id), published)
+        if (!published) assert.ok(premium.temporalRelationshipOutcomes?.some(item => item.id === fact.id))
         tallies.inheritedPair++
       }
     }

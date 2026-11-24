@@ -4,7 +4,7 @@ import { sortedUnique } from '../../producers/shared'
 import type { FactEntity, ProducedFact } from '../../producers/types'
 import type { ByeongCandidateInput } from './types'
 
-const DRAFT_HASH = '1d4b7686a4f0fc6d6ab5c478575cb2b0922d58c803565bf4e11692695f6068f7'
+const DRAFT_HASH = '1d454b4b243d431152c9e655b246d161572941d76f3969dca370a4b9c1033235'
 
 export function verifyByeongDraft(input: ByeongCandidateInput): void {
   if (input.draftRuleSource === undefined) return

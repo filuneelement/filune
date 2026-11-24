@@ -19,6 +19,7 @@ try {
   const { projectNatalStructuralReading } = await load('lib/personalityStructuralReading')
   const { assembleReading, validateReadingAssembly, moneyOutcomeFromReading, relationshipOutcomeFromReading } = await load('lib/reading/index')
   const { buildCustomerReadingPlan } = await load('lib/reading/customer/buildCustomerReadingPlan')
+  const { evaluateOutcomePublicationEligibility } = await load('lib/reading/publicationEligibility')
   const { renderCustomerReadingKo } = await load('lib/reading/customer/renderCustomerReadingKo')
   const { customerContextFromSingleResult } = await load('lib/reading/customerContext')
   const { synthesizeSingleResult } = await load('components/result/singleResultCopy')
@@ -63,7 +64,22 @@ try {
       customerContext: customerContextFromSingleResult(context), referenceTime: at }
     const assembly = assembleReading(input)
     validateReadingAssembly(assembly)
+    const projectedOutcomes = [...(moneyOutcomes ?? []), ...(relationshipOutcomes ?? [])]
+    const explanationByOutcome = new Map(assembly.structuralExplanationUnits.map(unit => [unit.outcomeFactId, unit]))
+    for (const outcome of projectedOutcomes) {
+      assert(explanationByOutcome.has(outcome.id), `${id} missing StructuralExplanationUnit for ${outcome.id}`)
+      const explanation = explanationByOutcome.get(outcome.id)
+      assert.equal(explanation.scopeId, outcome.scopeId)
+      assert.equal(explanation.certainty, outcome.certainty)
+      assert.deepEqual(explanation.provenanceIds, [...new Set(explanation.provenanceIds)].sort())
+    }
     const plan = buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relationshipOutcomes })
+    const planExplanationIds = new Set(plan.structuralExplanationUnits.map(unit => unit.id))
+    for (const paragraph of plan.chapters.flatMap(chapter => chapter.paragraphPlans)) {
+      if (paragraph.expression.kind === 'outcome') {
+        for (const id of paragraph.expression.structuralExplanationUnitIds ?? []) assert(planExplanationIds.has(id))
+      }
+    }
     const rendered = renderCustomerReadingKo(plan, natal)
     assert.deepEqual(rendered.map(chapter => chapter.chapterId), scope === 'free' ? freeIds : [...freeIds, ...paidIds])
     assert.deepEqual(buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relationshipOutcomes }), plan)
@@ -200,12 +216,26 @@ try {
   const contactOnly = renderCustomerReadingKo(buildCustomerReadingPlan({
     assembly: contactAssembly, natal: b.natal, relationshipOutcomes,
   }), b.natal).find(chapter => chapter.chapterId === 'CR-05')
-  assert(contactOnly.paragraphs.some(p => p.plan.slots.includes('contact_or_change')),
-    JSON.stringify(relationshipOutcomes.map(fact => [fact.semanticType, fact.scope, fact.temporalStatus])))
+  const contactFacts = relationshipOutcomes.filter(fact => ['relationship_contact_signal', 'relationship_change_signal'].includes(fact.semanticType))
+  const publishableContactFacts = contactFacts.filter(fact => evaluateOutcomePublicationEligibility(fact).publishable)
+  if (publishableContactFacts.length) {
+    assert(contactOnly.paragraphs.some(p => p.plan.sourceOutcomeIds.some(id => publishableContactFacts.some(fact => fact.id === id))),
+      JSON.stringify(contactFacts.map(fact => [fact.semanticType, fact.scope, fact.temporalStatus, fact.lifecycle, fact.currentlyEffective])))
+  } else {
+    assert(!contactOnly.paragraphs.some(p => p.plan.sourceOutcomeIds.some(id => contactFacts.some(fact => fact.id === id))))
+    assert(contactFacts.every(fact => contactAssembly && contactAssembly.temporalRelationshipOutcomes?.some(item => item.id === fact.id)))
+  }
   assert(!contactOnly.paragraphs.some(p => p.plan.slots.includes('formation')))
   const rel = b.rendered.find(chapter => chapter.chapterId === 'CR-05')
   assert(rel.paragraphs.some(item => item.plan.layer === 'personality'))
-  assert(rel.paragraphs.some(item => item.plan.sourceMappingIds.includes('CL-R01')))
+  const bPublishableRelationships = b.relationshipOutcomes.filter(fact => evaluateOutcomePublicationEligibility(fact).publishable)
+  const eligibleIds = new Set(bPublishableRelationships.map(fact => fact.id))
+  const renderedOutcomeIds = rel.paragraphs.flatMap(item => item.plan.sourceOutcomeIds)
+  assert(renderedOutcomeIds.every(id => eligibleIds.has(id)), 'customer relationship copy uses publishable OutcomeFacts only')
+  const unpublishableIds = b.relationshipOutcomes.filter(fact => !evaluateOutcomePublicationEligibility(fact).publishable)
+    .map(fact => fact.id)
+  assert(unpublishableIds.every(id => !renderedOutcomeIds.includes(id)
+    && b.plan.evidenceContext.outcomes.some(item => item.outcomeFactId === id)))
   const changed = assembleReading({ ...b.input, customerContext: customerContextFromSingleResult({ relationshipStatus: 'married' }) })
   const alternate = renderCustomerReadingKo(buildCustomerReadingPlan({ ...b, assembly: changed }), b.natal)
     .find(chapter => chapter.chapterId === 'CR-05')
@@ -239,7 +269,7 @@ try {
       all.indexOf(scope) === index), ['natal', 'sewoon', 'month'])
     assert.equal(money.quality.repeatedScopeMeaningCount, 2)
     assert.equal(money.quality.distinctSemanticCount, 6)
-    assert.equal(rel.quality.repeatedScopeMeaningCount, 1)
+    assert.equal(rel.quality.repeatedScopeMeaningCount, 0)
     assert.equal(rel.paragraphs.filter(p => p.plan.slots.includes('formation')).length, 2)
     assert.equal(contactOnly.quality.unsupportedClaimCount, 0)
     const opposed = moneyCases.find(item => item.id === 'P4-I protected → outflow').chapter

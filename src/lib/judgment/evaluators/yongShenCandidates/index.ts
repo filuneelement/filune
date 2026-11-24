@@ -153,7 +153,7 @@ export function evaluateYongShenCandidates(input: YongShenCandidateInput) {
         ...contextFacts.flatMap((id) => facts.get(id)?.uncertaintyIds ?? []), ...contextEvidence.flatMap((id) => evidenceMap.get(id)?.uncertaintyIds ?? [])]) },
       trace, contextFactIds: contextFacts, contextEvidenceIds: contextEvidence, scopeId: context.scopeId, sourceScope: 'natal',
       provenance: { producerRef: producer.producerRef, ruleVersion: 'A179', sourceDocument: { documentId: 'A', documentRevision: 179,
-        path: 'src/docs/source/A_rev179.md', section: 'A-8-1 / A-8-2; A-2-2 I-03', location: 'I-01 / I-02 / I-02a / C-10 / I-03 / I-04-1' },
+        path: 'src/docs/source/authority/A_rev179.md', section: 'A-8-1 / A-8-2; A-2-2 I-03', location: 'I-01 / I-02 / I-02a / C-10 / I-03 / I-04-1' },
         method: 'existing-pattern-and-facts-only-FILUNE-visible-yongshen-candidacy' } }))
   }
   return detach({ candidates, evidence, roleStates: [] })

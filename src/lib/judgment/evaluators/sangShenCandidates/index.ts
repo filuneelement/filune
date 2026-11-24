@@ -157,7 +157,7 @@ export function evaluateSangShenCandidates(input: SangShenCandidateInput) {
         existingYongRoleIds: yong.filter((j) => j.status === 'confirmed' && j.entityId === entity.entityId).map((j) => j.roleStateRef!).sort() },
       runtimeStates: states, sourcePatternJudgmentId: pattern.judgmentId, trace, contextFactIds: contextFacts, contextEvidenceIds: contextEvidence,
       sourceScope: 'natal', scopeId: context.scopeId, provenance: { producerRef: producer.producerRef, ruleVersion: 'A179',
-        sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/A_rev179.md', section: 'A-8-1 / A-8-2; A-2-2 I-03; A-2-3 I-05/I-07', location: 'I-01 / I-03 / I-04-1 / I-05 / I-07 / I-02a' },
+        sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/authority/A_rev179.md', section: 'A-8-1 / A-8-2; A-2-2 I-03; A-2-3 I-05/I-07', location: 'I-01 / I-03 / I-04-1 / I-05 / I-07 / I-02a' },
         method: 'existing-judgments-and-facts-only-drain-and-support-helper-candidate' } }))
   }
   return detach({ candidates, evidence: evidenceContextSchema.parse({ contractVersion: '1', evidenceContextId: recordId('sangshen-evidence', [context.scopeId]),

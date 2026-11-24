@@ -21,7 +21,7 @@ export function effectEvidence(records: EvidenceContextContract['records'], matc
     !!matchingNatalPillars && item.sourceRef.kind === 'source-document'
     && item.sourceRef.document.documentId === 'C'
     && item.sourceRef.document.documentRevision === DOCUMENT_PINS.C.revision
-    && item.sourceRef.document.path === `src/docs/source/C_rev${DOCUMENT_PINS.C.revision}.md`
+    && item.sourceRef.document.path === `src/docs/source/authority/C_rev${DOCUMENT_PINS.C.revision}.md`
     && item.sourceRef.document.section === 'C-10-1.' && item.hash?.value === DOCUMENT_PINS.C.sha256
     && item.verification.claimRef === `document-pillars:${matchingNatalPillars}`
   const byId = new Map(records.map((item) => [item.evidenceId, item]))

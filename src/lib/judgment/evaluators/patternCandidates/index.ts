@@ -100,7 +100,7 @@ export function evaluatePatternCandidates(input: PatternCandidateInput) {
         ...ids.flatMap((id) => evidence.records.find((r) => r.evidenceId === id)!.uncertaintyIds),
         ...(status === 'deferred' ? reasons : [])]), sourceScope: 'natal', scopeId: context.scopeId,
       hiddenStemSystemId: 'filune-a179', provenance: { producerRef: producer.producerRef, ruleVersion: 'A179',
-        sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/A_rev179.md', section: 'A-8-1', location: 'I-01 / I-02 / I-02a / C-10' },
+        sourceDocument: { documentId: 'A', documentRevision: 179, path: 'src/docs/source/authority/A_rev179.md', section: 'A-8-1', location: 'I-01 / I-02 / I-02a / C-10' },
         sourceDerivedScopeId: derived.scopeId, method: 'supplied-facts-only-pattern-candidates' } }))
   }
   const finish = () => detach({ scopeId: context.scopeId, sourceScope: 'natal' as const,

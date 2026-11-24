@@ -2,8 +2,10 @@ import type { TemporalContribution, TemporalQuality, TimingCard } from './timing
 import type { MoneyContrast } from './moneyExplanation'
 import type { MoneyAxis } from '../../outcome'
 import type { CustomerBehaviorPattern } from './behaviorLoops'
-import type { ReadingCertainty, ReadingProvenance, ReadingScope } from '../types'
+import type { ReadingCertainty, ReadingProvenance, ReadingScope, ReadingSemanticUnit } from '../types'
 import type { CustomerReadingContext } from '../customerContext'
+import type { StructuralExplanationUnit } from '../structuralExplanation'
+import type { OutcomeFact } from '../../outcome/types'
 
 export type CustomerChapterId = 'CR-01' | 'CR-02' | 'CR-03' | 'CR-04' | 'CR-05' | 'CR-07' | 'CR-08' | 'CR-09'
 export type SemanticReadiness = 'ready' | 'partial' | 'deferred'
@@ -50,7 +52,7 @@ export type ParagraphExpression =
       readonly composite?: 'outward_decision' | 'relation_sequence'; readonly pattern?: CustomerBehaviorPattern;
       readonly limitationFactId?: string }
   | { readonly kind: 'outcome'; readonly voice: OutcomeVoice; readonly scene?: CustomerReadingContext['relationshipStatus'];
-      readonly startsAt?: string; readonly endsBefore?: string }
+      readonly startsAt?: string; readonly endsBefore?: string; readonly structuralExplanationUnitIds?: readonly string[] }
 
 export interface OutcomeActivation {
   readonly semanticUnitId: string
@@ -115,6 +117,64 @@ export interface CustomerChapterPlan {
   readonly relationshipSequence?: CustomerRelationshipSequence
   readonly relationshipRecurrence?: readonly string[]
   readonly provenance: ReadingProvenance
+}
+
+export interface CustomerReadingPlan {
+  readonly version: 'p4g-1'
+  readonly referenceTime?: string
+  readonly temporalOverlapQuality: TemporalQuality
+  readonly chapters: readonly CustomerChapterPlan[]
+  readonly semanticUnits: readonly ReadingSemanticUnit[]
+  readonly structuralExplanationUnits: readonly StructuralExplanationUnit[]
+  readonly evidenceContext: CustomerEvidenceContext
+}
+
+export type CustomerEvidenceGapClassification = 'SOURCE_GAP' | 'ENGINE_GAP' | 'PUBLICATION_INELIGIBLE' | 'RENDERER_GAP'
+
+export interface CustomerEvidenceGap {
+  readonly id: string
+  readonly classification: CustomerEvidenceGapClassification
+  readonly outcomeIds: readonly string[]
+  readonly sourceGapId?: string
+  readonly reason?: string
+}
+
+export interface CustomerEvidenceOutcome {
+  readonly outcomeFactId: string
+  readonly domain: OutcomeFact['domain']
+  readonly semanticType: string
+  readonly lifecycle: OutcomeFact['lifecycle']
+  readonly temporalStatus: OutcomeFact['temporalStatus']
+  readonly currentlyEffective: boolean
+  readonly certainty: OutcomeFact['certainty']
+  readonly scope: OutcomeFact['scope']
+  readonly scopeId: string
+  readonly period?: OutcomeFact['period']
+  readonly sourceJudgmentIds: readonly string[]
+  readonly sourceRelationIds: readonly string[]
+  readonly sourceRoleIds: readonly string[]
+  readonly sourceLuckEffectIds: readonly string[]
+  readonly sourceParticipantIds: readonly string[]
+  readonly provenance: readonly string[]
+  readonly publicationEvidenceIds: readonly string[]
+  readonly explanationUnitIds: readonly string[]
+  readonly publicationReason: string
+}
+
+/** Non-public diagnostics/evidence only. Customer claims must be rendered from semanticUnits. */
+export interface CustomerEvidenceContext {
+  readonly id: string
+  readonly explanationUnitIds: readonly string[]
+  readonly deferredOutcomeIds: readonly string[]
+  readonly inactiveOutcomeIds: readonly string[]
+  readonly stoppedOutcomeIds: readonly string[]
+  readonly expiredOutcomeIds: readonly string[]
+  readonly ineffectiveOutcomeIds: readonly string[]
+  readonly unresolvedCauseRefs: readonly string[]
+  readonly gapIds: readonly string[]
+  readonly outcomes: readonly CustomerEvidenceOutcome[]
+  readonly explanationUnits: readonly StructuralExplanationUnit[]
+  readonly gaps: readonly CustomerEvidenceGap[]
 }
 
 export const chapterTargets = {

@@ -9,6 +9,8 @@ import type { runInternalReading } from '../judgment/pipeline/internalReading'
 import type { CurrentPersonalityResult, PersonalityPeriod, PersonalityScope } from '../personality/current/types'
 import type { NatalPersonalityResult } from '../personality/types'
 import type { EventTimingFact } from '../eventTiming/types'
+import type { StructuralExplanationUnit } from './structuralExplanation'
+import type { PublicationConditionEvidence } from './publicationEligibility'
 
 export type ReadingScope = PersonalityScope
 export type ChapterId =
@@ -43,6 +45,8 @@ export interface ReadingAssemblyInput {
   readonly evaluatedLuckScopes?: readonly { readonly snapshot: LuckScopeState; readonly evaluatedAt: string }[]
   /** Required for external scope snapshots when a canonical reference instant is unavailable. */
   readonly referenceTime?: string
+  /** Explicit source evidence for conditional publication; absent means the trigger is unverified. */
+  readonly publicationConditions?: Readonly<Record<string, PublicationConditionEvidence>>
   readonly customerContext?: CustomerContext
   readonly productScope: ProductScope
 }
@@ -82,6 +86,8 @@ export interface ReadingMeaningRef {
 }
 
 export interface ReadingSemanticUnit extends ReadingProvenance {
+  readonly publicationQualification?: { readonly kind: 'confirmed' | 'contextual' | 'reduced' | 'conditional'; readonly evidenceIds: readonly string[] }
+  readonly structuralExplanationUnitIds?: readonly string[]
   readonly moneyAxis?: MoneyAxis
   readonly moneyTargetId?: string
   readonly moneyBurdenPath?: MoneyOutcomeFact['burdenPath']
@@ -155,6 +161,8 @@ export type TemporalSnapshot = Pick<LuckScopeState, 'id' | 'scope' | 'parentScop
 
 export interface ReadingAssembly {
   readonly version: '1'
+  readonly publicationConditions?: ReadingAssemblyInput['publicationConditions']
+  readonly structuralExplanationUnits: readonly StructuralExplanationUnit[]
   readonly transitionOutcomes?: ReadingAssemblyInput['transitionOutcomes']
   readonly temporalSnapshots?: readonly TemporalSnapshot[]
   readonly temporalMoneyOutcomes?: readonly MoneyOutcomeFact[]

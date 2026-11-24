@@ -2,7 +2,7 @@ import { evidenceRecordSchema, factStatusSchema } from '../contracts'
 import type { EvidenceRecord } from '../contracts'
 import type { ValueStatus } from '../../canonical/types'
 import type { ProducerReference } from './types'
-import { DOCUMENT_PINS } from '../systems/documentReceipt'
+import { canonicalDocumentPath, DOCUMENT_PINS } from '../systems/documentReceipt'
 import { combineAssessment, sortedUnique, recordId } from './shared'
 
 export type AssessedParent = { assessment: ValueStatus; uncertaintyIds: string[] }
@@ -21,7 +21,7 @@ export function localFactAssessment(input: { parents: AssessedParent[]; uncertai
     const doc = record.sourceRef.document
     const pin = DOCUMENT_PINS[doc.documentId as keyof typeof DOCUMENT_PINS]
     return !!pin && doc.documentRevision === pin.revision
-      && doc.path === `src/docs/source/${doc.documentId}_rev${pin.revision}.md` && record.hash?.value === pin.sha256
+      && doc.path === canonicalDocumentPath(doc.documentId, pin.revision) && record.hash?.value === pin.sha256
       && record.hash.hashTarget === doc.path && !!doc.section && !!record.ruleId && !!record.verification.checkedByRef && record.verification.basisEvidenceIds.length > 0
   })
   const reasons = sortedUnique([...uncertaintyIds, ...(completeParents ? [] : ['parent-assessment-metadata-unavailable']),

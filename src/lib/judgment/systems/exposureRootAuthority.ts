@@ -1,7 +1,7 @@
 import { evidenceRecordSchema, hiddenStemEntrySchema } from '../contracts'
 import type { EvidenceRecord, HiddenStemEntry } from '../contracts'
 import { a179SourceEvidence, FILUNE_A179 } from './hiddenStemFiluneA179'
-import { DOCUMENT_PINS, verifyDocumentClaim } from './documentReceipt'
+import { canonicalDocumentPath, DOCUMENT_PINS, verifyDocumentClaim } from './documentReceipt'
 import { detach } from '../producers/shared'
 
 export type ExposureRootSources = { A: string; C: string; D: string; approval: string }
@@ -63,7 +63,7 @@ export function exposureRootAuthority(sources: ExposureRootSources) {
     const section = key === 'A' ? 'A-8-1 / A-2-3 I-05 / A-8-5 OP-Z13' : key === 'D' ? 'H-3-1' : key === 'C' ? 'C-10-1 items 2,4,9' : '① G-1/G-8; ② items 14,15'
     return evidenceRecordSchema.parse({ evidenceId: evidenceId(key), sourceType: 'source-document',
       sourceRef: { kind: 'source-document', document: { documentId, documentRevision: revisions[key],
-        path: `src/docs/source/${documentId}_rev${revisions[key]}.md`, section, location: section } },
+        path: canonicalDocumentPath(documentId, revisions[key]), section, location: section } },
       documentRevision: revisions[key], ruleId: key === 'D' || key === 'C' ? 'C-10' : 'I-02', status: 'provisional',
       verification: { claimRef: 'documented-hidden-membership-and-fact-boundaries', method: 'supplied-frozen-source-clause-and-row-extraction', basisEvidenceIds: [] },
       note: 'Document observations only; source supplied, not independently verified.',
@@ -72,7 +72,7 @@ export function exposureRootAuthority(sources: ExposureRootSources) {
   // Raw-source evidence remains provisional. These are separate, local verification receipts.
   const receipt = (key: keyof ExposureRootSources, section: string, ruleId: string, quote: string, claimRef: string) => {
     const documentId = key === 'approval' ? '25-7' : key
-    const record = verifyDocumentClaim({ documentId, revision: revisions[key], path: `src/docs/source/${documentId}_rev${revisions[key]}.md`,
+    const record = verifyDocumentClaim({ documentId, revision: revisions[key], path: canonicalDocumentPath(documentId, revisions[key]),
       sha256: DOCUMENT_PINS[documentId].sha256, text: sources[key], rawEvidenceId: evidenceId(key) },
     { evidenceId: `exposure-root:verified:${claimRef}`, section, ruleId, quote, claimRef })
     evidence.push(record); return record.evidenceId

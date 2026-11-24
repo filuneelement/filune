@@ -2,11 +2,14 @@ import { evidenceRecordSchema } from '../contracts'
 import type { EvidenceRecord } from '../contracts'
 
 export const DOCUMENT_PINS = {
-  A: { revision: 179, sha256: '4d918e24854c5d48724779e2167cd2d0fa9b7c6140afb5ff8c076f067c40d80c' },
-  C: { revision: 215, sha256: '9e5b60a8346d4822a902d13e555dfc322431f016dfabf6f22c86390202c058f8' },
-  D: { revision: 152, sha256: '0a1e991a6bc7f4c2514241732c17754d54ffa2eb46c4f95f91e524de164ebade' },
-  '25-7': { revision: 16, sha256: '6abcb08af95b95cf2e94ed1314964035bff8e41dfd9e1623610b0f5182dd1cec' },
+  A: { revision: 179, sha256: 'cfeb43c482f973b5f06bf73f58ed57cd1faf46c8d8c00241eaf9753f73b4f7d2' },
+  C: { revision: 215, sha256: 'f8e4f575bf7f8443a29254e9813a39acecba0d21134cc795d01bc399c550e6d7' },
+  D: { revision: 152, sha256: '9479b8c2c8a14621bb394ab53993b4587e78cc3cf3adf57987f31efeaf892ec6' },
+  '25-7': { revision: 16, sha256: '1026b2219488289f80ad33901b8e38f0949d063ee5cc82ee4bf7d559bb73c0f6' },
 } as const
+
+export const canonicalDocumentPath = (documentId: string, revision: number) =>
+  `src/docs/source/authority/${documentId}_rev${revision}.md`
 
 // Synchronous SHA-256 keeps existing fact producers synchronous in browser and SSR.
 // This checks source identity; it is not an independent calendar/biography verification.
@@ -47,7 +50,7 @@ export type PinnedDocument = { documentId: string; revision: number; path: strin
 export function verifyDocumentClaim(source: PinnedDocument, claim: { evidenceId: string; section: string; ruleId: string; quote: string; claimRef: string }): EvidenceRecord {
   const pin = DOCUMENT_PINS[source.documentId as keyof typeof DOCUMENT_PINS]
   if (!pin || source.revision !== pin.revision || source.sha256 !== pin.sha256
-    || source.path !== `src/docs/source/${source.documentId}_rev${source.revision}.md`
+    || source.path !== canonicalDocumentPath(source.documentId, source.revision)
     || !claim.section || !claim.ruleId || !claim.quote || !source.text.includes(claim.section)
     || !source.text.includes(claim.quote) || sourceSha256(source.text) !== source.sha256
     || !new RegExp(`^revision: ${source.revision}$`, 'm').test(source.text)) throw new TypeError(`Unverified document claim: ${source.documentId}/${claim.claimRef}`)
