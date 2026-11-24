@@ -1,3 +1,4 @@
+import { hasBehaviorStages } from './customer/behaviorLoops'
 import { uniqueIds } from './semanticUnit'
 import type { NatalPersonalityResult, PersonalityFact } from '../personality/types'
 
@@ -15,12 +16,6 @@ const problemSolving = new Set(['분석력', '위기 돌파', '위기 돌파 지
   '기존 방식에 얽매이지 않고 새로운 방식을 적용함', '다른 분야의 아이디어를 결합함'])
 const collaboration = new Set(['협동', '다른 사람을 돕고 협력하며 그 안에서 자신의 역량을 발휘할 길을 찾음',
   '치열하게 경쟁하거나 동료와 강하게 연대함'])
-const conditionalBehaviors = new Set([
-  '기분이 상하면 표정에 바로 드러남', '속상한 일이 생기면 말을 아끼는 경향',
-  '힘들 때도 자신의 어려움을 말하지 않음', '사회적 마찰이 커지면 반항이 강해짐',
-  '검토가 길어지면 시도하기 전에 스스로 포기할 수 있음',
-  '자기 기준이 지나치게 확고해지면 다른 의견을 듣지 않으려 함',
-])
 const documentedConsequences = new Set([
   '검토가 길어지면 시도하기 전에 스스로 포기할 수 있음',
   '빠른 결단이 성급해지면 실수가 늘어날 수 있음',
@@ -61,7 +56,7 @@ export function projectNatalPersonalityChapters(natal: Readonly<NatalPersonality
     return record?.sourceRefs.length && record.sourceType === fact.sourceType
       ? [`${record.sourceType}:${record.profileId}`] : []
   })))
-  const behavior = tagged(conditionalBehaviors, 'stress', 'shadow')
+  const behavior = byType('stress', 'shadow', 'strength').filter(fact => hasBehaviorStages(fact.trait))
   const outwardPositions = new Set(natal.positionExpressions.filter(item => item.expressionMode === 'outward')
     .map(item => item.position))
   return {
@@ -70,6 +65,9 @@ export function projectNatalPersonalityChapters(natal: Readonly<NatalPersonality
       externalExpression: slot(byType('social', 'expression').filter(fact => fact.sourceType !== 'ten_god'
         || (fact.sourcePosition && fact.sourcePosition !== 'day_stem' && outwardPositions.has(fact.sourcePosition))), 'KNOWLEDGE_GAP'),
       internalDecisionStyle: slot(byType('decision'), 'KNOWLEDGE_GAP'),
+      practicalDecision: slot(byType('decision').filter(fact => fact.trait === '실리를 따져 신속하게 판단함'), 'NOT_APPLICABLE'),
+      judgmentBoundary: slot(byType('shadow').filter(fact => fact.trait === '자기 판단을 유일한 기준으로 삼기 쉬움'
+        || fact.trait === '자기 기준이 지나치게 확고해지면 다른 의견을 듣지 않으려 함'), 'NOT_APPLICABLE'),
       informationAdaptationStyle: slot(tagged(information, 'strength', 'inner', 'expression'), 'KNOWLEDGE_GAP'),
       relationshipSocialExpression: slot(byType('interpersonal', 'social'), 'KNOWLEDGE_GAP'),
       stressResponse: slot(byType('stress'), 'KNOWLEDGE_GAP'),
@@ -85,6 +83,9 @@ export function projectNatalPersonalityChapters(natal: Readonly<NatalPersonality
       overuseRisk: slot(tagged(overuse, 'shadow'), 'SOURCE_GAP', true),
     },
     'CR-03': {
+      behaviorContext: slot(behavior, 'KNOWLEDGE_GAP'),
+      behaviorConflict: slot(conflicts.flatMap(conflict => conflict.factIds.map(id => byId.get(id)!)),
+        'NOT_APPLICABLE', false, conflicts.map(conflict => conflict.id)),
       trigger: slot(behavior, 'KNOWLEDGE_GAP'),
       internalResponse: slot(byType('inner', 'stress'), 'KNOWLEDGE_GAP', true),
       judgment: slot(byType('decision'), 'KNOWLEDGE_GAP', true),

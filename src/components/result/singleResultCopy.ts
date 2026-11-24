@@ -217,7 +217,8 @@ export function synthesizeSingleResult(natal: NatalPersonalityResult, current: C
       sourceEffectIds: [...plan.sourceEffectIds], axesUsed: [],
     }))
     return {
-      title: chapter.title, paragraphs, readiness: chapter.readiness,
+      title: chapter.title, paragraphs, readiness: chapter.publicationReadiness,
+      semanticReadiness: chapter.semanticReadiness, publicationReadiness: chapter.publicationReadiness,
       debug: {
         section: chapter.title,
         sourceFactIds: [...new Set(paragraphs.flatMap(item => item.sourceFactIds))],

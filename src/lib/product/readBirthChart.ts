@@ -11,6 +11,7 @@ import C from '../../docs/source/authority/C_rev215.md?raw'
 import D from '../../docs/source/authority/D_rev152.md?raw'
 import approval from '../../docs/source/authority/25-7_rev16.md?raw'
 import { findJieBoundariesForGregorianYear } from '../solarTermPillars'
+import { bounds } from '../reading/semanticUnit'
 import { assembleReading } from '../reading/assembleReading'
 import type { ReadingAssemblyInput, ReadingJudgmentResult } from '../reading/types'
 
@@ -76,10 +77,31 @@ export function readBirthChart(birth: BirthInput, options: BirthReadingOptions) 
     referenceTime: instant,
   })
 
+  const adjacent = productScope === 'premium' ? evaluateNextDaewoon(birth, judgment) : []
+  const transitionOutcomes = adjacent.length ? [
+    ...moneyOutcomeFromReading({ judgment, evaluatedLuckScopes: adjacent }),
+    ...relationshipOutcomeFromReading({ judgment, evaluatedLuckScopes: adjacent }),
+  ].filter(fact => adjacent.some(({ snapshot }) => snapshot.id === fact.scopeId)) : undefined
+
   return assembleReading({
+    ...(adjacent.length && { evaluatedLuckScopes: adjacent, transitionOutcomes }),
     judgment, moneyOutcomes, healthOutcomes, relationshipOutcomes, productScope, customerContext,
     ...(eventTiming && { eventTimingFacts: eventTiming.facts }),
   })
+}
+
+function evaluateNextDaewoon(birth: BirthInput, judgment: ReadingJudgmentResult) {
+  const great = judgment.canonical.greatLuck
+  const current = judgment.judgmentCore.find(snapshot => snapshot.scope === 'greatLuck' && snapshot.runtimeStatus === 'resolved')
+  if (!current || great.status !== 'available' || great.value.currentIndex == null) return []
+  const next = great.value.cards[great.value.currentIndex + 1]
+  if (!next?.startInstant || !next.endInstant || bounds(current.validity)?.[1] !== next.startInstant) return []
+  const result = runInternalReading({
+    ...birthReadingContext(next.startInstant), birth, executionId: 'product-next-daewoon', daewoonOnly: true,
+  })
+  const snapshot = result.judgmentCore.find(value => value.scope === 'greatLuck' && value.runtimeStatus === 'resolved'
+    && bounds(value.validity)?.[0] === next.startInstant && bounds(value.validity)?.[1] === next.endInstant)
+  return snapshot ? [{ snapshot, evaluatedAt: next.startInstant }] : []
 }
 
 export function collectEventScopes(judgment: ReadingJudgmentResult, referenceTime: string) {

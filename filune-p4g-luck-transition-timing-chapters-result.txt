@@ -1,0 +1,98 @@
+FILUNE P4-G 결과보고서
+
+Producer Audit
+
+- Canonical은 원국·대운·세운·절기월의 범위와 정확한 달력 경계를 공급한다. LuckScopeState는 개별 실행이 확인한 구조 상태, 실제 작용, 참여자와 작용 차단 근거를 공급한다.
+- Money 및 Relationship Outcome은 분야, 대상, 경로, 방향, 확정도와 유효 기간을 공급한다. Health는 기존 CL-H03의 독립 주의 기간을 사용할 수 있다. H1 전통 대응으로 시기를 생성하지 않는다.
+- EventTiming은 승인된 별도 근거와 고객 맥락이 들어온 계약·사업 유형만 사용한다. 재물·관계 Outcome은 사건 확정의 근거로 사용하지 않는다.
+- 유료 제품 진입점은 다음 대운 경계에서 기존 Judgment를 대운 범위까지 독립 실행한다. 다음 대운의 재물·관계 결과는 전환 비교에 전달한다. CR-07 및 기존 EventTiming이 받던 Outcome 입력은 그대로 사용한다.
+
+Temporal Model
+
+기준일은 명시된 referenceTime이다. 기간의 시작은 포함하고 종료는 제외한다. 원국은 기간 없는 기준 상태다. 기간 메타데이터에 scope, exact ISO, periodRef를 두고, 기여에 원천 ID, 방향, 확정도, lifecycle, 대상 및 기제를 보존한다. 고객용 시각은 Asia/Seoul로 표시한다.
+
+- CR-04는 원국 또는 평가된 부모 범위에서 현재 범위로 무엇이 달라졌는지 설명한다. 새 경로는 현 범위의 실제 참여자 근거를 요구한다. 상하위 기간에 같은 작용이 반복 확인되면 포함 관계 안에서 연결한다. 관측만 있고 비교가 부족한 경우는 PARTIAL이다.
+- CR-08은 정확한 경계를 공유하는 양쪽 대운의 독립 평가에서 상태 차이를 찾는다. 확인된 방향 전환, 보호 상태 변화, 부담의 시작과 명시적으로 제어된 종료, 새 경로, 근거 있는 강화·약화를 분류할 수 있다. 비교할 상태가 비어 있거나 경계만 확인된 경우 변화 문장을 생성하지 않는다. 하나의 제품 요청에서는 현재 대운과 바로 다음 대운을 평가한다. Assembly가 독립 평가를 더 받으면 가까운 경계 두 개까지 검토한다.
+- CR-09는 수익화·관계 형성·승인 이벤트의 기회와 관리 부담·제약·관계 압박·조건부 건강 주의를 구간별로 다룬다. 같은 기간의 같은 대상에 기회와 주의가 있으면 카드에 둘 다 남긴다. 세부 기간은 자체 평가와 포함 관계 및 의미·대상·기제·방향이 모두 맞을 때 연결한다. 대운만 있으면 장기 배경으로 표현한다.
+
+Cross-Chapter Deduplication
+
+같은 의미 ID의 재사용을 허용한다. CR-04는 비교에 의한 현재 변화, CR-08은 대운 경계의 전후 상태, CR-09는 그 구간에서 살펴볼 활용 조건과 제약을 각각 다룬다. 기간과 방향이 달라지면 표현에서 따로 보존한다. 서로 다른 구조 주체가 완전히 같은 고객 설명으로 나타나면 같은 문장 중 대표를 사용한다. 원천 Outcome에는 전체 기제가 남아 있다.
+
+Readiness 및 fixture 결과
+
+아래 표는 실제 Judgment·Outcome fixture의 KO 결과다. 대표 발행 gap은 표현 밀도다. 상태 표기의 의미/발행 순서에서 READY는 의미 조건을, PARTIAL은 근거 또는 발행 요건의 일부 충족을 나타낸다.
+
+| Fixture | 장 | 의미 / 발행 | 글자 / 문단 | 의미 ID 수 | 변화·전환·구간 | Gap |
+|---|---|---|---:|---:|---|---|
+| protection-direction | CR-04 | READY / PARTIAL | 191 / 1 | 2 | 변화 1 | RENDERER_GAP/density_target |
+| protection-direction | CR-08 | DEFERRED / DEFERRED | 0 / 0 | 0 | 평가 쌍 0, 전환 0 | ENGINE_GAP/adjacent_daewoon_transition |
+| protection-direction | CR-09 | PARTIAL / PARTIAL | 333 / 2 | 2 | 구간 1, 기회 0, 주의 2 | SOURCE_GAP/independent_timing_windows, RENDERER_GAP/density_target |
+| new-activation | CR-04 | READY / PARTIAL | 169 / 1 | 1 | 변화 1 | RENDERER_GAP/density_target |
+| new-activation | CR-08 | DEFERRED / DEFERRED | 0 / 0 | 0 | 평가 쌍 0, 전환 0 | ENGINE_GAP/adjacent_daewoon_transition |
+| new-activation | CR-09 | PARTIAL / PARTIAL | 216 / 1 | 1 | 구간 1, 기회 1, 주의 0 | SOURCE_GAP/independent_timing_windows, RENDERER_GAP/density_target |
+| major | CR-04 | READY / PARTIAL | 169 / 1 | 1 | 변화 1 | RENDERER_GAP/density_target |
+| major | CR-08 | READY / PARTIAL | 232 / 1 | 2 | 평가 쌍 1, 전환 1 | RENDERER_GAP/density_target |
+| major | CR-09 | READY / PARTIAL | 549 / 3 | 3 | 구간 2, 기회 1, 주의 2 | RENDERER_GAP/density_target |
+| damage-to-protection | CR-04 | READY / PARTIAL | 191 / 1 | 2 | 변화 1 | RENDERER_GAP/density_target |
+| damage-to-protection | CR-08 | READY / PARTIAL | 437 / 2 | 3 | 평가 쌍 1, 전환 1 | RENDERER_GAP/density_target |
+| damage-to-protection | CR-09 | READY / PARTIAL | 549 / 3 | 3 | 구간 2, 기회 1, 주의 2 | RENDERER_GAP/density_target |
+| unchanged-pair | CR-04 | DEFERRED / DEFERRED | 0 / 0 | 0 | 변화 0 | ENGINE_GAP/current_comparison |
+| unchanged-pair | CR-08 | PARTIAL / PARTIAL | 0 / 0 | 0 | 평가 쌍 1, 전환 0 | SOURCE_GAP/adjacent_daewoon_transition |
+| unchanged-pair | CR-09 | DEFERRED / DEFERRED | 0 / 0 | 0 | 구간 0, 기회 0, 주의 0 | ENGINE_GAP/independent_timing_windows |
+| current-only | CR-04 | PARTIAL / PARTIAL | 291 / 2 | 2 | 변화 0 | SOURCE_GAP/current_comparison, RENDERER_GAP/density_target |
+| current-only | CR-08 | DEFERRED / DEFERRED | 0 / 0 | 0 | 평가 쌍 0, 전환 0 | ENGINE_GAP/adjacent_daewoon_transition |
+| current-only | CR-09 | PARTIAL / PARTIAL | 216 / 1 | 1 | 구간 1, 기회 1, 주의 0 | SOURCE_GAP/independent_timing_windows, RENDERER_GAP/density_target |
+| none | CR-04 | DEFERRED / DEFERRED | 0 / 0 | 0 | 변화 0 | ENGINE_GAP/current_comparison |
+| none | CR-08 | DEFERRED / DEFERRED | 0 / 0 | 0 | 평가 쌍 0, 전환 0 | ENGINE_GAP/adjacent_daewoon_transition |
+| none | CR-09 | DEFERRED / DEFERRED | 0 / 0 | 0 | 구간 0, 기회 0, 주의 0 | ENGINE_GAP/independent_timing_windows |
+| opportunity-and-caution | CR-04 | READY / PARTIAL | 404 / 3 | 4 | 변화 3 | RENDERER_GAP/density_target |
+| opportunity-and-caution | CR-08 | DEFERRED / DEFERRED | 0 / 0 | 0 | 평가 쌍 0, 전환 0 | ENGINE_GAP/adjacent_daewoon_transition |
+| opportunity-and-caution | CR-09 | READY / PARTIAL | 526 / 3 | 3 | 구간 1, 기회 1, 주의 2 | RENDERER_GAP/density_target |
+| CS-126 | CR-04 | READY / PARTIAL | 443 / 2 | 5 | 변화 2 | RENDERER_GAP/density_target |
+| CS-126 | CR-08 | PARTIAL / PARTIAL | 0 / 0 | 0 | 평가 쌍 1, 전환 0 | SOURCE_GAP/adjacent_daewoon_transition |
+| CS-126 | CR-09 | PARTIAL / PARTIAL | 280 / 1 | 2 | 구간 1, 기회 1, 주의 0 | SOURCE_GAP/independent_timing_windows, RENDERER_GAP/density_target |
+
+실제 KO 전문
+
+CR-04 · CS-126 · 세운·월운의 현재 활성
+
+원래 확인된 ‘만든 결과물이 수익으로 연결되는 경로’에 이 구간의 별도 작용이 더해집니다. 익힌 기술이 실제로 쓸 수 있는 결과물로 정리될 때 수익에 연결되는 방식입니다. 적용 범위는 세운 2027년 2월 4일 10시 46분 24초부터 2028년 2월 4일 16시 31분 7초 직전까지, 그 안의 월운 2027년 7월 7일 16시 36분 49초부터 2027년 8월 8일 2시 26분 25초 직전까지입니다.
+
+앞선 평가와 비교해 이번 구간에는 ‘이미 이어진 관계의 구도가 움직일 여지’이 새로 활성될 수 있습니다. 적용 범위는 세운 2027년 2월 4일 10시 46분 24초부터 2028년 2월 4일 16시 31분 7초 직전까지, 그 안의 월운 2027년 7월 7일 16시 36분 49초부터 2027년 8월 8일 2시 26분 25초 직전까지입니다. 조건이 유지되는 범위에서 볼 수 있는 해석입니다.
+
+CR-04 · protection-direction · 보호에서 유지 제약으로 방향 전환
+
+원래 ‘확보한 재원이 약해지는 압력을 완화하는 작용’이 확인됩니다. 이 범위에서는 같은 대상에 ‘확보한 몫이 분산될 수 있어 재원을 남기는 데 생기는 제약’이 나타날 수 있습니다. 적용 범위는 대운 2020년 1월 1일 9시 0분 0초부터 2030년 1월 1일 9시 0분 0초 직전까지입니다. 조건이 유지되는 범위에서 볼 수 있는 해석입니다.
+
+CR-08 · major · 인접 대운의 중요 보호 전환
+
+2030년 1월 1일 9시 0분 0초에 대운의 경계가 있습니다. 앞선 범위에서 ‘확보한 재원이 약해지는 압력을 완화하는 작용’이 확인됩니다. 이 범위에서는 같은 대상에 ‘확보한 몫이 분산될 수 있어 재원을 남기는 데 생기는 제약’이 나타날 수 있습니다. 적용 범위는 대운 2030년 1월 1일 9시 0분 0초부터 2040년 1월 1일 9시 0분 0초 직전까지입니다. 조건이 유지되는 범위에서 볼 수 있는 해석입니다.
+
+CR-08 · unchanged-pair · 양쪽 평가 및 설명 가능한 전환 없음
+
+고객 본문 0문단.
+
+CR-09 · opportunity-and-caution · 같은 기간의 기회와 주의
+
+활용할 수 있는 조건은 ‘만든 결과물이 수익으로 연결되는 경로’입니다. 익힌 기술이 실제로 쓸 수 있는 결과물로 정리될 때 수익에 연결되는 방식입니다. 만들 수 있는 결과가 실제로 쓰이고 수익에 연결될 조건까지 갖추는지가 판단 기준입니다. 장기 배경이 작동하는 범위는 대운 2020년 1월 1일 9시 0분 0초부터 2030년 1월 1일 9시 0분 0초 직전까지입니다(한국 시간).
+
+신중히 볼 조건은 ‘남긴 재원을 여러 차례 이어 쌓는 데 따르는 제약’입니다. 한 번 남길 여력과 그 상태를 다음에도 이어갈 여력을 구분하는 시기입니다. 장기 배경이 작동하는 범위는 대운 2020년 1월 1일 9시 0분 0초부터 2030년 1월 1일 9시 0분 0초 직전까지입니다(한국 시간).
+
+신중히 볼 조건은 ‘들어온 재원을 남겨 둘 여력의 제약’입니다. 수익이 들어오는 규모와 실제 남길 여력은 따로 볼 수 있습니다. 장기 배경이 작동하는 범위는 대운 2020년 1월 1일 9시 0분 0초부터 2030년 1월 1일 9시 0분 0초 직전까지입니다(한국 시간).
+
+CR-09 · CS-126 · 독립 평가된 세운·월운의 동일 수익화 경로
+
+활용할 수 있는 조건은 ‘만든 결과물이 수익으로 연결되는 경로’입니다. 익힌 기술이 실제로 쓸 수 있는 결과물로 정리될 때 수익에 연결되는 방식입니다. 만들 수 있는 결과가 실제로 쓰이고 수익에 연결될 조건까지 갖추는지가 판단 기준입니다. 현재 진행 중인 적용 구간은 세운 2027년 2월 4일 10시 46분 24초부터 2028년 2월 4일 16시 31분 7초 직전까지, 그 안의 월운 2027년 7월 7일 16시 36분 49초부터 2027년 8월 8일 2시 26분 25초 직전까지입니다(한국 시간).
+
+QA
+
+전용 fixture는 미지원 주장·변화·전환·기회·주의, 장내 중복, 장간 동일 역할 및 중복 기여가 모두 0인지 검사한다. 입력 순서 역전, 보호 방향 전후 두 경우, 정확한 인접 경계, 비교 한쪽 누락, 전환 없음, 기회 단독·주의 단독·동시 출현, 기간 압축 및 날짜 표시를 검증한다. 별도 회귀 fixture는 승인 계약 EventTiming의 원천 ID와 확정도, Health H3의 대운·세운·절기월 주의 경로를 검증한다.
+
+통과한 검증은 TypeScript 빌드, Vite 프로덕션 빌드, git diff --check, P4-G 전용 검증, P4-C KO·Assembly 통합, 고객 장 계약, P4-F Money 확장, P4-M3B EventTiming 투영, P4-N1 EventTiming 제품 연결, P4-H Health 통합이다. 추가로 실행한 레거시 P4-B core 스크립트는 기존 customer 디렉터리를 파일로 읽어 EISDIR로 중단된다. 파일만 순회하는 진단 실행에서도 기존 personalityResourceOutput의 런타임 import가 레거시 검사와 충돌했다. 레거시 스크립트의 변경은 작업에 포함하지 않았다.
+
+Remaining GAP
+
+- SOURCE_GAP · Work/Study 및 추가 사건 시기는 취업·승진·시험·합격 등으로 확장할 근거가 부족하다. 서로 다른 의미의 대상 전환을 단일 구조 기제에 연결하는 권한도 이번 검증에 포함되지 않았다.
+- ENGINE_GAP · 독립 평가로 확인되지 않은 범위의 비교는 유보한다. 장기 Health 양쪽 경로 비교의 제품 입력 경로는 확보되지 않았다. minor 전환, 명시적 부담 종료 및 대운·세운·월운 3계층 압축의 양성 사례는 전용 fixture에서 확인되지 않았다.
+- RENDERER_GAP · 대표 출력은 발행 분량과 설명 깊이에 미달해 발행 PARTIAL이다. 현재·장기·구체 시기를 뒷받침하는 근거 양에 맞춰 publication 상태를 유지한다.

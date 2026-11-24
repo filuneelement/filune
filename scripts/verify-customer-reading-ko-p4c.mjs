@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'vite'
+import { loadPersonalityRendererFixtures } from './fixtures/personality-renderer.mjs'
 
 const read = path => JSON.parse(readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'))
 const server = await createServer({ appType: 'custom', logLevel: 'error',
   server: { middlewareMode: true, hmr: false, ws: false } })
 const load = path => server.ssrLoadModule(`/src/${path}.ts`)
 const freeIds = ['CR-01', 'CR-02', 'CR-03']
-const paidIds = ['CR-05', 'CR-07']
+const paidIds = ['CR-04', 'CR-05', 'CR-07', 'CR-08', 'CR-09']
 const textOf = chapter => chapter.paragraphs.map(paragraph => paragraph.text)
 
 try {
@@ -38,6 +39,10 @@ try {
     { id: 'E', birth: { date: { year: 1985, month: 1, day: 4 }, time: { known: true, value: { hour: 9, minute: 0 } },
       gender: '男性', timeCorrectionMode: 'none' }, at: '1999-09-15T00:00:00.000Z', context: {}, scope: 'premium' },
   ]
+  const personalityFixtures = await loadPersonalityRendererFixtures(path => load(`lib/${path}`))
+  for (const [key, label, { natal }] of personalityFixtures.filter(([key]) => ['B', 'C', 'Q'].includes(key))) {
+    cases.push({ id: `P3-${key}`, label, natal, at: sample.referenceTime, context: {}, scope: 'free' })
+  }
   const observed = new Map()
   for (const fixture of cases) {
     const { id, at, context, scope } = fixture
@@ -45,11 +50,12 @@ try {
     const judgment = scope === 'premium' ? runInternalReading({
       ...contextAt, birth: fixture.birth, executionId: `p4c-ko:${id}`,
     }) : undefined
-    const calculated = judgment?.canonical ?? calculateCanonicalChart(fixture.birth, contextAt.calculation)
-    const pillars = ['year', 'month', 'day', 'time'].map(key => calculated.chart.pillars[key].value.ganZhi)
+    const calculated = judgment?.canonical ?? (fixture.birth && calculateCanonicalChart(fixture.birth, contextAt.calculation))
+    const pillars = calculated ? ['year', 'month', 'day', 'time'].map(key => calculated.chart.pillars[key].value.ganZhi)
+      : [fixture.natal.dayPillar, fixture.label]
     if (fixture.known) assert.deepEqual(pillars, canonical[fixture.known].pillars)
     // The free UI normally supplies Canonical Personality; paid fixture additionally uses evaluated role modifiers.
-    const base = buildNatalPersonality(calculated.chart)
+    const base = fixture.natal ?? buildNatalPersonality(calculated.chart)
     const natal = !judgment ? base : applyStructuralRoleModifiers(base, projectNatalStructuralReading(judgment.judgmentCore[0]))
     const moneyOutcomes = judgment ? moneyOutcomeFromReading({ judgment }) : undefined
     const relationshipOutcomes = judgment ? relationshipOutcomeFromReading({ judgment }) : undefined
@@ -81,9 +87,26 @@ try {
         assert(paragraph.sourcePersonalityFactIds.every(id => facts.has(id)))
         assert(paragraph.sourceOutcomeIds.every(id => outcomes.has(id)))
         assert.equal(paragraph.reasonStatus === 'complete', paragraph.causeAvailable && paragraph.lifeMappingAvailable)
+        if (paragraph.expression.kind === 'temporal') {
+          assert(paragraph.expression.contribution.activations.every(item => item.interval && item.periodRef))
+          continue
+        }
         if (paragraph.scope !== 'natal') {
           assert(paragraph.periodRef && paragraph.expression.startsAt && paragraph.expression.endsBefore)
-          assert(paragraph.sourceOutcomeIds.every(id => outcomes.get(id).period.periodId === paragraph.periodRef))
+          if (!paragraph.activations) {
+            assert(paragraph.sourceOutcomeIds.every(id => outcomes.get(id).period.periodId === paragraph.periodRef))
+          }
+        }
+        if (paragraph.activations) {
+          assert.deepEqual(new Set(paragraph.activations.map(item => item.sourceOutcomeId)), new Set(paragraph.sourceOutcomeIds))
+          for (const activation of paragraph.activations) {
+            const fact = outcomes.get(activation.sourceOutcomeId)
+            const unit = plan.semanticUnits.find(item => item.id === activation.semanticUnitId)
+            assert.equal(fact.scope, activation.scope)
+            assert.equal(fact.period?.periodId, activation.periodRef)
+            assert.equal(unit.certainty, activation.certainty)
+            assert.equal(unit.meaningRef.recordId, fact.id)
+          }
         }
         if (chapter.chapterId === 'CR-05') {
           assert.equal(paragraph.layer === 'outcome', paragraph.sourceOutcomeIds.length > 0)
@@ -92,11 +115,11 @@ try {
     }
     observed.set(id, { rendered, plan, pillars, input, natal, moneyOutcomes, relationshipOutcomes })
   }
-  assert.equal(new Set([...observed.values()].map(value => value.pillars.join(''))).size, 5)
+  assert.equal(new Set([...observed.values()].map(value => value.pillars.join(''))).size, cases.length)
   for (const chapterId of ['CR-01', 'CR-02']) {
     const texts = [...observed.values()].map(item => textOf(item.rendered.find(chapter => chapter.chapterId === chapterId)).join('\n'))
-    assert.equal(new Set(texts).size, 5, chapterId)
-    for (let index = 0; index < texts.length; index++) {
+    assert.equal(new Set(texts).size, cases.length, chapterId)
+    for (let index = 0; index < 5; index++) {
       const current = texts[index].split('\n')
       for (const earlier of texts.slice(0, index)) {
         const previous = new Set(earlier.split('\n'))
@@ -107,31 +130,79 @@ try {
   }
   // P4-I's verified mixed acquisition and capacity path, with the actual producer.
   const { runJudgmentCore } = await load('lib/judgment/core/luckScope')
-  const { buildMoneyOutcome } = await load('lib/outcome/index')
+  const { buildMoneyOutcome, buildRelationshipOutcome } = await load('lib/outcome/index')
   const pillar = (id, stem, branch) => ({ stem: { id, value: stem }, branch: { id: id + '-branch', value: branch } })
   const at = '2027-01-15T00:00:00.000Z'
-  const [mixedNatal] = runJudgmentCore({ executionId: 'p4c-ko-mixed', referenceTime: at, luck: [], natalCombinations: [],
-    natal: { day: pillar('dm', '甲', '寅'), month: pillar('wealth', '戊', '辰'), year: pillar('food', '丙', '巳') },
-    natalValidity: { periodId: 'p4i-mixed', from: { kind: 'exact', instant: at },
-      to: { kind: 'exact', instant: '2027-02-01T00:00:00.000Z' } },
-    natalCapacityEvidence: { state: 'wealth_capacity_insufficient', evidenceIds: ['reviewed-wealth-bearing-capacity'] },
+  const validity = (periodId, from, to) => ({ periodId, from: { kind: 'exact', instant: from },
+    to: { kind: 'exact', instant: to } })
+  const natalValidity = validity('p4i-inspection', at, '2027-02-01T00:00:00.000Z')
+  const wealth = { day: pillar('dm', '甲', '寅'), month: pillar('wealth', '戊', '辰'), year: pillar('food', '丙', '巳') }
+  const guarded = { day: wealth.day, month: pillar('peer', '甲', '寅'),
+    year: wealth.month, time: pillar('guard', '辛', '酉') }
+  const moneyCases = [
+    { id: 'P4-I capacity', natal: wealth, options: { natalCapacityEvidence: {
+      state: 'wealth_capacity_insufficient', evidenceIds: ['reviewed-wealth-bearing-capacity'],
+    } }, expected: ['CL-M01', 'CL-M03'] },
+    { id: 'P4-I protected → outflow', natal: guarded, options: { luck: [{
+      scope: 'greatLuck', pillar: pillar('stopper', '丙', '巳'),
+      validity: validity('great', '2020-01-01T00:00:00.000Z', '2030-01-01T00:00:00.000Z'),
+    }] }, expected: ['CL-M04', 'CL-M05'] },
+    { id: 'P4-I protected + earning', natal: guarded, options: { luck: [{
+      scope: 'greatLuck', pillar: pillar('additional-output', '丁', '巳'),
+      validity: validity('great', '2020-01-01T00:00:00.000Z', '2030-01-01T00:00:00.000Z'),
+    }] }, expected: ['CL-M02', 'CL-M05'] },
+    { id: 'P4-I earning + burden', natal: { ...wealth, time: pillar('killing', '庚', '申') },
+      options: { natalPolicyEvidence: [{ entityId: 'killing', condition: 'harmful_killing',
+        evidenceIds: ['killing-harmful_killing'] }] }, expected: ['CL-M01', 'CL-M06'] },
+  ].map(({ id, natal, options, expected }) => {
+    const [baseline, ...scoped] = runJudgmentCore({ executionId: id, referenceTime: at, luck: [], natalCombinations: [],
+      natal, natalValidity, ...options })
+    const moneyOutcomes = buildMoneyOutcome({ natal: baseline, referenceTime: at,
+      luck: scoped.map(snapshot => ({ snapshot, evaluatedAt: at })) })
+    const assembly = assembleReading({ productScope: 'premium', referenceTime: at, moneyOutcomes })
+    validateReadingAssembly(assembly)
+    const chapter = renderCustomerReadingKo(buildCustomerReadingPlan({ assembly, moneyOutcomes }))
+      .find(chapter => chapter.chapterId === 'CR-07')
+    for (const path of expected) assert(chapter.paragraphs.some(p => p.plan.sourceMappingIds.includes(path)), `${id} ${path}`)
+    assert.equal(chapter.quality.unsupportedClaimCount, 0, id)
+    assert.equal(chapter.quality.duplicateMeaningCount, 0, id)
+    return { id, chapter, results: [...new Set(moneyOutcomes.map(outcome => outcome.result))] }
   })
-  const mixedMoney = buildMoneyOutcome({ natal: mixedNatal, referenceTime: at, luck: [] })
-  const mixedPlan = buildCustomerReadingPlan({
-    assembly: assembleReading({ productScope: 'premium', referenceTime: at, moneyOutcomes: mixedMoney }),
-    moneyOutcomes: mixedMoney,
-  })
-  const mixed = renderCustomerReadingKo(mixedPlan).find(chapter => chapter.chapterId === 'CR-07')
+  const [{ chapter: mixed }] = moneyCases
   assert(mixed.paragraphs.some(p => p.plan.slots.includes('earning') && p.plan.sourceMappingIds.includes('CL-M01')))
   assert(mixed.paragraphs.some(p => p.plan.slots.includes('retention') && p.plan.sourceMappingIds.includes('CL-M03')))
-  assert(mixed.paragraphs.some(p => p.plan.slots.includes('sustainability')))
-  assert.equal(mixed.quality.unsupportedClaimCount, 0)
+  assert(mixed.paragraphs.some(p => p.plan.slots.includes('qualitative_sustainability')))
   const a = observed.get('A')
   const ui = synthesizeSingleResult(a.natal, undefined, sample.referenceTime, sample.context, 'ko', ko)
   assert.deepEqual(ui.free.map(chapter => chapter.paragraphs.map(item => item.text)), a.rendered.map(textOf))
-  assert(a.rendered[2].gaps.some(gap => gap.type === 'PARTIAL_LOOP'))
+  if (process.argv.includes('--baseline')) assert(a.rendered[2].gaps.some(gap => gap.type === 'PARTIAL_LOOP'))
+  else assert.equal(a.rendered[2].title, '상황에 따라 달라지는 나의 반응')
   assert.doesNotMatch(textOf(a.rendered[2]).join(' '), /반복되기 쉽|반복합니다/u)
   const b = observed.get('B')
+  // P4-E's standalone evaluated contact interval. Inspect the complete producer output.
+  const contactNatal = Object.fromEntries(['year', 'month', 'day', 'time'].map(position => {
+    const value = b.input.canonical.chart.pillars[position].value
+    return [position, {
+      stem: { id: 'entity:' + JSON.stringify([`/chart/pillars/${position}/value/ganZhi`, 'stem']), value: value.stem },
+      branch: { id: 'entity:' + JSON.stringify([`/chart/pillars/${position}/value/ganZhi`, 'branch']), value: value.branch },
+    }]
+  }))
+  const [contactBase, contactGreat] = runJudgmentCore({ executionId: 'p4e-great-fixture', referenceTime: at,
+    natal: contactNatal, natalValidity, natalCombinations: [],
+    luck: [{ scope: 'greatLuck', pillar: pillar('p4e-great', '辛', '丑'),
+      validity: validity('p4e-great', '2026-01-01T00:00:00.000Z', '2036-01-01T00:00:00.000Z') }],
+  })
+  const contactCanonical = calculateCanonicalChart(birth('CS-005'), birthReadingContext(at).calculation)
+  const relationshipOutcomes = buildRelationshipOutcome({ canonical: contactCanonical, natal: contactBase,
+    luck: [{ snapshot: contactGreat, evaluatedAt: at }] })
+  const contactAssembly = assembleReading({ productScope: 'premium', referenceTime: at,
+    canonical: contactCanonical, personality: b.natal, relationshipOutcomes })
+  const contactOnly = renderCustomerReadingKo(buildCustomerReadingPlan({
+    assembly: contactAssembly, natal: b.natal, relationshipOutcomes,
+  }), b.natal).find(chapter => chapter.chapterId === 'CR-05')
+  assert(contactOnly.paragraphs.some(p => p.plan.slots.includes('contact_or_change')),
+    JSON.stringify(relationshipOutcomes.map(fact => [fact.semanticType, fact.scope, fact.temporalStatus])))
+  assert(!contactOnly.paragraphs.some(p => p.plan.slots.includes('formation')))
   const rel = b.rendered.find(chapter => chapter.chapterId === 'CR-05')
   assert(rel.paragraphs.some(item => item.plan.layer === 'personality'))
   assert(rel.paragraphs.some(item => item.plan.sourceMappingIds.includes('CL-R01')))
@@ -160,9 +231,79 @@ try {
   assert.equal(limited.paragraphPlans[0].reasonStatus, 'partial')
   assert.deepEqual(limited.paragraphPlans[0].sourceMappingIds, [])
 
+  if (!process.argv.includes('--baseline')) {
+    assert.equal(a.plan.version, 'p4g-1')
+    assert.equal(a.rendered[0].qualityStatus, 'PASS')
+    assert.equal(a.rendered[1].qualityStatus, 'PASS')
+    assert.deepEqual(money.paragraphs[0].plan.activations.map(item => item.scope).filter((scope, index, all) =>
+      all.indexOf(scope) === index), ['natal', 'sewoon', 'month'])
+    assert.equal(money.quality.repeatedScopeMeaningCount, 2)
+    assert.equal(money.quality.distinctSemanticCount, 6)
+    assert.equal(rel.quality.repeatedScopeMeaningCount, 1)
+    assert.equal(rel.paragraphs.filter(p => p.plan.slots.includes('formation')).length, 2)
+    assert.equal(contactOnly.quality.unsupportedClaimCount, 0)
+    const opposed = moneyCases.find(item => item.id === 'P4-I protected → outflow').chapter
+    assert(opposed.paragraphs.some(p => p.plan.lifeMechanismIds.includes('wealth_protection') && p.plan.scope === 'natal'))
+    assert(opposed.paragraphs.some(p => p.plan.lifeMechanismIds.includes('wealth_damage') && p.plan.scope === 'daewoon'))
+    assert(rel.paragraphs.some(p => p.plan.expression.composite === 'relation_sequence'
+      && p.plan.expression.traitFactIds.length === 3))
+    assert(a.rendered[0].quality.compositeParagraphCount >= 1)
+    for (const [id, value] of observed) {
+      const chapter = value.plan.chapters.find(item => item.chapterId === 'CR-03')
+      const rendered = value.rendered.find(item => item.chapterId === 'CR-03')
+      for (const pattern of chapter.behaviorPatterns) {
+        assert.equal(pattern.status === 'ready', Boolean(pattern.context.length && (pattern.response.length || pattern.judgment.length)
+          && pattern.behavior.length), id)
+        if (pattern.conflictId) {
+          const conflict = value.natal.conflicts.find(item => item.id === pattern.conflictId)
+          assert([...pattern.context, ...pattern.trigger, ...pattern.response, ...pattern.judgment, ...pattern.behavior, ...pattern.result]
+            .every(id => conflict.factIds.includes(id)))
+        }
+      }
+      const ready = chapter.behaviorPatterns.filter(pattern => pattern.status === 'ready').length
+      assert.equal(rendered.quality.responsePatternCount, ready)
+      assert.equal(rendered.semanticReadiness, ready >= 2 ? 'ready' : ready ? 'partial' : 'deferred')
+      assert.equal(rendered.publicationReadiness, ready ? 'partial' : 'deferred')
+      assert.equal(rendered.quality.densityGap, Boolean(ready))
+      assert.equal(rendered.gaps.some(gap => gap.type === 'RENDERER_GAP' && gap.slot === 'density_target'), Boolean(ready))
+      assert.doesNotMatch(textOf(rendered).join(' '), /늘 반복|계속 같은 선택|비슷한 일이 되풀이|항상 이런 결과/u)
+      assert.equal(rendered.quality.unsupportedRecurrenceCount, 0)
+    }
+    assert.equal(observed.get('D').rendered.find(item => item.chapterId === 'CR-03').quality.resultSupportedCount, 1)
+    assert.equal(observed.get('P3-C').rendered.find(item => item.chapterId === 'CR-03').quality.resultSupportedCount, 1)
+    assert(a.plan.chapters.find(item => item.chapterId === 'CR-03').behaviorPatterns
+      .some(pattern => pattern.mechanism === 'rechecking_after_completion'
+        && pattern.judgment[0] !== pattern.behavior[0] && pattern.resultCoverage === 'gap'))
+    assert.equal(rel.title, '관계에서 드러나는 나의 방식')
+    assert.equal(rel.titleKey, 'relationship_style')
+    assert.equal(a.rendered[2].titleKey, 'situational_responses')
+    assert.equal(ui.free[2].semanticReadiness, 'ready')
+    assert.equal(ui.free[2].publicationReadiness, 'partial')
+    assert.deepEqual(ui.free[2], sample.free[2])
+    for (const { rendered } of observed.values()) for (const chapter of rendered) {
+      assert.equal(chapter.semanticReadiness, chapter.quality.semanticReadiness)
+      assert.equal(chapter.publicationReadiness, chapter.quality.publicationReadiness)
+      assert.equal(chapter.readiness, chapter.publicationReadiness)
+    }
+    assert.equal(rel.quality.personalityOutcomeCausalLeakCount, 0)
+    assert.equal(rel.quality.relationshipSequenceCoverage, 'supported')
+    assert.equal(rel.quality.relationshipRecurrenceCoverage, 'gap')
+  }
+
   const results = [['A', freeIds], ['B', ['CR-05']], ['C', ['CR-07']]].flatMap(([id, ids]) =>
     observed.get(id).rendered.filter(chapter => ids.includes(chapter.chapterId)).map(chapter => ({ fixture: id, ...chapter })))
-  if (process.argv.includes('--json')) console.log(JSON.stringify(results, null, 2))
+  if (process.argv.includes('--all-json')) console.log(JSON.stringify({
+    ...(process.argv.includes('--ui') && { ui }),
+    cases: [...observed].map(([id, value]) => ({
+      id, pillars: value.pillars, chapters: value.rendered,
+      conflicts: value.natal.conflicts.map(item => item.conflictType),
+      relationship: [...new Set((value.relationshipOutcomes ?? []).map(item => item.semanticType))],
+      money: [...new Set((value.moneyOutcomes ?? []).map(item => item.result))],
+      loops: value.plan.chapters.find(chapter => chapter.chapterId === 'CR-03').behaviorPatterns,
+      ...(process.argv.includes('--facts') && { facts: value.natal.facts.map(item => [item.traitType, item.trait, item.sourceType, item.status]) }),
+    })), moneyCases, contactOnly,
+  }, null, 2))
+  else if (process.argv.includes('--json')) console.log(JSON.stringify(results, null, 2))
   else if (process.argv.includes('--report')) {
     for (const chapter of results) {
       console.log(`## Fixture ${chapter.fixture} · ${chapter.chapterId} ${chapter.title}\n`)
@@ -178,7 +319,7 @@ try {
       }
       console.log()
     }
-  } else console.log('PASS · five charts, five chapters, provenance, scope, determinism, KO UI, partial reason and context routing')
+  } else console.log('PASS · eight charts, five chapters, loops, scope compression, provenance, determinism, KO UI and source gaps')
 } finally {
   await server.close()
 }

@@ -39,6 +39,14 @@ Hurting Officer → Wealth has its own source-backed earning and method gate. A 
 
 Money uses the assertion policy and the [audited mapping register](../../codex/p4-outcome-assertion-policy-correction-result.md#b-money-impact). `OUT-MONEY-04` supplies the upstream checks for separately supported loss, division and Money-related difficulty. The [P4-I brief](../../codex/p4i-money-outcome-batch1.md) scopes implementation.
 
+## Individual Money coverage
+
+The CR-07 axes are earning, earning method, retention constraint, accumulation continuity, combined outflow-or-division, protection and burden. An unresolved retention fact carries no positive or negative retention axis. A protection fact supports protection, without acting as a separate favorable retention or acquisition fact. A bounded validity records when a path was evaluated. It does not establish that a currently active earning path will last for the entire interval.
+
+`money_loss_or_division` remains a combined meaning. The evaluated harm path and its protective counterconditions do not independently establish realized loss, a distribution agreement, a separate competitive effect or a cost. Preserve source-backed retention and protection in their own directions and scopes. Keep accumulated continuity constraints qualitative under the existing `money_duration`.
+
+`money_related_problem` has two qualified paths. Wealth feeding harmful Killing continues under the existing rule. `wealth_can_weaken_needed_support` requires the actual adverse HO-06 damage to a required resource and the linked HO-02 regulation evidence in the evaluated scope. A generic Wealth–Resource control, restored or inactive damage, or favorable excess-resource control cannot satisfy it. The paths use separate outcome results and provenance. They both count toward one burden axis, with no actor, operating cost, event or amount inference.
+
 ## Individual Relationship expansion
 
 | Semantic | Required facts | Required current state | Real-life meaning and limitations | Provenance |

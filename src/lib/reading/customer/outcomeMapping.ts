@@ -28,7 +28,7 @@ export function mapMoney(fact: MoneyOutcomeFact): Mapping | undefined {
       return undefined
     case 'harder_to_sustain_accumulation':
       return refs.includes('OUT-MONEY-02') && refs.includes('07:L140-L144,L1117')
-        ? rule('CL-M03', 'capacity_constraint', 'sustainability', 'accumulation', 'sustainability') : undefined
+        ? rule('CL-M03', 'capacity_constraint', 'sustainability', 'accumulation', 'qualitative_sustainability') : undefined
     case 'wealth_can_be_divided_or_flow_out':
       return refs.includes('OUT-MONEY-04') && refs.includes('07:L140-L144,L1250-L1251')
         ? rule('CL-M04', 'wealth_damage', 'division', 'combined_loss_or_division') : undefined
@@ -39,6 +39,12 @@ export function mapMoney(fact: MoneyOutcomeFact): Mapping | undefined {
       // The existing producer emits this result only for the qualified Wealth → Killing → Day Master path.
       return refs.includes('OUT-MONEY-04') && refs.includes('07:L162,L1262,L1273')
         ? rule('CL-M06', 'wealth_feeds_pressure', 'pressure', 'money_related_pressure') : undefined
+    case 'wealth_can_weaken_needed_support':
+      return refs.includes('OUT-MONEY-04') && refs.includes('Judgment:HO-06') && refs.includes('06:PP-607,§75') && refs.includes('07:L955')
+        && fact.burdenPath?.kind === 'wealth_damages_needed_resource'
+        && fact.sourceParticipantIds.includes(fact.burdenPath.affectedEntityId)
+        && fact.sourceRelationIds.includes(fact.burdenPath.supportingRelationId)
+        ? rule('CL-M06B', 'wealth_damages_needed_support', 'supportPressure', 'money_related_pressure') : undefined
     default: return undefined
   }
 }
@@ -60,12 +66,23 @@ export function mapRelationship(fact: RelationshipOutcomeFact): Mapping | undefi
   }
 }
 
+// The producer's wealth entity is the target for money. Relationship
+// contact, change and formation already target the close-relationship axis.
+export function outcomeTargetKey(fact: CustomerOutcome) {
+  return 'wealthEntityId' in fact
+    ? JSON.stringify([fact.wealthEntityId, fact.direction, fact.burdenPath?.affectedEntityId ?? null]) : 'close_relationship'
+}
+
+export function outcomeMeaningKey(fact: CustomerOutcome) {
+  return JSON.stringify([fact.semanticType, 'result' in fact ? fact.result : null])
+}
+
 export function outcomeSlots(fact: CustomerOutcome): readonly string[] {
   switch (fact.semanticType) {
     case 'money_acquisition': return ['earning']
     case 'money_generation_method': return ['earning_method']
     case 'money_retention': return ['retention']
-    case 'money_duration': return ['accumulation', 'sustainability']
+    case 'money_duration': return ['accumulation', 'qualitative_sustainability']
     case 'money_loss_or_division': return ['combined_loss_or_division']
     case 'money_related_problem': return ['money_related_pressure']
     case 'relationship_contact_signal': return ['contact_or_change']

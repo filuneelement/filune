@@ -38,19 +38,28 @@ interface CauseToLifeMappingRule {
 | ID · 대상 | 필수 경로와 작동 | 현실 기제 및 제한 | Authority |
 | --- | --- | --- | --- |
 | CL-P01 · Personality | 출처가 있는 trait + 위치/발현 또는 승인된 modifier. 긴장은 conflict의 양쪽 Fact와 상황 근거 | 밖에서 드러나는 방식, 가까운 관계에서의 판단, 일·협업에서의 행동 성향. 직위·성과·실제 관계 사건으로 확대 금지 | 11·12, [일주풀이](../../source/personality/일주풀이.md), [십성](../../source/personality/십성.md) |
+| CL-P02 · 판단 전환 | 같은 Conflict 또는 동일 원천 경로에 속한 양쪽 Fact와 발현 위치·조건 | 갑자의 착수 망설임, 바깥 표현과 개인 판단의 맥락 대비. 맥락 대비에서 시간 순서·후회 추정 금지 | [P4-E B01·B10](../../codex/p4e-behavior-relationship-pattern-source-expansion-result.md#2-behavior-pattern-rules) |
+| CL-P03 · 상황 반응 | 증거 있는 촉발·맥락, 발현 Fact와 반응·행동의 연결 | 사회 마찰 때 이의를 드러내는 방향, 자기 결과물의 기준에 따른 완료 후 재점검. 실익 판단에서 실행까지는 실행 근거와 역조건 확인 후 적용 | [P4-E B03·B05·B09](../../codex/p4e-behavior-relationship-pattern-source-expansion-result.md#2-behavior-pattern-rules) |
+| CL-P04 · 행동 결과 | 촉발, 반응 또는 판단, 행동 및 같은 출처가 연결한 결과 | 착수 지연, 시도 전 중단, 성급한 결정에서의 실수 가능성. 결과를 반복이나 실제 이력으로 승격하지 않는다 | [P4-E B01·B02·B11](../../codex/p4e-behavior-relationship-pattern-source-expansion-result.md#2-behavior-pattern-rules) |
+| CL-P05 · 반복·재발 | CL-P04 또는 동등한 행동 경로와 명시적인 별도 재발 근거 | 같은 조건에서 반응 경로가 다시 활성된다는 주장만 허용. 재점검 횟수, 한 사건 안에서 반복한 생각, 긴 검토, 원문에 중복 등장한 문구는 재발 근거에서 제외. 현 발행 근거 미연결 | [P4-E B02·B12](../../codex/p4e-behavior-relationship-pattern-source-expansion-result.md#4-cr-03-완성-고리와-readiness) |
 | CL-M01 · 획득·획득 방식 | 실제 食神→財 생산 경로 및 획득/방식 Fact | 기술·생산 결과의 수익화 가능성. 액수·안정성 제외 | 14 OUT-MONEY-01, 02 용신론, 07 L1256 |
 | CL-M02 · 획득·획득 방식 | 실제 傷官→財 경로와 별도 통과한 획득/방식 Fact | 독창적 표현·기지로 만드는 결과의 수익화 가능성 | 14 OUT-MONEY-01 별도 gate, 07 L764·984 |
-| CL-M03 · 유지·축적 지속성 | 적용 구조에서 財를 감당하는 힘의 부족이 확인되고 유지·기간 Fact가 각각 존재 | 들어오는 수익을 남기거나 계속 축적하기 어려운 조건. 유출·원인 주체 자동 추정 금지 | OUT-MONEY-02, 04·06, 07 L140–144·1117 |
-| CL-M04 · 유지·유출/배분 | 관련 財에 실제로 도달한 손상과 각각의 Fact, 보호·통관 확인 | 경쟁·배분 또는 유출 가능성. 경쟁 주체·동업 비용은 독립 근거가 있을 때만 구체화 | OUT-MONEY-02/04, 07 L140–144·1250–1251 |
+| CL-M03 · 유지·축적 지속성 | 같은 財의 감당 부족과 독립 유지·정성적 축적 지속성 Fact | 한 번 남기는 힘과 지속 축적 제약을 구분한다. 유효 구간만으로 장기 지속을 확정하지 않는다 | OUT-MONEY-02, 04·06, 07 L140–144·1117 |
+| CL-M04 · 유지·유출/배분 | 관련 財에 실제로 도달한 손상과 각각의 Fact, 보호·통관 확인 | 합성 유출·배분 가능성과 출처가 뒷받침하는 유지 제약. 손실·분배·경쟁·비용과 행위자는 별도 근거가 없으면 공백 | OUT-MONEY-02/04, 07 L140–144·1250–1251 |
 | CL-M05 · 유지 보호 | 유지 보호 Fact와 유효한 보호 경로 | 수익을 남기는 기능을 보호. 피해·유출 Fact와 공존 가능 | OUT-MONEY-02, 07 L1067·2322 |
-| CL-M06 · 재물 관련 부담 | 실제 財生殺 또는 財가 필요한 印 등을 손상한 승인 경로와 money problem Fact | 전자는 수익 관련 활동에 따른 압박, 후자는 결과 추구가 필요한 기반을 누르는 문제. 지출·확장·문서·실제 책임 증가를 특정하려면 별도 근거 필요 | OUT-MONEY-04, 07 L162·1262·1273, 06 PP-503 |
+| CL-M06 · 재생살 부담 | 실제 財生殺과 해로운 살의 일간 도달, 승인 money problem Fact | 수익과 함께 부담이 커질 수 있는 경로. 비용·손실·구체 사건 제외 | OUT-MONEY-04, 07 L162·L1262·L1273, 06 PP-503 |
+| CL-M06B · 필요한 조절 기반의 약화 | 유효한 불리 HO-06, 해당 財가 실제로 손상한 필요한 印 및 같은 원천 HO-02 조절 경로, 활성·약화된 피해 상태 | 돈을 추구하는 힘이 활동의 조절 기반을 약하게 할 수 있음. 운영 비용·문서 사건·관계 주체 제외 | 06 PP-607·§75, 07 L955, Judgment PA-605 |
 | CL-R01 · 접촉/변화 | 유효한 일지 대상 합/충과 scope 참여자, 해당 signal Fact | 접점 또는 관계 구도 변화. 합의 접촉/변화 모호성 및 충의 변화 범위 보존 | A I-22, OP-R01/R03, 14 OUT-REL-02 |
 | CL-R02 · 형성 기회 | 유효한 육합 또는 완전한 삼합과 같은 scope의 자격 있는 활성 천간, formation Fact | 가까운 관계를 만들 기회. 관계 상태·혼인·성사 추정 금지 | 14 Relationship expansion, A I-22①, 07 L202–207, B W-88 |
 | CL-R03 · 관계 압박 | 관련 배우자 표지인 정관에 닿는 승인 OFF-03 경로와 operating/reduced 손상, pressure Fact | 표현과 관계에서 기대되는 역할 사이의 압박 가능성. 상대 행동·이별·제3자 추정 금지 | A I-15·OP-R03, 14, 07 L762–765 |
+| CL-R04 · 관계 소통 | 대화 맥락, 자기 반응 Fact, 원천 조건 | 의견을 동등하게 교환하려는 기준과 근거 있는 직접 표현. 상대의 통제·일방성·상처 추정 금지 | [P4-E R04·R06](../../codex/p4e-behavior-relationship-pattern-source-expansion-result.md#3-relationship-pattern-rules) |
+| CL-R05 · 관계 경계·갈등 | 자신의 관계 기준 또는 부담과 자기 반응 Fact | 기준 초과 시 선 긋기. 소진 뒤 거리를 원하는 R13은 조건부 검토. 연락 두절·단절·이별·상대의 잘못 추정 금지 | [P4-E R03·R13](../../codex/p4e-behavior-relationship-pattern-source-expansion-result.md#3-relationship-pattern-rules) |
 | CL-H01 · 전통 신체 대응 | Canonical 일간·오행과 대응 Fact | 전통 대응 소개. 주의 부위·약함 판정은 여기서 생성 금지 | A I-16, B W-30, [⑲-A A/B/F](../../source/health/FILUNE-19A-premium-health-evidence.md), 14 OUT-HEALTH-01 |
 | CL-H02 · 구조 부담 | 실제 용신/상신 압박 또는 유효한 해로운 칠살 경로, 독립 Health target 및 burden Fact | 전통적 주의 근거. 부위는 승인된 피해 대상과 별도 연결 시에만. 필요한 칠살, 단순 합·오행 부족은 제외 | 14 OUT-HEALTH-02, ⑲-A B–F, B 7-2/W-35, A OP-P06/P07 |
 | CL-H03 · 주의 시기 | CL-H02의 동일 경로와 독립 평가된 국소 활성·재활성, 확정 구간 및 attention period Fact | 해당 기간의 주의. 조건부면 부위 생략. 종료와 회복은 별도 권한 | 14 Level 3, ⑲-A C–F, B W-30–35, D Q10 |
 | CL-E01 · 계약·사업 시기 | Master 15에서 승인되어 실제 채택된 EventTimingFact와 같은 event target의 근거·조건·구간 | 계획·진행 관련 기회, 조정·지연·부담 등 승인된 방향만. 일반 취업, 직업 적성·성공, 학업으로 확대 금지 | [15 §6A·§7](15-event-timing-spec.md) |
+
+결과와 재발은 별도 증거 필드다. CR-03 상황별 반응과 CR-05 관계 방식의 근거가 충분해도 발행 상태는 장 질문, 표현 깊이, 원인 커버리지와 QA로 별도 판정한다. 결과가 있는 행동 경로도 다음 상황에서 다시 활성된다는 근거가 없다면 재발 슬롯을 비운다. 관계 단계의 `relationshipSequence`는 단계 간 근거의 연결이며 `relationshipRecurrence`는 명시적 재발 근거만 소비한다. CL-R04·05는 Personality 층의 매핑이며 CL-R01~03 Outcome의 원인이 되지 않는다. CR-05의 관계 재발과 시기는 선택 근거다. 관계 시기 근거는 원국 관계 축의 충분성을 바꾸지 않는다.
 
 ## 학업 후보 및 역조건
 

@@ -18,7 +18,7 @@ const allowed = {
   money_generation_method: ['skill_and_output', 'ingenuity_and_expression'],
   money_retention: ['harder_to_retain', 'retention_supported_by_protection', 'unresolved'],
   money_loss_or_division: ['wealth_can_be_divided_or_flow_out'],
-  money_related_problem: ['wealth_path_can_bring_difficulty'],
+  money_related_problem: ['wealth_path_can_bring_difficulty', 'wealth_can_weaken_needed_support'],
   money_duration: ['harder_to_sustain_accumulation'],
 }
 const earningPolicies = new Set(['FOOD-01', 'FOOD-04', 'WEALTH-01', 'HO-01', 'PEER-03', 'ROB-04'])

@@ -6,6 +6,11 @@
 
 CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 원천 Fact와 원천 갈등 ID를 제공한다. 후보 상태는 단일 축의 설명 가능성과 장 완성 여부를 구분한다. [15개 fixture 커버리지 감사](../../codex/p4-personality-coverage-audit-result.md)
 
+## 고객 장의 판정 상태
+
+- `semanticReadiness`는 장 질문을 설명할 원천 의미의 충분성을 뜻한다. 문장 길이와 표현은 이 판정에 사용하지 않는다.
+- `publicationReadiness`는 근거 충분성, 필수 질문과 원인 커버리지, Renderer 완결성, 무근거·중복·층 혼합 검사 및 품질 band를 평가한다. 의미가 충분해도 본문 밀도가 부족하면 발행 PARTIAL이며 `RENDERER_GAP/density_target`을 기록한다. 밀도 공백 자체는 QA FAIL이 아니다. 의미 DEFERRED는 발행 DEFERRED다.
+
 ## CR-01 나의 기본 성향
 
 - **chapterId / customerTitle** CR-01 · 나의 기본 성향
@@ -18,7 +23,7 @@ CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 �
 - **causeExplanationRequirement** 기질 → 출처 역할과 위치 → 표현 상황. 일주는 성향을 보정한다.
 - **timingRequirement** 원국만 사용.
 - **customerContextUse** 실제 입력이 허용하는 비유 선택.
-- **crossChapterReuse** F-03/CH-2, 구조 근거는 F-02/CH-1. CR-02에는 능력의 발휘, CR-03에는 반복 과정을 전달.
+- **crossChapterReuse** F-03/CH-2, 구조 근거는 F-02/CH-1. CR-02에는 능력의 발휘, CR-03에는 상황에 따른 판단과 반응을 전달.
 - **prohibitedInference** 일주로 격·재물·직업·결혼을 생성하거나 미상 시지 추정.
 - **partialPolicy** 증거가 있는 독립 축만 사용하고 누락 축 기록.
 
@@ -38,21 +43,18 @@ CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 �
 - **prohibitedInference** 강점 이름 나열, 임의 Top-3, 성공·성과 보장.
 - **partialPolicy** 동일 mechanism의 별칭은 합치고 지원된 강점만 기술.
 
-## CR-03 반복되는 행동 패턴
+## CR-03 상황에 따라 달라지는 나의 반응
 
-- **chapterId / customerTitle** CR-03 · 반복되는 행동 패턴
-- **coreQuestion** 비슷한 상황에서 왜 비슷한 선택과 행동을 반복하는가?
-- **primaryProducers** NatalPersonalityResult의 decision, stress, shadow, expression 및 conflicts.
-- **supportingProducers** position·interpersonal·modifier 증거.
-- **requiredSemanticSlots** trigger, internal response, judgment, behavior, result, repetition mechanism.
-- **optionalSemanticSlots** 보호·악화 조건, 서로 다른 상황의 대조.
-- **minimumEvidenceCoverage** 독립 루프 최소 2개, 가능하면 3개. 각 루프는 적어도 촉발→행동→반복 이유가 연결되어야 한다.
-- **causeExplanationRequirement** 성향 이름을 다시 말하기보다 전환마다 지원된 기제와 결과를 설명한다.
+- **chapterId / customerTitle** CR-03 · 상황에 따라 달라지는 나의 반응
+- **coreQuestion** 나는 어떤 상황에서 무엇을 중요하게 보고, 어떻게 판단하고 반응하는가?
+- **primaryProducers** Natal Personality의 decision, stress, shadow, expression, 관련 strengths 및 Conflict.
+- **requiredSemanticSlots** trigger, response_or_judgment, behavior_or_expression, context. 명시적 맥락 대비에서는 context가 trigger 역할을 할 수 있다.
+- **optionalSemanticSlots** result, contrast, recurrence, protective_condition, aggravating_condition.
+- **minimumEvidenceCoverage** 의미 판정은 독립 반응 2개 이상이면 READY, 1개면 PARTIAL, 0개면 DEFERRED. 각 반응에 촉발 또는 맥락, 반응 또는 판단, 행동 또는 표현을 요구한다. 같은 Conflict의 양쪽 Fact와 발현 맥락의 차이가 확인되면 하나의 맥락 대비로 센다.
+- **causeExplanationRequirement** 상황 → 판단 또는 반응 → 행동·표현. 결과와 재발은 각각 별도 근거가 있을 때 추가한다.
 - **timingRequirement** 원국만 사용.
-- **customerContextUse** 명시된 맥락의 장면으로 구체화.
-- **crossChapterReuse** F-03/F-04, CH-2/CH-3. CR-05는 관계에 특화된 루프를 추가.
-- **prohibitedInference** 반복 이력, 행동 빈도, 인과 고리를 추정.
-- **partialPolicy** 연결이 끊긴 루프는 성향의 조건부 단서로만 제공하고 루프 커버리지에서 제외.
+- **crossChapterReuse** 같은 기제를 CR-05에서 사용할 경우 의미·기제·원천 Fact ID를 그대로 두고 검증된 관계 맥락을 덧붙인다.
+- **prohibitedInference** 미지원 결과·재발, 맥락 대비의 시간 순서화, 일주를 실제 과거 이력이나 빈도로 변환.
 
 ## CR-04 지금 내 삶에서 무엇이 달라지고 있는가
 
@@ -62,7 +64,7 @@ CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 �
 - **supportingProducers** CurrentPersonalityResult, 승인 EventTiming, Health.
 - **requiredSemanticSlots** baseline, current daewoon background, current sewoon activation, what changed, opportunity, pressure, affected domain, duration, cause.
 - **optionalSemanticSlots** 권한과 책임의 별도 증거, 조건부 경감, 월의 독립 활성.
-- **minimumEvidenceCoverage** 원국과 현재 대운·세운의 각각의 근거, 최소 한 경로의 범위별 변화와 현실 적용. 분야는 해당 Outcome이 있는 경우.
+- **minimumEvidenceCoverage** 원국 또는 평가한 상위 범위와 현재 범위의 비교에서 실제 차이가 하나 이상이면 semantic READY. 현재 승인 Outcome만 있으면 PARTIAL. 유효한 현재 의미와 비교 근거가 모두 없으면 DEFERRED. 원국은 기준 상태로만 쓰며 시작일과 종료일을 표시하지 않는다.
 - **causeExplanationRequirement** 실제로 달라진 역할·대상·기능과 기회/압박을 별도로 풀이. 책임만 증가하는지 권한이 함께 움직이는지 독립 증거 확인.
 - **timingRequirement** 기준일이 현재의 검증 구간 안에 있어야 하며 대운 배경과 연 활성 범위를 각각 기록.
 - **customerContextUse** 입증된 대상의 장면만 구체화.
@@ -70,21 +72,17 @@ CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 �
 - **prohibitedInference** 변화운 총평으로 분야·책임·시기 단정.
 - **partialPolicy** 가용 범위만 서술하고 비어 있는 비교 및 분야는 각각 표시.
 
-## CR-05 왜 관계에서 비슷한 일이 반복되는가
+## CR-05 관계에서 드러나는 나의 방식
 
-- **chapterId / customerTitle** CR-05 · 왜 관계에서 비슷한 일이 반복되는가
-- **coreQuestion** 관계의 시작과 친밀해진 뒤의 반응은 왜 비슷해지는가?
-- **primaryProducers** A층 Personality relationship/interpersonal·conflict, B층 Relationship Outcome.
-- **supportingProducers** 일지 관계 Judgment, 필요한 범위의 현재 스냅샷.
-- **requiredSemanticSlots** beginnings, attraction/engagement, after closeness, conflict, communication, repeated loop, supported structural pressure, supported current timing.
-- **optionalSemanticSlots** 접촉·변화·형성의 독립 근거, 보호·감쇠 조건.
-- **minimumEvidenceCoverage** A층에서 지지된 관계 루프 1개와 소통 근거. B층을 사용할 때 각 주장에 독립 Outcome과 경로 참조.
-- **causeExplanationRequirement** 표현·주도권·과해석·경쟁·책임/통제를 개별 검증. 후보 라벨만으로 기제를 선택하지 않는다.
-- **timingRequirement** B층의 평가된 기간만 사용.
-- **customerContextUse** single/dating/married의 의미는 장면 선택에 사용.
-- **crossChapterReuse** CH-2/3→CH-6, timing CH-9/10. CR-03 루프에 관계 대상·상황을 추가.
-- **prohibitedInference** 성향에서 사건 도출, 파트너 행동·혼인·이별·제3자 추정.
-- **partialPolicy** A층만 있는 경우 가능 범위 표기. 관계 발달·약속 시기에는 source gap 유지.
+- **chapterId / customerTitle** CR-05 · 관계에서 드러나는 나의 방식
+- **coreQuestion** 나는 사람을 어떻게 받아들이고, 가까워진 뒤에는 무엇을 중요하게 보며, 소통과 갈등에서는 어떤 방식으로 반응하는가?
+- **Section A · 관계에서 드러나는 나의 방식** 원국 Personality만 사용한다. 사회적 접근, 친밀과 신뢰, 소통, 경계와 갈등 대응, 거리 조절 중 근거가 있는 축을 선택한다.
+- **Section B · 관계의 흐름이 움직이는 시기** 별도 질문은 관계의 접점·구도·형성 기회 또는 압박이 어느 평가 기간에 움직이는가이다. 유효한 Relationship Outcome과 평가된 기간만 사용한다. A의 성향에서 B의 사건 원인을 만들지 않는다.
+- **sequence / recurrence** `relationshipSequence`는 지지된 관계 단계의 연결이다. `relationshipRecurrence`에는 같은 유형의 반응이 다시 활성된다는 명시 근거만 허용한다.
+- **beginnings** 폭넓은 교류는 사회적 접근에 해당한다. R10의 관찰과 차츰 마음을 여는 방식은 조건이 확인된 친밀 진입 후보이며, 연애 시작이나 성사를 뜻하지 않는다. `SOURCE_GAP/beginnings`를 유지한다.
+- **semanticReadiness** Section A의 독립 관계 축 3개 이상에 소통 또는 경계·갈등이 있으면 READY다. 지지된 축이 있으나 이 기준을 만족하지 못하면 PARTIAL이다. 원국 관계 Fact가 없으면 DEFERRED다.
+- **relationshipTimingAvailability** B는 A의 의미 판정과 독립적이다. 유효한 기간과 근거 연결이 완결되면 available, 유효 내용이나 근거·기간이 일부에 그치면 partial, 표시할 평가가 없으면 none이다.
+- **publicationReadiness** A만으로도 발행 후보가 될 수 있다. B만 있으면 평가된 시기 결과를 내부 섹션으로 유지하고 고객 장 본문에서는 제외한다. 선택 근거인 관계 재발·친밀 관계 개시의 공백만으로 강등하지 않는다.
 
 ## CR-06 어떤 일과 환경에서 내 강점이 가장 잘 살아나는가
 
@@ -108,9 +106,10 @@ CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 �
 - **coreQuestion** 무엇으로 수익을 만들고 무엇이 유지를 돕거나 제한하는가?
 - **primaryProducers** MoneyOutcomeFact와 연결된 scoped Judgment.
 - **supportingProducers** 승인 EventTiming, Runtime·protection.
-- **requiredSemanticSlots** earning, earning method, retention, accumulation, loss, division, competition, cost, sustainability.
+- **requiredSemanticSlots** 획득 계열에서 한 축 이상, 유지·정성적 축적 지속성·보호·합성 유출/배분·부담 계열에서 한 축 이상. 분리된 손실·분배·경쟁·비용과 독립적인 장기 지속은 근거가 있을 때만 추가한다.
 - **optionalSemanticSlots** 보호·통관, 해당 시기, 독립 확인된 사업 관련 부담.
-- **minimumEvidenceCoverage** 획득과 유지를 독립 평가. 각 표출 축에 자체 Fact와 path 필요. 한쪽 공백은 다른 쪽 유지.
+- **semanticReadiness** 두 계열이 모두 지원되면 READY, 한 계열만 있으면 PARTIAL, 고객용 Money Outcome이 없으면 DEFERRED. 같은 합성 Fact나 한 기간의 반복으로 축을 늘리지 않는다.
+- **publicationReadiness** 의미 판정·장 질문·원인 커버리지·QA와 1,500~2,500자 및 7~10문단 band를 별도 검증한다.
 - **causeExplanationRequirement** 획득 → 방식 → 유지/축적 → 유출과 비용의 근거 → 시기. 기술 수익화, 실제 경쟁·배분, 필요한 기반 손상, 압박 경로를 분리.
 - **timingRequirement** 독립 평가된 기간만 연결. 원국 capacity를 월 판단에 복제하지 않는다.
 - **customerContextUse** 실제 돈 활동이 확인된 경우 승인 기제의 예시에 반영.
@@ -126,7 +125,7 @@ CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 �
 - **supportingProducers** Outcome, EventTiming, Health, 승인된 월 구체화.
 - **requiredSemanticSlots** major transition, changed structural state, why, affected domain, opportunity, burden, duration, next stage.
 - **optionalSemanticSlots** 과거 변화 이력, 전환기에 국소 분기.
-- **minimumEvidenceCoverage** 경계 양쪽의 비교 가능한 평가와 실제 상태 차이. 변화 크기는 확인된 기능/대상 범위로 설명.
+- **minimumEvidenceCoverage** 정확한 경계를 공유하는 대운을 양쪽에서 독립 평가하고 승인된 의미의 상태 차이가 하나 이상이면 semantic READY. 평가한 쌍에서 설명 가능한 변화가 확인되지 않으면 PARTIAL. 양쪽을 확인할 수 없으면 DEFERRED. 대운 변경만으로 변화가 생겼다고 설명하지 않는다.
 - **causeExplanationRequirement** 변한 경로의 시작·감쇠·정지·유지를 구분.
 - **timingRequirement** 대운은 장기 환경, 세운은 연 활성, 절기월은 구체화. 기간과 계층을 유지.
 - **customerContextUse** 확인된 분야 변화의 예시만 선택.
@@ -142,13 +141,17 @@ CR-01~03의 현재 의미 투영은 Assembly의 natalPersonalityChapters에서 �
 - **supportingProducers** 대운 배경, Health timing, CR-04/08의 근거.
 - **requiredSemanticSlots** 구간별 판정, 원인, 분야/대상, 실제 행동 시 고려 조건.
 - **optionalSemanticSlots** 기회, 재물 활동, 관계 변화, 판단 유의, 기회와 부담 공존, 축·근거 간 방향 차이.
-- **minimumEvidenceCoverage** 카드마다 유효 구간과 독립 국소 근거. 분류별 최소 카드 개수 없음.
+- **minimumEvidenceCoverage** 각 카드에 유효한 구간과 독립 평가 근거를 요구한다. 독립 구간 두 개 이상 또는 기회와 주의가 각각 하나 이상이면 semantic READY. 단일 관점의 유효 구간 한 개는 PARTIAL. 유효한 구간이 없으면 DEFERRED.
 - **causeExplanationRequirement** 무엇이 어떤 조건에서 활성화되는지와 주의의 이유를 연결.
 - **timingRequirement** 시작·끝과 부모 세운 및 축. 미래는 해당 구간에 별도로 평가된 Fact만 사용.
 - **customerContextUse** 명시 이벤트의 자격과 실제 선택 기준에 사용.
 - **crossChapterReuse** CH-9/10 상세, CH-5/6/7/8 참조. 같은 interval의 방향·부위·확정도 유지.
 - **prohibitedInference** 좋은 달/나쁜 달 구분, 매매·처방, 분야 relevance 없는 월 추천.
 - **partialPolicy** 근거 있는 카드만 노출 후보로 조립. 미평가 월을 중립 또는 유리로 채우지 않는다.
+
+### 시간 장 공통 발행 기준
+
+CR-04·08·09는 `semanticReadiness`와 `publicationReadiness`를 따로 기록한다. 발행은 장의 질문에 답하는 설명과 원인, 출처, 표현 밀도, 미지원 주장 및 중복 검사를 거친다. `current_change`, `long_term_transition`, `opportunity_window`, `caution_window`는 의미를 사용하는 역할이다. 동일한 Outcome을 재사용하면 원천 의미·대상·메커니즘·방향·확정도·기간이 보존되어야 한다.
 
 ## 건강의 교차 배치
 

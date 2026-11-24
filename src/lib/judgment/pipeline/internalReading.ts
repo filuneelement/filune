@@ -38,6 +38,8 @@ export type InternalReadingInput = {
   executionId: string
   natalInspectionPeriod: Validity
   sources: ExposureRootSources & { draftA: string }
+  /** Evaluate Daewoon without constructing a Sewoon or month at its boundary. */
+  daewoonOnly?: boolean
   /** Optional precomputed daily pillar and its effective period. */
   dailyLuck?: Omit<LuckScopeInput, 'scope'>
   resourceExcessEvidence?: ResourceExcessEvidence
@@ -50,7 +52,7 @@ const aggregate = (statuses: string[]): StageStatus => statuses.includes('deferr
   ? 'deferred' : statuses.some((status) => status === 'confirmed' || status === 'candidate') ? 'confirmed' : 'rejected'
 
 /** Internal first-scope pipeline. Documents supply authority; case expectations stay in the verifier. */
-function runSingleInternalReading({ birth, calculation, executionId, natalInspectionPeriod, sources, dailyLuck, resourceExcessEvidence, judgmentCoreEvidence }: InternalReadingInput) {
+function runSingleInternalReading({ birth, calculation, executionId, natalInspectionPeriod, sources, dailyLuck, resourceExcessEvidence, judgmentCoreEvidence, daewoonOnly }: InternalReadingInput) {
   const canonical = calculateCanonicalChart(birth, calculation)
   const producer = produceJudgmentEngineFacts(canonical, { hiddenStemSystem: { systemId: 'filune-a179', sourceText: sources.A } })
   const { producerRef } = producer
@@ -241,7 +243,7 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
   markFunctionEffects(context, natalFunctionEffects)
 
   const activePeriods: Partial<Record<'greatLuck' | 'yearlyLuck' | 'monthlyLuck', Validity>> = {}
-  for (const stage of ['greatLuck', 'yearlyLuck', 'monthlyLuck'] as const) {
+  for (const stage of daewoonOnly ? ['greatLuck'] as const : ['greatLuck', 'yearlyLuck', 'monthlyLuck'] as const) {
     const refs = sortedUnique(producer.entities.flatMap((item) => item.sourceScope === stage && item.periodRef ? [item.periodRef] : []))
     const matches = refs.map((ref) => producerPeriod(producer, ref)).filter((period) => luckPeriodStatus(period, referenceTime) === 'effective')
     if (matches.length === 1) activePeriods[stage] = matches[0]
@@ -441,6 +443,6 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
 /** Preserve the current-month result; a window adds independent 절기월 snapshots. */
 export function runInternalReading(input: InternalReadingInput) {
   const current = runSingleInternalReading(input)
-  if (!input.monthlyWindowStart) return current
+  if (input.daewoonOnly || !input.monthlyWindowStart) return current
   return { ...current, luck: { ...current.luck, monthlyWindow: runMonthlyWindow(input, current, input.monthlyWindowStart) } }
 }

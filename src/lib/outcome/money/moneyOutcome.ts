@@ -7,7 +7,7 @@ type Meaning =
   | { semanticType: 'money_generation_method'; result: 'skill_and_output' | 'ingenuity_and_expression' }
   | { semanticType: 'money_retention'; result: 'harder_to_retain' | 'retention_supported_by_protection' | 'unresolved' }
   | { semanticType: 'money_loss_or_division'; result: 'wealth_can_be_divided_or_flow_out' }
-  | { semanticType: 'money_related_problem'; result: 'wealth_path_can_bring_difficulty' }
+  | { semanticType: 'money_related_problem'; result: 'wealth_path_can_bring_difficulty' | 'wealth_can_weaken_needed_support' }
   | { semanticType: 'money_duration'; result: 'harder_to_sustain_accumulation' }
 
 export type MoneyOutcomeFact = OutcomeFact & Meaning & {
@@ -15,6 +15,29 @@ export type MoneyOutcomeFact = OutcomeFact & Meaning & {
   readonly originRelationId: string
   readonly wealthEntityId: string
   readonly direction: 'favorable' | 'unfavorable' | 'deferred'
+  readonly burdenPath?: {
+    readonly kind: 'wealth_feeds_harmful_killing' | 'wealth_damages_needed_resource'
+    readonly affectedEntityId: string
+    readonly supportingRelationId: string
+  }
+}
+
+export type MoneyAxis = 'earning' | 'earning_method' | 'retention' | 'accumulation_continuity'
+  | 'combined_outflow_or_division' | 'protection' | 'burden'
+
+export function moneyAxisFor(fact: MoneyOutcomeFact): MoneyAxis | undefined {
+  switch (fact.result) {
+    case 'can_earn': return 'earning'
+    case 'skill_and_output':
+    case 'ingenuity_and_expression': return 'earning_method'
+    case 'harder_to_retain': return 'retention'
+    case 'harder_to_sustain_accumulation': return 'accumulation_continuity'
+    case 'wealth_can_be_divided_or_flow_out': return 'combined_outflow_or_division'
+    case 'retention_supported_by_protection': return 'protection'
+    case 'wealth_path_can_bring_difficulty':
+    case 'wealth_can_weaken_needed_support': return 'burden'
+    case 'unresolved': return undefined
+  }
 }
 
 type MoneyScopeParent = Pick<LuckScopeState, 'id' | 'actualFunctions' | 'stemFacts'>
@@ -26,7 +49,7 @@ export type EvaluatedMoneyScope = {
 }
 const scopes = { natal: 'natal', greatLuck: 'daewoon', yearlyLuck: 'sewoon', monthlyLuck: 'month' } as const
 const earningPolicies = new Set(['FOOD-01', 'FOOD-04', 'WEALTH-01', 'HO-01', 'PEER-03', 'ROB-04'])
-const divisionPolicies = new Set(['WEALTH-05', 'PEER-06', 'ROB-03'])
+const wealthDamagePolicies = new Set(['WEALTH-05', 'PEER-06', 'ROB-03'])
 const harmfulFeedPolicies = new Set(['KILL-05', 'WEALTH-06', 'PEER-05', 'ROB-05-harmful'])
 const isWealth = (god: string) => god === '正財' || god === '偏財'
 const live = (fn: string) => fn === 'operating' || fn === 'reduced'
@@ -59,8 +82,8 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
     const earning = action === 'generate' && isWealth(target.tenGod) && earningPolicies.has(policy)
       && (source.tenGod === '食神' || source.tenGod === '傷官')
       && (actual.direction === 'favorable' || actual.direction === 'favorable_auxiliary')
-    const division = action === 'control' && isWealth(target.tenGod) && divisionPolicies.has(policy) && harmful
-    const protection = action === 'control' && isWealth(target.tenGod) && divisionPolicies.has(policy)
+    const outflow = action === 'control' && isWealth(target.tenGod) && wealthDamagePolicies.has(policy) && harmful
+    const protection = action === 'control' && isWealth(target.tenGod) && wealthDamagePolicies.has(policy)
       && !actual.byeongCandidate && actual.function === 'reduced'
       ? (actual.resolutionEvidence ?? []).filter(ref => relationIds.has(ref)) : []
     const conditional = snapshot.conditionalByeong.find(item => item.triggerRelationFactId === id
@@ -69,10 +92,22 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
       && (harmful && harmfulFeedPolicies.has(policy) && actual.conditionEvidence?.length || conditional)
       ? relations.find(item => item.action === 'control' && item.source.id === target.id && item.target.dayMaster
         && actualById.get(item.id)?.structuralEffect?.currentlyEffective) : undefined
-    if (!earning && !division && !protection.length && !attack) continue
+    // HO-06 establishes that this particular resource is needed to regulate output.
+    // Generic Wealth → Resource control and resource-excess relief have other policies.
+    const neededResource = policy === 'HO-06' && action === 'control' && isWealth(source.tenGod)
+      && actual.direction === 'unfavorable' && actual.evidenceStatus === 'SOURCE_EXPLICIT' && harmful
+      && damage.some(path => path.damagedFunction === 'resource' && path.currentState !== 'inactive')
+      ? relations.find(item => {
+        const support = actualById.get(item.id)
+        return item.source.id === target.id && item.action === 'control' && item.target.tenGod === '傷官'
+          && actual.conditionEvidence?.includes(item.id) && support?.policyId === 'HO-02'
+          && support.structuralEffect?.currentlyEffective && live(support.function)
+      })
+      : undefined
+    if (!earning && !outflow && !protection.length && !attack && !neededResource) continue
 
     const elders = parent?.actualFunctions.find(item => item.structuralEffect?.relationOriginFactId === effect.relationOriginFactId)
-    const protectorIds = division && !effect.inherited && effect.originScope === snapshot.scope
+    const protectorIds = outflow && !effect.inherited && effect.originScope === snapshot.scope
       && elders?.function === 'reduced' && !elders.byeongCandidate
       ? parent?.stemFacts.filter(item => elders.resolutionEvidence?.includes(item.id))
         .flatMap(item => [item.source.id, item.target.id]).filter(entity => entity !== source.id && entity !== target.id) ?? [] : []
@@ -111,11 +146,14 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
       || (attack && (conditional?.currentFunction === 'reduced' || actualById.get(attack.id)?.function === 'reduced'))
     const conditionId = 'money-condition:' + JSON.stringify([action, source.id, target.id])
     const add = (meaning: Meaning, direction: MoneyOutcomeFact['direction'], provenance: string[],
-      { deferred = false, capacityBased = false } = {}) => {
+      { deferred = false, capacityBased = false, burdenPath }: {
+        deferred?: boolean; capacityBased?: boolean; burdenPath?: MoneyOutcomeFact['burdenPath']
+      } = {}) => {
       facts.push({
         ...meaning, id: 'money:' + JSON.stringify([meaning.semanticType, snapshot.id, conditionId]),
         domain: 'money', scope, scopeId: snapshot.id, ...(scoped && { period: snapshot.validity }),
-        conditionId, originRelationId: effect.relationOriginFactId, wealthEntityId: attack ? source.id : target.id,
+        conditionId, originRelationId: effect.relationOriginFactId, wealthEntityId: burdenPath ? source.id : target.id,
+        ...(burdenPath && { burdenPath }),
         direction, certainty: deferred ? 'deferred' : reduced ? 'contextual' : 'confirmed',
         lifecycle: deferred ? 'deferred' : reduced ? 'reduced' : 'active', temporalStatus,
         currentlyEffective: !deferred && (temporalStatus === 'baseline' || temporalStatus === 'current'),
@@ -123,7 +161,7 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
         sourceRoleIds: unique(roleIds), sourceLuckEffectIds: unique([
           ...effects.map(state => state.event.id), ...(capacityBased ? capacityEffects.map(state => state.event.id) : []),
         ]),
-        sourceParticipantIds: unique([source.id, target.id, ...(attack ? [attack.target.id] : [])]),
+        sourceParticipantIds: unique([source.id, target.id, ...(attack ? [attack.target.id] : neededResource ? [neededResource.target.id] : [])]),
         provenance: unique([...provenance, ...(actual.ruleId ? [actual.ruleId] : []), ...refs,
           effect.relationOriginFactId, snapshot.patternContext.id]),
       })
@@ -141,7 +179,7 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
       add({ semanticType: 'money_retention', result: 'harder_to_retain' }, 'unfavorable', provenance, { capacityBased: true })
       add({ semanticType: 'money_duration', result: 'harder_to_sustain_accumulation' }, 'unfavorable', provenance, { capacityBased: true })
     }
-    if (division) {
+    if (outflow) {
       const provenance = ['OUT-MONEY-04', '07:L140-L144,L1250-L1251']
       add({ semanticType: 'money_loss_or_division', result: 'wealth_can_be_divided_or_flow_out' }, 'unfavorable', provenance)
       add({ semanticType: 'money_retention', result: 'harder_to_retain' }, 'unfavorable', provenance)
@@ -149,7 +187,13 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
     if (protection.length) add({ semanticType: 'money_retention', result: 'retention_supported_by_protection' },
       'favorable', ['OUT-MONEY-02', '07:L1067,L2322'])
     if (attack) add({ semanticType: 'money_related_problem', result: 'wealth_path_can_bring_difficulty' },
-      'unfavorable', ['OUT-MONEY-04', '07:L162,L1262,L1273'])
+      'unfavorable', ['OUT-MONEY-04', '07:L162,L1262,L1273'], { burdenPath: {
+        kind: 'wealth_feeds_harmful_killing', affectedEntityId: attack.target.id, supportingRelationId: attack.id,
+      } })
+    if (neededResource) add({ semanticType: 'money_related_problem', result: 'wealth_can_weaken_needed_support' },
+      'unfavorable', ['OUT-MONEY-04', '06:PP-607,§75', '07:L955', 'Judgment:HO-06'], { burdenPath: {
+        kind: 'wealth_damages_needed_resource', affectedEntityId: target.id, supportingRelationId: neededResource.id,
+      } })
   }
   const resolved = new Set(facts.filter(fact => fact.semanticType === 'money_retention' && fact.certainty !== 'deferred')
     .map(fact => fact.wealthEntityId))

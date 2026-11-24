@@ -10,8 +10,8 @@ import { collectLuck, collectNatalJudgment, scopeNames } from './judgmentUnits'
 import { collectCurrentPersonality, collectNatalPersonality } from './personalityUnits'
 import { collectRelationshipUnits } from './relationshipUnits'
 import { collectEventTimingUnits } from './eventTimingUnits'
-import { bounds, uniqueIds, type RoutedUnits } from './semanticUnit'
-import type { ChapterId, ReadingAssembly, ReadingAssemblyInput, ReadingCertainty, ReadingScope, SelectionKind } from './types'
+import { bounds, compare, uniqueIds, withinPeriod, type RoutedUnits } from './semanticUnit'
+import type { ChapterId, ReadingAssembly, ReadingAssemblyInput, ReadingCertainty, ReadingScope, SelectionKind, TemporalSnapshot } from './types'
 
 function collectCanonical(chart: Readonly<CalculatedChart>, input: ReadingAssemblyInput, unknownHour: boolean, out: RoutedUnits) {
   const ids = (pointer: string) => input.judgment?.diagnostics.facts
@@ -34,6 +34,22 @@ function collectCanonical(chart: Readonly<CalculatedChart>, input: ReadingAssemb
   }
   const terms = chart.solarTerms.evaluation
   add('/solarTerms/evaluation', terms.status, 'uncertaintyIds' in terms ? terms.uncertaintyIds : [])
+}
+
+const byId = <T extends { readonly id: string }>(items: readonly T[]) =>
+  [...items].sort((a, b) => compare(a.id, b.id))
+const sortedFacts = <T extends { readonly id: string }>(items?: readonly T[]) => items && byId(items)
+
+function temporalProjection(snapshot: NonNullable<ReadingAssemblyInput['luckScopes']>[number]): TemporalSnapshot {
+  return {
+    id: snapshot.id, scope: snapshot.scope, parentScopeId: snapshot.parentScopeId, validity: snapshot.validity,
+    stemFacts: byId(snapshot.stemFacts), patternFacts: byId(snapshot.patternFacts),
+    branchFacts: byId(snapshot.branchFacts), formationFacts: byId(snapshot.formationFacts),
+    formationBranchPool: byId(snapshot.formationBranchPool),
+    runtime: [...snapshot.runtime].sort((a, b) => compare(a.entityId, b.entityId)),
+    actualFunctions: [...snapshot.actualFunctions].sort((a, b) => compare(a.relationFactId, b.relationFactId)),
+    inheritedRoleFunctions: [...snapshot.inheritedRoleFunctions].sort((a, b) => compare(a.fact.id, b.fact.id)),
+  }
 }
 
 export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
@@ -141,7 +157,20 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     .map(item => scopeNames[item.scope]))
   if (canonical || natal) availableScopes.add('natal')
   if (judgment?.luck.monthlyWindow?.length) availableScopes.add('month')
+  const temporalSnapshots = productScope === 'premium' ? [
+    ...snapshots.filter(snapshot => snapshot.scope === 'natal' || (referenceTime && withinPeriod(referenceTime, snapshot.validity))),
+    ...(input.evaluatedLuckScopes ?? []).flatMap(({ snapshot, evaluatedAt }) =>
+      withinPeriod(evaluatedAt, snapshot.validity) ? [snapshot] : []),
+    ...(judgment?.luck.monthlyWindow ?? []).flatMap(month => month.judgmentCore
+      && withinPeriod(month.referenceTime, month.judgmentCore.validity) ? [month.judgmentCore] : []),
+  ] : []
+  const comparisonSnapshots = byId([...new Set(temporalSnapshots)].filter(snapshot => snapshot.runtimeStatus === 'resolved')
+    .map(temporalProjection))
+
   return {
+    ...(productScope === 'premium' && { temporalSnapshots: comparisonSnapshots,
+      transitionOutcomes: sortedFacts(input.transitionOutcomes), temporalMoneyOutcomes: sortedFacts(input.moneyOutcomes),
+      temporalRelationshipOutcomes: sortedFacts(input.relationshipOutcomes), temporalHealthOutcomes: sortedFacts(input.healthOutcomes) }),
     version: '1', productScope,
     ...(Object.keys(customerReadingContext).length > 0 && { customerReadingContext }),
     ...(natal && { natalPersonalityChapters: projectNatalPersonalityChapters(natal, unknownHour) }), ...(productScope === 'premium' && referenceTime && { referenceTime }),

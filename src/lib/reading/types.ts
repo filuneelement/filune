@@ -1,6 +1,6 @@
 import type { CustomerReadingContext } from './customerContext'
 import type { NatalPersonalityChapterProjection } from './personalityChapterProjection'
-import type { HealthOutcomeFact, MoneyOutcomeFact, RelationshipOutcomeFact } from '../outcome'
+import type { HealthOutcomeFact, MoneyAxis, MoneyOutcomeFact, RelationshipOutcomeFact } from '../outcome'
 import type { CalculatedChart } from '../canonical/types'
 import type { Validity } from '../judgment/contracts'
 import type { LuckScopeState } from '../judgment/core/luckScope'
@@ -37,6 +37,8 @@ export interface ReadingAssemblyInput {
   readonly relationshipOutcomes?: readonly RelationshipOutcomeFact[]
   readonly eventTimingFacts?: readonly EventTimingFact[]
   readonly luckScopes?: readonly LuckScopeState[]
+  /** Independently projected Outcomes reserved for comparing adjacent Daewoon. */
+  readonly transitionOutcomes?: readonly (MoneyOutcomeFact | RelationshipOutcomeFact)[]
   /** Additional snapshots already evaluated at their own in-period reference instants. */
   readonly evaluatedLuckScopes?: readonly { readonly snapshot: LuckScopeState; readonly evaluatedAt: string }[]
   /** Required for external scope snapshots when a canonical reference instant is unavailable. */
@@ -80,6 +82,9 @@ export interface ReadingMeaningRef {
 }
 
 export interface ReadingSemanticUnit extends ReadingProvenance {
+  readonly moneyAxis?: MoneyAxis
+  readonly moneyTargetId?: string
+  readonly moneyBurdenPath?: MoneyOutcomeFact['burdenPath']
   readonly id: string
   readonly semanticKey: string
   readonly topic: ReadingTopic
@@ -144,8 +149,17 @@ export interface ReadingChapterAssembly {
   readonly customerRenderable: false
 }
 
+export type TemporalSnapshot = Pick<LuckScopeState, 'id' | 'scope' | 'parentScopeId' | 'validity'
+  | 'stemFacts' | 'patternFacts' | 'branchFacts' | 'formationFacts' | 'formationBranchPool'
+  | 'runtime' | 'actualFunctions' | 'inheritedRoleFunctions'>
+
 export interface ReadingAssembly {
   readonly version: '1'
+  readonly transitionOutcomes?: ReadingAssemblyInput['transitionOutcomes']
+  readonly temporalSnapshots?: readonly TemporalSnapshot[]
+  readonly temporalMoneyOutcomes?: readonly MoneyOutcomeFact[]
+  readonly temporalHealthOutcomes?: readonly HealthOutcomeFact[]
+  readonly temporalRelationshipOutcomes?: readonly RelationshipOutcomeFact[]
   readonly customerReadingContext?: CustomerReadingContext
   readonly natalPersonalityChapters?: NatalPersonalityChapterProjection
   readonly productScope: ProductScope

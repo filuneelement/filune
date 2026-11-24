@@ -633,7 +633,7 @@ interface PersonalityConflict {
 대인관계 스타일
 강점
 과할 때의 문제
-반복되는 행동 패턴
+상황별 반응과 근거가 확인된 반복 양상
 ```
 
 ---

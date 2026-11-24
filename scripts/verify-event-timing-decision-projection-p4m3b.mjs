@@ -196,6 +196,16 @@ try {
   const annualFact = annualProjection.facts[0]
   assert.equal(annualFact.originScope, 'sewoon')
   const annualReading = assembleReading({ ...originAssemblyInput, eventTimingFacts: annualProjection.facts })
+  const { buildCustomerReadingPlan } = await load('reading/customer/buildCustomerReadingPlan')
+  const { renderCustomerReadingKo } = await load('reading/customer/renderCustomerReadingKo')
+  const customerTiming = renderCustomerReadingKo(buildCustomerReadingPlan({ assembly: annualReading }))
+    .find(chapter => chapter.chapterId === 'CR-09')
+  const contractWindow = customerTiming.paragraphs.find(({ plan }) => plan.expression.contribution.origin === 'event_timing')
+  assert.equal(contractWindow.plan.expression.contribution.role, 'opportunity_window')
+  assert.equal(contractWindow.plan.expression.contribution.activations[0].sourceId, annualFact.id)
+  assert.equal(contractWindow.plan.expression.contribution.activations[0].certainty, annualFact.certainty)
+  assert.doesNotMatch(contractWindow.text, /체결됩니다|계약하세요/u)
+
   const annualEvent = annualReading.semanticUnits.find(unit => unit.meaningRef.recordId === annualFact.id)
   assert.ok(annualEvent, 'existing annual contract support reaches Assembly')
   assert.deepEqual(identity(annualEvent), expectedIdentity(annualFact), 'Assembly preserves a non-natal origin and its scope and sources')

@@ -1,11 +1,15 @@
+import { buildTimingChapters, timingOverlapQuality } from './timingChapters'
+import { planMoneyContrasts } from './moneyExplanation'
 import type { MoneyOutcomeFact, RelationshipOutcomeFact } from '../../outcome'
 import type { NatalPersonalityResult, PersonalityFact } from '../../personality/types'
 import { activeCertainty, bounds, compare, compareUnits, makeUnit, uniqueIds } from '../semanticUnit'
 import type { ReadingAssembly, ReadingProvenance, ReadingSemanticUnit } from '../types'
-import { mapMoney, mapRelationship, outcomeSlots } from './outcomeMapping'
+import { buildBehaviorPatterns, hasBehaviorStages, type CustomerBehaviorPattern } from './behaviorLoops'
+import { mapMoney, mapRelationship, outcomeMeaningKey, outcomeSlots, outcomeTargetKey } from './outcomeMapping'
+import { customerChapterTitleKeys } from './types'
 import type {
-  CustomerChapterGap, CustomerChapterId, CustomerChapterPlan, CustomerReadingParagraphPlan,
-  OutcomeVoice, ParagraphExpression, ParagraphPurpose, PersonalityVoice,
+  RelationshipAxis, CustomerRelationshipSequence, CustomerChapterGap, CustomerChapterId, CustomerChapterPlan, CustomerReadingParagraphPlan,
+  OutcomeActivation, OutcomeVoice, ParagraphExpression, ParagraphPurpose, PersonalityVoice,
 } from './types'
 
 const provenanceFrom = (units: readonly ReadingProvenance[]): ReadingProvenance => ({
@@ -28,20 +32,14 @@ const aliases = new Map([
   ['자신의 결과물에 타인의 결과물보다 높은 기준을 적용함', 'precision'],
   ['완료한 작업도 다시 점검함', 'precision'], ['정확성', 'precision'], ['꼼꼼함', 'precision'], ['치밀함', 'precision'],
   ['타당성을 스스로 확인하고 움직임', 'verify_before_acting'], ['조언을 들어도 스스로 납득한 뒤 움직임', 'verify_before_acting'],
+  ['신속한 판단', 'fast_judgment'], ['빠른 판단', 'fast_judgment'],
+  ['기회를 놓치지 않음', 'opportunity_detection'], ['기회 포착', 'opportunity_detection'],
   ['넓은 교류', 'broad_contact'], ['넓고 활발한 교류', 'broad_contact'],
   ['위기 돌파', 'overcome_obstacles'], ['위기 돌파 지향', 'overcome_obstacles'],
   ['결과에 집중하며 난관을 돌파함', 'overcome_obstacles'],
+  ['다른 사람을 돕고 협력하며 그 안에서 자신의 역량을 발휘할 길을 찾음', 'collaborate'],
+  ['완성도를 높이기 위해 세부를 확인함', 'precision'],
   ['협동', 'collaborate'], ['치열하게 경쟁하거나 동료와 강하게 연대함', 'collaborate'],
-])
-
-// One source statement contains both the condition and the resulting reaction.
-const linkedReactions = new Map([
-  ['기분이 상하면 표정에 바로 드러남', 'discomfort_visible'],
-  ['속상한 일이 생기면 말을 아끼는 경향', 'upset_withdraws_from_speech'],
-  ['힘들 때도 자신의 어려움을 말하지 않음', 'difficulty_kept_private'],
-  ['사회적 마찰이 커지면 반항이 강해짐', 'friction_pushback'],
-  ['검토가 길어지면 시도하기 전에 스스로 포기할 수 있음', 'extended_review_inhibits_action'],
-  ['자기 기준이 지나치게 확고해지면 다른 의견을 듣지 않으려 함', 'rigid_standard_reduces_listening'],
 ])
 
 const strengthPositions: readonly PersonalityFact['sourcePosition'][] = [
@@ -57,15 +55,46 @@ const relationshipBehavior = new Map([
   ['배려와 재능 나눔이 가까운 범위에 집중됨', 'afterCloseness'],
   ['가까운 사람과 신뢰를 차곡차곡 쌓음', 'afterCloseness'],
   ['가까운 사람을 포용하되 자신이 돌볼 범위를 주도적으로 정하려 함', 'afterCloseness'],
+  ['정인 성향이 과할 때 겉으로 원만해 보여도 주위 사람들과 거리감을 느낄 수 있음', 'emotionalDistance'],
   ['갈등을 우회하기보다 자기 뜻을 지키며 부딪히는 편', 'conflictMechanism'],
   ['교류의 폭이 넓지만 기준을 넘으면 단호하게 선을 그음', 'conflictMechanism'],
 ])
 
+const relationshipAxisByTrait = new Map<string, RelationshipAxis>([
+  ['가까운 사람과 신뢰를 차곡차곡 쌓음', 'trust'],
+  ['교류의 폭이 넓지만 기준을 넘으면 단호하게 선을 그음', 'boundary'],
+])
+
+function relationshipAxis(fact: PersonalityFact): RelationshipAxis {
+  const explicit = relationshipAxisByTrait.get(fact.trait)
+  if (explicit) return explicit
+  switch (relationshipBehavior.get(fact.trait)) {
+    case 'communication': return 'communication'
+    case 'afterCloseness': return 'closeness'
+    case 'conflictMechanism': return 'conflict'
+    case 'emotionalDistance': return 'distance'
+    default: return 'approach'
+  }
+}
+
+function relationshipMapping(trait: string) {
+  if (trait === '수평적인 대화와 동등한 대우를 중시함' || trait === '갈등을 우회하기보다 자기 뜻을 지키며 부딪히는 편') return 'CL-R04'
+  if (trait === '교류의 폭이 넓지만 기준을 넘으면 단호하게 선을 그음') return 'CL-R05'
+  return 'CL-P01'
+}
+
+const strengthContexts = new Map([
+  ['분석력', 'conflicting_evidence'], ['협동', 'shared_task_handoff'],
+  ['완료한 작업도 다시 점검함', 'final_review'], ['기회 포착', 'changed_options'],
+  ['빠른 판단', 'limited_decision_time'], ['신속한 판단', 'limited_decision_time'],
+])
+
 const moneyOrder: readonly OutcomeVoice[] = ['skill', 'expression', 'earning', 'retention', 'capacity',
-  'division', 'divisionRetention', 'sustainability', 'protection', 'pressure']
+  'division', 'divisionRetention', 'sustainability', 'protection', 'pressure', 'supportPressure']
 const relationshipOrder: readonly OutcomeVoice[] = ['contact', 'change', 'formation', 'relationshipPressure']
 const relationshipLayer = (chapterId: CustomerChapterId, layer: 'personality' | 'outcome') =>
-  chapterId === 'CR-05' ? { layer } : {}
+  chapterId === 'CR-05' ? { layer, section: layer === 'personality'
+    ? 'natal_relationship' as const : 'relationship_outcome' as const } : {}
 
 interface BuildInput {
   readonly assembly: ReadingAssembly
@@ -101,7 +130,7 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
       || compare(a.id, b.id))
   }
 
-  const chapterIds: CustomerChapterId[] = ['CR-01', 'CR-02', 'CR-03']
+  const chapterIds: Exclude<CustomerChapterId, 'CR-04' | 'CR-08' | 'CR-09'>[] = ['CR-01', 'CR-02', 'CR-03']
   if (assembly.productScope === 'premium') chapterIds.push('CR-05', 'CR-07')
 
   const chapters = chapterIds.map((chapterId): CustomerChapterPlan => {
@@ -112,31 +141,49 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
     const scene = assembly.customerReadingContext?.relationshipStatus
     const selectedProfiles = new Set<string>()
     let usedScene = false
+    let relationshipSequence: CustomerRelationshipSequence | undefined
+    let behaviorPatterns: readonly CustomerBehaviorPattern[] | undefined
 
-    function add(purpose: ParagraphPurpose, slots: readonly string[], expression: ParagraphExpression,
-      units: readonly ReadingSemanticUnit[], keys: readonly string[], mapping?: string, mechanism?: string,
-      conflictIds: readonly string[] = [], hasOutcomePath = false) {
+    function add(purpose: ParagraphPurpose, slots: readonly string[], expression: Exclude<ParagraphExpression, { kind: 'temporal' }>,
+      units: readonly ReadingSemanticUnit[], keys: readonly string[], mapping?: string | readonly string[], mechanism?: string,
+      conflictIds: readonly string[] = [], hasOutcomePath = false, activations?: readonly OutcomeActivation[]) {
       if (!units.length || keys.some(key => contributions.has(key))) return
       keys.forEach(key => contributions.add(key))
       const references = [...units].sort(compareUnits)
       references.forEach(unit => usedUnits.set(unit.id, unit))
       const provenance = provenanceFrom(references)
+      const explanationEvidence = conflictIds.flatMap(id => conflicts.get(id)?.explanationEvidence ?? [])
       const first = units[0]
+      const contextKeys = uniqueIds([
+        ...(expression.kind === 'personality' ? slots
+          .filter(slot => !['coreNature', 'independentAbility', 'additionalAbility', 'recurrence'].includes(slot))
+          .map(slot => `context:${slot}`) : []),
+        ...(chapterId === 'CR-02' && expression.kind === 'personality' ? expression.traitFactIds.flatMap(id => {
+          const context = strengthContexts.get(facts.get(id)?.trait ?? '')
+          return context ? [`context:${context}`] : []
+        }) : []),
+        ...(expression.scene ? [`scene:${expression.scene}`] : []),
+        ...(activations ?? []).flatMap(activation => activation.periodRef ? [`period:${activation.periodRef}`] : []),
+      ])
       const certainty = units.some(unit => unit.certainty === 'conditional') ? 'conditional'
         : units.some(unit => unit.certainty !== 'confirmed') ? 'contextual' : 'confirmed'
       const causeAvailable = expression.kind === 'personality'
         ? Boolean(mapping && mechanism) : hasOutcomePath
       const lifeMappingAvailable = Boolean(mapping && mechanism)
       paragraphs.push({
-        ...provenance, sourceConflictIds: uniqueIds([...provenance.sourceConflictIds, ...conflictIds]),
+        ...provenance, evidenceIds: uniqueIds([...provenance.evidenceIds, ...explanationEvidence]), sourceConflictIds: uniqueIds([...provenance.sourceConflictIds, ...conflictIds]),
         id: `${chapterId}:${JSON.stringify(keys)}`, chapterId, purpose, slots,
         ...relationshipLayer(chapterId, expression.kind),
+        ...(chapterId === 'CR-07' && { moneyAxes: [...new Set(references.flatMap(unit => unit.moneyAxis ?? []))].sort(compare) }),
+        ...(chapterId === 'CR-05' && expression.kind === 'personality' && {
+          relationshipAxes: [...new Set(fromIds(expression.traitFactIds).map(relationshipAxis))].sort(compare),
+        }),
         ...(!paragraphs.length && { emphasis: 'key_conclusion' as const }),
         semanticUnitIds: uniqueIds(references.map(unit => unit.id)),
         sourceOutcomeIds: uniqueIds(units.filter(unit => unit.meaningRef.kind === 'outcome_fact')
           .map(unit => unit.meaningRef.recordId)),
-        sourceMappingIds: mapping ? [mapping] : [], lifeMechanismIds: mechanism ? [mechanism] : [],
-        contributionKeys: keys, scope: first.scope, periodRef: first.period?.periodId, certainty,
+        sourceMappingIds: typeof mapping === 'string' ? [mapping] : mapping ?? [], lifeMechanismIds: mechanism ? [mechanism] : [],
+        activations, contextKeys, contributionKeys: keys, scope: first.scope, periodRef: first.period?.periodId, certainty,
         causeAvailable, lifeMappingAvailable, reasonStatus: causeAvailable && lifeMappingAvailable ? 'complete' : 'partial',
         expression,
       })
@@ -151,17 +198,25 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
         const record = knowledge.get(id)
         return record?.sourceType === item.sourceType ? [`${record.sourceType}:${record.profileId}`] : []
       })
-      const fact = sorted.find(item => !selectedTraits.has(aliases.get(item.trait) ?? item.trait)
-        && (!independent || profiles(item).every(profile => !selectedProfiles.has(profile))))
-      if (!fact) return
+      const unused = sorted.filter(item => !selectedTraits.has(aliases.get(item.trait) ?? item.trait))
+      const fact = (independent && unused.find(item => profiles(item).every(profile => !selectedProfiles.has(profile)))) || unused[0]
+      if (!fact) return undefined
       const key = aliases.get(fact.trait) ?? fact.trait
       selectedTraits.add(key)
       profiles(fact).forEach(profile => selectedProfiles.add(profile))
       const applicableScene = chapterId === 'CR-05' && ['communication', 'conflictMechanism'].includes(slot) && !usedScene ? scene : undefined
       if (applicableScene) usedScene = true
-      add(purpose, [slot], { kind: 'personality', voice, traitFactIds: [fact.id],
-        ...(applicableScene && { scene: applicableScene }) }, [unitFor(fact)], [`trait:${key}`],
-      'CL-P01', `${mechanism}:${key}`)
+      const limitation = chapterId === 'CR-02' && key === 'fast_judgment'
+        ? fromIds(projection?.['CR-02'].overuseRisk.sourcePersonalityFactIds).find(item =>
+          item.trait === '빠른 결단이 성급해지면 실수가 늘어날 수 있음'
+          && profiles(item).some(profile => profiles(fact).includes(profile))) : undefined
+      add(purpose, limitation ? [slot, 'overuseRisk'] : [slot], {
+        kind: 'personality', voice, traitFactIds: [fact.id, ...(limitation ? [limitation.id] : [])],
+        ...(applicableScene && { scene: applicableScene }), ...(limitation && { limitationFactId: limitation.id }),
+      }, [unitFor(fact), ...(limitation ? [unitFor(limitation)] : [])],
+      [`trait:${key}`, ...(limitation ? [`limitation:${limitation.trait}`] : [])],
+      chapterId === 'CR-05' ? relationshipMapping(fact.trait) : 'CL-P01', chapterId === 'CR-02' ? `strength:${key}` : `${mechanism}:${key}`)
+      return fact
     }
 
     if (chapterId === 'CR-01') {
@@ -169,23 +224,47 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
         const candidates = fromIds(projection?.['CR-01'][slot].sourcePersonalityFactIds)
         const qualified = voice === 'outward' ? candidates.filter(fact => fact.traitType === 'social'
           || fact.sourceType === 'day_pillar') : voice === 'stress'
-          ? candidates.filter(fact => !linkedReactions.has(fact.trait)) : candidates
+          ? candidates.filter(fact => !hasBehaviorStages(fact.trait)) : candidates
         personality(slot, voice, purpose, qualified, voice, voice === 'decision' || voice === 'relationship' ? 'day_pillar' : undefined)
       }
-      const conflict = projection?.['CR-01'].internalContradiction.sourceConflictIds
-        .map(id => conflicts.get(id)).find(item => item && (
-          item.conflictType === 'outward_vs_inner' && fromIds(item.factIds).length === 2
-          || item.conflictType === 'source_explicit' && fromIds(item.factIds)
-            .some(fact => fact.sourceType === 'day_pillar' && fact.traitType === 'expression')))
-      if (conflict) {
-        const linked = fromIds(conflict.factIds)
-        const selected = conflict.conflictType === 'source_explicit'
-          ? linked.filter(fact => fact.sourceType === 'day_pillar' && fact.traitType === 'expression').slice(0, 1)
-          : [...linked].sort((a, b) => Number(b.traitType === 'social') - Number(a.traitType === 'social'))
-        const distinct = selected.some(fact => !selectedTraits.has(aliases.get(fact.trait) ?? fact.trait))
-        if (distinct) add('contrast', ['internalContradiction'], { kind: 'personality', voice: 'duality',
-          traitFactIds: selected.map(fact => fact.id) }, linked.map(unitFor), [`contrast:${conflict.id}`],
-        'CL-P01', 'outward_inner_tension', [conflict.id])
+      const outward = paragraphs.find(paragraph => paragraph.slots.includes('externalExpression'))
+      const decision = paragraphs.find(paragraph => paragraph.slots.includes('internalDecisionStyle'))
+      if (outward?.expression.kind === 'personality' && decision?.expression.kind === 'personality') {
+        const [external] = fromIds(outward.expression.traitFactIds)
+        const [internal] = fromIds(decision.expression.traitFactIds)
+        if (external && internal && aliases.get(external.trait) === 'broad_contact'
+          && aliases.get(internal.trait) === 'verify_before_acting') {
+          const position = paragraphs.indexOf(outward)
+          for (const paragraph of [decision, outward]) {
+            paragraphs.splice(paragraphs.indexOf(paragraph), 1)
+            paragraph.contributionKeys.forEach(key => contributions.delete(key))
+          }
+          add('contrast', [...outward.slots, ...decision.slots], {
+            kind: 'personality', voice: 'duality', composite: 'outward_decision', traitFactIds: [external.id, internal.id],
+          }, [unitFor(external), unitFor(internal)], [...outward.contributionKeys, ...decision.contributionKeys],
+          'CL-P01', 'outward_contact_internal_verification')
+          paragraphs.splice(position, 0, paragraphs.pop()!)
+          personality('additionalExpression', 'outward', 'life_expression',
+            fromIds(projection?.['CR-01'].externalExpression.sourcePersonalityFactIds)
+              .filter(fact => fact.traitType === 'expression' && fact.sourceType === 'day_pillar'))
+        }
+      }
+      if (!paragraphs.some(paragraph => paragraph.purpose === 'contrast')) {
+        const explicit = projection?.['CR-01'].internalContradiction.sourceConflictIds
+          .flatMap(id => conflicts.get(id) ?? []).find(item => item.conflictType === 'source_explicit')
+        const expression = explicit && fromIds(explicit.factIds).find(fact => fact.traitType === 'expression'
+          && !selectedTraits.has(aliases.get(fact.trait) ?? fact.trait))
+        if (explicit && expression) {
+          add('condition', ['internalContradiction'], { kind: 'personality', voice: 'outward',
+            traitFactIds: [expression.id] }, [unitFor(expression)], [`trait:${expression.trait}`],
+          'CL-P01', 'source_conflict_expression', [explicit.id])
+        }
+      }
+      if (paragraphs.length < 6) {
+        personality('practicalDecision', 'decision', 'condition', fromIds(projection?.['CR-01'].practicalDecision?.sourcePersonalityFactIds))
+      }
+      if (paragraphs.length < 7 && !paragraphs.some(paragraph => paragraph.slots.includes('stressResponse'))) {
+        personality('judgmentBoundary', 'stress', 'condition', fromIds(projection?.['CR-01'].judgmentBoundary?.sourcePersonalityFactIds))
       }
     } else if (chapterId === 'CR-02') {
       const strength = projection?.['CR-02']
@@ -196,31 +275,67 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
       personality('additionalAbility', 'ability', 'application', abilities, 'independent_ability', 'day_pillar', true)
     } else if (chapterId === 'CR-03') {
       const slots = projection?.['CR-03']
-      const behavior = new Set(slots?.behavior.sourcePersonalityFactIds)
-      for (const fact of fromIds(slots?.trigger.sourcePersonalityFactIds)) {
-        const mechanism = linkedReactions.get(fact.trait)
-        if (!behavior.has(fact.id) || !mechanism) continue
-        add('condition', ['trigger', 'internalResponse', 'behavior'], { kind: 'personality', voice: 'pattern',
-          traitFactIds: [fact.id] }, [unitFor(fact)], [`reaction:${mechanism}`], 'CL-P01', mechanism)
+      const linked = (slots?.behaviorConflict?.sourceConflictIds ?? []).flatMap(id => conflicts.get(id) ?? [])
+      behaviorPatterns = buildBehaviorPatterns(fromIds(uniqueIds([
+        ...(slots?.behaviorContext?.sourcePersonalityFactIds ?? []),
+        ...(slots?.judgment.sourcePersonalityFactIds ?? []),
+        ...linked.flatMap(conflict => conflict.factIds),
+      ])), linked, fact => fact.provenanceIds.flatMap(id => {
+        const record = knowledge.get(id)
+        return record?.sourceType === fact.sourceType ? record.sourceRefs : []
+      }))
+      for (const pattern of behaviorPatterns.filter(item => item.status === 'ready')) {
+        const ids = uniqueIds([...pattern.context, ...pattern.trigger, ...pattern.response, ...pattern.judgment,
+          ...pattern.behavior, ...pattern.result, ...pattern.recurrence])
+        const covered = ['context', 'response_or_judgment', 'behavior_or_expression',
+          ...(pattern.trigger.length ? ['trigger'] : []), ...(pattern.result.length ? ['result'] : []),
+          ...(pattern.recurrence.length ? ['recurrence'] : [])]
+        const contextSplit = !pattern.trigger.length
+        add('condition', covered, { kind: 'personality', voice: contextSplit ? 'duality' : 'pattern',
+          traitFactIds: contextSplit ? [...pattern.behavior, ...pattern.judgment] : uniqueIds(pattern.behavior), pattern },
+          fromIds(ids).map(unitFor), [`reaction:${pattern.mechanism}`], pattern.mappingIds, pattern.mechanism,
+          pattern.conflictId ? [pattern.conflictId] : [])
       }
-      gaps.push({ type: 'PARTIAL_LOOP', slot: 'repetitionMechanism' })
+      if (paragraphs.length < 2) gaps.push({ type: 'SOURCE_GAP', slot: 'independentResponsePatterns' })
     } else if (chapterId === 'CR-05') {
       const social = fromIds(projection?.['CR-01'].relationshipSocialExpression.sourcePersonalityFactIds)
       const outward = new Set(projection?.['CR-01'].externalExpression.sourcePersonalityFactIds)
       personality('socialExpression', 'outward', 'conclusion',
         social.filter(fact => fact.traitType === 'social' && outward.has(fact.id)))
       const interpersonal = social.filter(fact => fact.traitType === 'interpersonal')
-      personality('relationshipStyle', 'relationship', 'life_expression',
+      const style = personality('relationshipStyle', 'relationship', 'life_expression',
         interpersonal.filter(fact => !relationshipBehavior.has(fact.trait)), 'relationship_style', 'day_pillar')
       for (const slot of ['afterCloseness', 'communication', 'conflictMechanism']) {
         personality(slot, 'relationship', 'condition',
           interpersonal.filter(fact => relationshipBehavior.get(fact.trait) === slot), slot, 'day_pillar')
       }
+      const sequence = ['relationshipStyle', 'communication', 'conflictMechanism']
+        .map(slot => paragraphs.find(paragraph => paragraph.slots.includes(slot)))
+      if (style && sequence.every(paragraph => paragraph?.expression.kind === 'personality')) {
+        const parts = sequence.filter(paragraph => paragraph !== undefined)
+        const ids = parts.flatMap(paragraph =>
+          paragraph.expression.kind === 'personality' ? paragraph.expression.traitFactIds : [])
+        for (const paragraph of parts.slice(1)) {
+          paragraphs.splice(paragraphs.indexOf(paragraph), 1)
+          paragraph.contributionKeys.forEach(key => contributions.delete(key))
+        }
+        relationshipSequence = {
+          sourcePersonalityFactIds: uniqueIds(ids),
+          relationshipStyle: parts[0].sourcePersonalityFactIds,
+          communication: parts[1].sourcePersonalityFactIds,
+          conflictResponse: parts[2].sourcePersonalityFactIds,
+        }
+        add('contrast', [...parts.slice(1).flatMap(paragraph => paragraph.slots), 'relationshipSequence'], {
+          kind: 'personality', voice: 'relationship', composite: 'relation_sequence', traitFactIds: ids, scene,
+        }, fromIds(ids).map(unitFor), parts.slice(1).flatMap(paragraph => paragraph.contributionKeys), uniqueIds(parts.flatMap(p => p.sourceMappingIds)), 'relationship_sequence')
+      }
+      personality('emotionalDistance', 'relationship', 'condition',
+        interpersonal.filter(fact => relationshipBehavior.get(fact.trait) === 'emotionalDistance'))
     }
 
     if (chapterId === 'CR-05' || chapterId === 'CR-07') {
       const outcomes = chapterId === 'CR-05' ? relationshipOutcomes : moneyOutcomes
-      if (!outcomes) gaps.push({ type: 'ENGINE_GAP', slot: 'outcome' })
+      if (!outcomes && chapterId === 'CR-07') gaps.push({ type: 'ENGINE_GAP', slot: 'outcome' })
       const candidates = (outcomes ?? []).flatMap(fact => {
         const unit = unitsByRecord.get(fact.id)
         const slots = outcomeSlots(fact)
@@ -234,12 +349,16 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
         const voice = mapping?.voice ?? fallback
         if (!voice) {
           gaps.push({ type: 'SOURCE_GAP', slot: slots[0] })
+          if (chapterId === 'CR-05' && fact.scope !== 'natal') {
+            gaps.push({ type: 'SOURCE_GAP', slot: 'relationshipTiming' })
+          }
           return []
         }
         return [{ fact, unit, mapping, voice, slots }]
       }).sort((a, b) => {
         const order = chapterId === 'CR-05' ? relationshipOrder : moneyOrder
         return compareUnitsByPeriod(a.unit, b.unit) || order.indexOf(a.voice) - order.indexOf(b.voice)
+          || Number(b.fact.semanticType === 'money_generation_method') - Number(a.fact.semanticType === 'money_generation_method')
           || compareUnits(a.unit, b.unit)
       })
       const grouped = new Set<string>()
@@ -248,66 +367,111 @@ export function buildCustomerReadingPlan({ assembly, natal, moneyOutcomes, relat
         const { fact, unit, mapping, voice } = item
         if (grouped.has(fact.id)) continue
         // Preserve independent Outcome IDs for a shared explanation and interval.
-        const companionType = voice === 'skill' || voice === 'expression' ? 'money_acquisition'
+        const companionType = fact.semanticType === 'money_generation_method' ? 'money_acquisition'
           : voice === 'division' ? 'money_retention' : undefined
         const companion = mapping && companionType && 'conditionId' in fact
           ? candidates.find(other => other.fact.semanticType === companionType && 'conditionId' in other.fact
-            && other.fact.conditionId === fact.conditionId && other.fact.scopeId === fact.scopeId
+            && !grouped.has(other.fact.id) && other.fact.conditionId === fact.conditionId && other.fact.scopeId === fact.scopeId
             && other.mapping?.id === mapping.id && other.unit.certainty === unit.certainty) : undefined
+        grouped.add(fact.id)
         if (companion) grouped.add(companion.fact.id)
-        const signature = JSON.stringify([voice, mapping?.mechanism, unit.scope, unit.period?.periodId, bounds(unit.period), unit.certainty])
+        // Within one period, identical customer-facing meaning can cite
+        // parallel paths. Cross-scope compression still compares target sets.
+        const signature = JSON.stringify([voice, mapping?.mechanism,
+          'direction' in fact ? fact.direction : null, unit.scope, unit.period?.periodId, bounds(unit.period)])
         const bucket = buckets.get(signature) ?? { item, entries: [] }
         bucket.entries.push(item, ...(companion ? [companion] : []))
         buckets.set(signature, bucket)
       }
-      const explained = new Set<string>()
+      const progressions: { item: typeof candidates[number]; entries: typeof candidates; last: ReadingSemanticUnit; key: string }[] = []
       for (const { item, entries } of buckets.values()) {
+        const { unit, mapping } = item
+        const interval = bounds(unit.period)
+        const key = JSON.stringify([
+          item.voice, mapping?.mechanism,
+          uniqueIds(entries.map(({ fact }) => outcomeMeaningKey(fact))),
+          uniqueIds(entries.map(({ fact }) => outcomeTargetKey(fact))),
+        ])
+        // Require containment for a scope progression. Partial overlaps and
+        // disjoint sibling periods each retain their own conclusion.
+        const progression = mapping && progressions.find(group => {
+          const outer = bounds(group.last.period)
+          return group.key === key && group.last.scope !== unit.scope
+            && (group.last.scope === 'natal' || outer && interval && outer[0] <= interval[0] && interval[1] <= outer[1])
+        })
+        if (progression) {
+          progression.entries.push(...entries)
+          progression.last = unit
+        } else progressions.push({ item, entries, last: unit, key })
+      }
+
+      if (chapterId === 'CR-07') {
+        const narrativeOrder: readonly OutcomeVoice[] = ['skill', 'expression', 'earning', 'retention', 'capacity',
+          'divisionRetention', 'sustainability', 'division', 'protection', 'pressure', 'supportPressure']
+        progressions.sort((a, b) => narrativeOrder.indexOf(a.item.voice) - narrativeOrder.indexOf(b.item.voice))
+      }
+      for (const { item, entries } of progressions) {
         const { unit, mapping, voice } = item
         const interval = bounds(unit.period)
-        const explanationKey = mapping?.mechanism ?? voice
-        const meaning = JSON.stringify([voice, explanationKey])
-        const timingOnly = Boolean(interval && explained.has(meaning))
-        explained.add(meaning)
-        const scopedScene = chapterId === 'CR-05' && !usedScene && (voice === 'contact' || voice === 'relationshipPressure') ? scene : undefined
-        if (scopedScene) usedScene = true
-        const keys = uniqueIds(entries.map(entry => JSON.stringify([
-          entry.fact.semanticType, entry.mapping?.mechanism ?? entry.voice, entry.unit.scope, bounds(entry.unit.period) ?? null,
-          'conditionId' in entry.fact ? entry.fact.conditionId : entry.fact.sourceRelationIds,
-        ])))
-        add(interval ? 'timing' : mapping ? 'cause' : 'conclusion',
+        const activations = entries.map(({ fact, unit }): OutcomeActivation => {
+          const interval = bounds(unit.period)
+          return { semanticUnitId: unit.id, sourceOutcomeId: fact.id, scope: unit.scope,
+            periodRef: unit.period?.periodId, certainty: unit.certainty, startsAt: interval?.[0], endsBefore: interval?.[1] }
+        })
+        add(unit.scope !== 'natal' && chapterId === 'CR-05' ? 'timing' : mapping ? 'cause' : 'conclusion',
           uniqueIds(entries.flatMap(entry => [...entry.slots, ...(entry.mapping?.slots ?? [])])),
-          { kind: 'outcome', voice, ...(scopedScene && { scene: scopedScene }),
-            ...(interval && { startsAt: interval[0], endsBefore: interval[1] }), ...(timingOnly && { timingOnly: true }) },
-          entries.map(entry => entry.unit), keys, mapping?.id, mapping?.mechanism, [],
-          entries.every(entry => entry.fact.sourceRelationIds.length > 0))
+          { kind: 'outcome', voice,
+            ...(interval && { startsAt: interval[0], endsBefore: interval[1] }) },
+          entries.map(entry => entry.unit), uniqueIds(entries.map(entry => `outcome:${entry.unit.id}`)),
+          mapping?.id, mapping?.mechanism, [], entries.every(entry => entry.fact.sourceRelationIds.length > 0), activations)
       }
     }
 
-    const required: Record<CustomerChapterId, readonly string[]> = {
+    if (chapterId === 'CR-07') planMoneyContrasts(paragraphs, usedUnits)
+
+    const required: Record<typeof chapterId, readonly string[]> = {
       'CR-01': ['coreNature', 'externalExpression', 'internalDecisionStyle', 'relationshipSocialExpression'],
-      'CR-02': ['problemSolving', 'socialCollaboration', 'independentAbility', 'workApplication', 'overuseRisk'],
-      'CR-03': ['trigger', 'internalResponse', 'judgment', 'behavior', 'result'],
-      'CR-05': ['relationshipStyle', 'socialExpression', 'beginnings', 'afterCloseness', 'communication',
-        'conflictMechanism', 'repetitionMechanism'],
+      'CR-02': ['strengthFamilies'],
+      'CR-03': [],
+      'CR-05': [],
       'CR-07': ['earning', 'earning_method', 'retention', 'accumulation', 'loss', 'division', 'competition', 'cost', 'sustainability'],
     }
     if (chapterId !== 'CR-07' && natal && !projection) gaps.push({ type: 'ASSEMBLY_GAP', slot: 'personality_projection' })
     const covered = new Set(paragraphs.flatMap(paragraph => paragraph.slots))
+    if (chapterId === 'CR-02' && paragraphs.length >= 3) covered.add('strengthFamilies')
+    if (chapterId === 'CR-01' && paragraphs.flatMap(paragraph => paragraph.semanticUnitIds).length < 5) {
+      gaps.push({ type: 'SOURCE_GAP', slot: 'distinctPersonalityMeanings' })
+    }
     for (const slot of required[chapterId]) if (!covered.has(slot)) gaps.push({
       type: !natal && chapterId !== 'CR-07' ? 'ENGINE_GAP' : 'SOURCE_GAP', slot,
     })
+    const axes = new Set(paragraphs.flatMap(paragraph => paragraph.relationshipAxes ?? []))
+    const relationshipQuestionCovered = axes.size >= 3 && (axes.has('communication') || axes.has('boundary') || axes.has('conflict'))
+    if (chapterId === 'CR-05') {
+      gaps.push({ type: 'SOURCE_GAP', slot: 'beginnings' }, { type: 'SOURCE_GAP', slot: 'relationshipRecurrence' })
+      if (!relationshipQuestionCovered) gaps.push({ type: 'SOURCE_GAP', slot: 'relationshipAxes' })
+    }
+    const moneyAxes = new Set(paragraphs.flatMap(paragraph => paragraph.moneyAxes ?? []))
+    const moneyQuestionCovered = [...moneyAxes].some(axis => axis === 'earning' || axis === 'earning_method')
+      && [...moneyAxes].some(axis => axis !== 'earning' && axis !== 'earning_method')
+    const semanticReadiness = chapterId === 'CR-07'
+      ? moneyQuestionCovered ? 'ready' : moneyAxes.size ? 'partial' : 'deferred'
+      : chapterId === 'CR-05'
+      ? relationshipQuestionCovered ? 'ready' : axes.size ? 'partial' : 'deferred'
+      : paragraphs.length ? gaps.length ? 'partial' : 'ready' : 'deferred'
     for (const paragraph of paragraphs) if (paragraph.reasonStatus === 'partial') gaps.push({
       type: 'SOURCE_GAP', slot: `reason:${paragraph.slots.join(',')}`,
     })
     const uniqueGaps = [...new Map(gaps.map(gap => [`${gap.type}:${gap.slot}`, gap])).values()]
       .sort((a, b) => compare(a.slot, b.slot) || compare(a.type, b.type))
     return {
-      chapterId, titleKey: chapterId,
-      readiness: paragraphs.length ? uniqueGaps.length ? 'partial' : 'ready' : 'deferred',
-      paragraphPlans: paragraphs, gaps: uniqueGaps, provenance: provenanceFrom(paragraphs),
+      chapterId, titleKey: customerChapterTitleKeys[chapterId], semanticReadiness,
+      paragraphPlans: paragraphs, behaviorPatterns, relationshipSequence,
+      ...(chapterId === 'CR-05' && { relationshipRecurrence: [] }), gaps: uniqueGaps, provenance: provenanceFrom(paragraphs),
     }
   })
-  return { version: 'p4c-1' as const, referenceTime, chapters, semanticUnits: [...usedUnits.values()].sort(compareUnits) }
+  const timing = assembly.productScope === 'premium' ? buildTimingChapters(assembly, [...(moneyOutcomes ?? assembly.temporalMoneyOutcomes ?? []), ...(relationshipOutcomes ?? assembly.temporalRelationshipOutcomes ?? [])], usedUnits, referenceTime) : []
+  return { version: 'p4g-1' as const, referenceTime, temporalOverlapQuality: timingOverlapQuality(timing), chapters: [...chapters, ...timing].sort((a, b) => compare(a.chapterId, b.chapterId)), semanticUnits: [...usedUnits.values()].sort(compareUnits) }
 }
 
 function compareUnitsByPeriod(a: ReadingSemanticUnit, b: ReadingSemanticUnit) {
