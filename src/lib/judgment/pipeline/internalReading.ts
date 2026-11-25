@@ -2,6 +2,7 @@ import { luckPeriodStatus } from '../core/luckValidity'
 import { judgmentCoreFromReading } from '../core/fromReading'
 import type { JudgmentCoreEvidence } from '../core/fromReading'
 import type { LuckScopeInput, ResourceExcessEvidence } from '../core/luckScope'
+import type { RoleFunctionBasis } from '../core/types'
 import { applyRoleFunctionEffects, evaluateRoleFunctions } from '../evaluators/roleFunctionState'
 import type { RoleFunctionPath } from '../evaluators/roleFunctionState'
 import { calculateCanonicalChart } from '../../canonical/calculateCanonicalChart'
@@ -10,8 +11,8 @@ import type { BirthInput, CalculationContext } from '../../canonical/types'
 import { evidenceContextSchema } from '../contracts'
 import type { EvidenceRecord, Validity } from '../contracts'
 import { produceJudgmentEngineFacts, produceExposureRootFacts } from '../producers'
-import { produceEffectFacts, stemTenGodPointer } from '../producers/effectFactProducer'
-import type { FunctionEffects, TargetFunction } from '../producers/effectFactProducer'
+import { produceEffectFacts, projectDailyEffectFacts, stemTenGodPointer } from '../producers/effectFactProducer'
+import type { FunctionEffects, TargetFunction, ValidatedRoleAssignment } from '../producers/effectFactProducer'
 import type { ExposureRootSources } from '../systems/exposureRootAuthority'
 import { detach, recordId, RELATION_EVIDENCE, sortedUnique } from '../producers/shared'
 import { adaptCarryContext, createExecutionScopeContext, producerPeriod, selectExecutionCandidates } from '../runtime'
@@ -102,6 +103,18 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
   const sangCandidates = evaluateSangShenCandidates(helperInput)
   const sangShen = evaluateSangShenJudgment({ ...helperInput, sangShenCandidates: sangCandidates.candidates, sangShenEvidence: sangCandidates.evidence })
   const roles = [...new Map([...yongShen.roleStates, ...sangShen.roleStates].map((role) => [role.roleStateId, role])).values()]
+  const validatedRoleAssignments: ValidatedRoleAssignment[] = [
+    ...yongShen.judgments.filter((judgment) => judgment.status === 'confirmed' && judgment.roleStateRef).map((judgment) => ({
+      roleStateRef: judgment.roleStateRef!, entityId: judgment.entityId, role: '용신' as const,
+      scopeId: judgment.scopeId, executionId, judgmentId: judgment.judgmentId,
+      producerRef: judgment.provenance.producerRef, evidenceIds: judgment.evidenceIds,
+    })),
+    ...sangShen.judgments.filter((judgment) => judgment.status === 'confirmed' && judgment.roleStateRef).map((judgment) => ({
+      roleStateRef: judgment.roleStateRef!, entityId: judgment.entityId, role: '상신' as const,
+      scopeId: judgment.scopeId, executionId, judgmentId: judgment.judgmentId,
+      producerRef: judgment.provenance.producerRef, evidenceIds: judgment.evidenceIds,
+    })),
+  ]
   mergeEvidence(pattern.evidence.records, natalCombination.bundle.evidence.records, yongShen.evidence.records,
     sangShen.evidence.records, issueByeongRuleReceipts(sources.A, 'exposure-root:source-A'))
   function markCandidates(id: string, candidates: { candidateId: string; status: string; sourceRuleIds: string[]; evidenceIds: string[] }[]) {
@@ -158,9 +171,6 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
   }
   const natalEffects = effectsIn(context, natalCombination.states)
   markEffects(context, natalEffects)
-  const successState = add('success-state', 'deferred', {
-    reasonCodes: ['SUCCESS_EFFECT_RULES_UNAVAILABLE'], resultRefs: [pattern.judgment.judgmentId], ruleIds: ['I-04'],
-  })
   const rootStemScope = evaluateStemCombination({ producer, context })
   mergeEvidence(rootStemScope.bundle.evidence.records)
 
@@ -172,23 +182,30 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     if (judgment.status !== 'confirmed' || !judgment.roleStateRef) continue
     const candidates = yongCandidates.candidates.filter((candidate) => judgment.sourceCandidateIds.includes(candidate.candidateId))
     legacyEffectPaths.push({ roleStateRef: judgment.roleStateRef, judgmentRef: judgment.judgmentId,
-      requiredRelationRefs: [], requiredParticipantIds: [], actionUnspecified: true,
+      requiredRelationRefs: [], requiredParticipantIds: [],
       structuralFactRefs: sortedUnique([pattern.judgment.judgmentId, ...judgment.functionBasis.exposureFactIds,
         ...derived.roots.filter((root) => root.rootExistence === 'present'
           && candidates.some((candidate) => candidate.roleBasis.rootFactIds.includes(root.id))).map((root) => root.id)]),
-      structuralStatus: 'unknown', exclusive: false, evidenceIds: judgment.evidenceIds })
+      structuralStatus: 'confirmed', exclusive: false, evidenceIds: judgment.evidenceIds })
   }
   for (const judgment of sangShen.judgments) {
     if (judgment.status !== 'confirmed' || !judgment.roleStateRef) continue
+    const edges = judgment.functionBasis.relationFactIds.map((id) => producer.relations.find((relation) => relation.relationFactId === id))
+    if (edges.some((edge) => !edge || !edge.sourceEntityId || !edge.targetEntityId)) continue
+    const requiredEdges = edges.filter((edge) => edge?.sourceEntityId === judgment.entityId)
+    if (!requiredEdges.length) continue
     legacyEffectPaths.push({ roleStateRef: judgment.roleStateRef, judgmentRef: judgment.judgmentId,
-      requiredRelationRefs: [], requiredParticipantIds: [], actionUnspecified: true,
+      actionId: judgment.judgmentId,
+      requiredRelationRefs: requiredEdges.map((edge) => edge!.relationFactId),
+      requiredParticipantIds: sortedUnique(requiredEdges.flatMap((edge) => edge ? [edge.sourceEntityId!, edge.targetEntityId!] : [])),
       observedRelationRefs: judgment.functionBasis.relationFactIds,
-      structuralFactRefs: sortedUnique([judgment.sourcePatternJudgmentId, ...judgment.relatedYongShenIds, ...judgment.functionBasis.rootFactIds]),
-      structuralStatus: 'unknown', exclusive: false, evidenceIds: judgment.evidenceIds })
+      structuralFactRefs: sortedUnique([judgment.sourcePatternJudgmentId, ...judgment.relatedYongShenIds,
+        ...judgment.functionBasis.rootFactIds, ...judgment.functionBasis.relationFactIds]),
+      structuralStatus: 'confirmed', exclusive: false, evidenceIds: judgment.evidenceIds })
   }
   function functionEffectsIn(scope: ExecutionScopeContext | null, states: StemCombinationResult['states'],
     combination: Pick<ReturnType<typeof evaluateNatalStemCombination>, 'status' | 'bundle'> | null,
-    preRoles: ReturnType<typeof evaluateRoleFunctions> = []): FunctionEffects {
+    preRoles: ReturnType<typeof evaluateRoleFunctions> = [], rootStates?: (typeof judgmentCore)[number]['rootStates']): FunctionEffects {
     if (!scope) return { effects: [], diagnostics: [] }
     const included = new Set(scope.includedEntityIds)
     const functions: TargetFunction[] = []
@@ -220,8 +237,8 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     const priorityEvidence = combination?.bundle.coverage.filter((item) => item.scopeId === scope.scopeId
       && item.kind === 'stem-combination' && item.completion === 'complete')
       .flatMap((item) => item.evidenceIds).filter((ref) => ref === RELATION_EVIDENCE) ?? []
-    return produceEffectFacts({ producer, context: scope, states, roles, functions, natalScopeId: context.scopeId,
-      evidence: [...evidenceById.values()],
+    return produceEffectFacts({ producer, context: scope, states, roles, functions, validatedRoleAssignments, natalScopeId: context.scopeId,
+      evidence: [...evidenceById.values()], rootStates,
       ...(combination?.status === 'evaluated' ? { priorLuckStops: { scopeId: scope.scopeId,
         states: states.filter((state) => state.scopeId !== scope.scopeId) } } : {}),
       ...(combination?.status === 'evaluated' ? { priority: { scopeId: scope.scopeId,
@@ -239,15 +256,46 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     stages.push(stage)
     return stage
   }
-  const natalFunctionEffects = functionEffectsIn(context, natalCombination.states, natalCombination)
-  markFunctionEffects(context, natalFunctionEffects)
-
   const activePeriods: Partial<Record<'greatLuck' | 'yearlyLuck' | 'monthlyLuck', Validity>> = {}
   for (const stage of daewoonOnly ? ['greatLuck'] as const : ['greatLuck', 'yearlyLuck', 'monthlyLuck'] as const) {
     const refs = sortedUnique(producer.entities.flatMap((item) => item.sourceScope === stage && item.periodRef ? [item.periodRef] : []))
     const matches = refs.map((ref) => producerPeriod(producer, ref)).filter((period) => luckPeriodStatus(period, referenceTime) === 'effective')
     if (matches.length === 1) activePeriods[stage] = matches[0]
   }
+  const branchMainObservations = [...derived.hiddenObservations, ...derived.branchMainObservations]
+  const unconfirmedBranchMainIds = producer.entities.filter(({ part, origin, entityId }) => part === 'branch' && origin === 'natal'
+    && !branchMainObservations.some((item) => item.branchEntityId === entityId && item.role === 'main'
+      && item.assessment === 'confirmed' && !item.uncertaintyIds.length)).map(({ entityId }) => entityId)
+  const relationById = new Map(producer.relations.map((relation) => [relation.relationFactId, relation]))
+  const roleFunctionBases: RoleFunctionBasis[] = [...(judgmentCoreEvidence?.roleFunctionBases ?? [])]
+  for (const judgment of sangShen.judgments) {
+    if (judgment.status !== 'confirmed' || !judgment.roleStateRef) continue
+    for (const id of judgment.functionBasis.relationFactIds) {
+      const relation = relationById.get(id)
+      if (relation?.sourceEntityId !== judgment.entityId || !relation.targetEntityId || relation.assessment !== 'confirmed'
+        || relation.existence !== 'present' || relation.uncertaintyIds.length
+        || relation.kind !== 'stem-generates' && relation.kind !== 'stem-controls') continue
+      roleFunctionBases.push({ roleHistoryRef: judgment.roleStateRef, sourceEntityId: relation.sourceEntityId,
+        targetEntityId: relation.targetEntityId, action: relation.kind === 'stem-generates' ? 'generate' : 'control',
+        evidenceIds: judgment.evidenceIds })
+    }
+  }
+  const judgmentCore = judgmentCoreFromReading(producer, executionId, natalInspectionPeriod, natalCombination,
+    [...roles, ...natalEffects.byeong.roleStates, ...natalEffects.guEung.roleStates], activePeriods, dailyLuck, resourceExcessEvidence,
+    { ...judgmentCoreEvidence, roleFunctionBases }, unconfirmedBranchMainIds)
+  const natalSuccess = judgmentCore[0].structuralSuccess
+  const successState = add('success-state', natalSuccess.overall.grade ? 'confirmed' : 'deferred', {
+    reasonCodes: [...natalSuccess.overall.reasonCodes], resultRefs: [judgmentCore[0].id], ruleIds: [...natalSuccess.ruleIds],
+  })
+  const natalPreRoles = evaluateRoleFunctions({ producer, context, natalScopeId: context.scopeId,
+    roles, states: natalCombination.states, paths: legacyEffectPaths, evidence: [...evidenceById.values()],
+    validatedRoleAssignments, restrictionsResolved: natalCombination.status === 'evaluated' })
+  const natalFunctionEffects = functionEffectsIn(context, natalCombination.states, natalCombination, natalPreRoles, judgmentCore[0].rootStates)
+  const natalRoleFunctions = natalPreRoles.map(({ fact, diagnostic, requiredFunctionIds }) => ({
+    preEffect: fact, diagnostic,
+    postEffect: applyRoleFunctionEffects(fact, natalFunctionEffects.effects, referenceTime, requiredFunctionIds),
+  }))
+  markFunctionEffects(context, natalFunctionEffects)
 
   function runLuck(stage: 'greatLuck' | 'yearlyLuck' | 'monthlyLuck', parent: StemCombinationResult | null) {
     const own = activePeriods[stage]
@@ -257,7 +305,8 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     const fallback = { scopeId: recordId('unresolved-scope', [executionId, stage]), effectivePeriod: own ?? null }
     const scope = contextAvailable ? createExecutionScopeContext(producer, { executionId, referenceTime, stage,
       selectedPeriodRefs: Object.fromEntries(required.map((key) => [key, activePeriods[key]!.periodId])),
-      intersectYearWithGreatLuck: stage === 'yearlyLuck' }) : null
+      intersectYearWithGreatLuck: stage === 'yearlyLuck',
+      monthlyGreatLuckPeriodRef: stage === 'monthlyLuck' ? activePeriods.greatLuck?.periodId : undefined }) : null
     const selected = producer.entities.find((item) => item.periodRef === own?.periodId && item.sourceScope === stage && item.part === 'stem')
     const pillar = selected ? producer.facts.find((item) => item.id === selected.canonicalFactRef) : undefined
     const calendarConfirmed = !!own && pillar?.assessment === 'confirmed'
@@ -299,9 +348,17 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     }
     const preRoles = scope ? evaluateRoleFunctions({ producer, context: scope, natalScopeId: context.scopeId,
       roles, states: runtimeStates, paths: legacyEffectPaths, evidence: [...evidenceById.values()],
+      validatedRoleAssignments,
       retainUnspecifiedForEffectCompatibility: true,
       restrictionsResolved: stateResult?.status === 'evaluated' }) : []
-    const functionEffects = functionEffectsIn(scope, runtimeStates, stateResult, preRoles)
+    const coreScope = judgmentCore.find((snapshot) => snapshot.scope === stage)
+    const functionEffects = functionEffectsIn(scope, runtimeStates, stateResult, preRoles, coreScope?.rootStates)
+    const success = coreScope?.structuralSuccess
+    const successStage = stageResult(scope ?? fallback, producerRef, 'success-state', success?.overall.grade ? 'confirmed' : 'deferred', {
+      ruleIds: [...(success?.ruleIds ?? [])], reasonCodes: [...(success?.overall.reasonCodes ?? ['LUCK_STRUCTURE_UNRESOLVED'])],
+      resultRefs: coreScope ? [coreScope.id] : [],
+    })
+    stages.push(successStage)
     const roleFunctions = preRoles.filter(({ fact }) => !fact.reasonCodes.includes('ROLE_ACTION_UNSPECIFIED')).map(({ fact, diagnostic, requiredFunctionIds }) => ({
       preEffect: fact, diagnostic,
       postEffect: applyRoleFunctionEffects(fact, functionEffects.effects, referenceTime, requiredFunctionIds),
@@ -326,7 +383,8 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
     stages.push(interpretation)
     return {
       stateResult,
-      output: { calendarStage, stemState, interpretation, pillar: pillar?.value ?? null, effectivePeriod: own ?? null,
+      output: { calendarStage, stemState, interpretation, successStage, structuralSuccess: success ?? null,
+        pillar: pillar?.value ?? null, effectivePeriod: own ?? null,
         scope, carryContext, relations: scopedRelations, runtimeStates, functionEffects, roleFunctions, relationActions, roleEffectContexts, roleEffectDeferrals, effectFactStage,
         currentApplications: stateResult?.bundle.applications.filter((item) => item.scopeId === scope?.scopeId) ?? [],
         byeongCandidates: evaluated?.candidates.candidates ?? [], byeong: evaluated?.byeong ?? null, guEung: evaluated?.guEung ?? null, natalScopeId: context.scopeId },
@@ -335,16 +393,31 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
   const great = runLuck('greatLuck', rootStemScope)
   const year = runLuck('yearlyLuck', great.stateResult)
   const month = runLuck('monthlyLuck', year.stateResult)
+  const dailySnapshot = judgmentCore.find(({ scope }) => scope === 'dailyLuck')
+  const dailyProjection = dailySnapshot && projectDailyEffectFacts(dailySnapshot, executionId, referenceTime, producerRef)
+  const day = dailyProjection && dailySnapshot ? {
+    effectivePeriod: dailySnapshot.validity, structuralSuccess: dailySnapshot.structuralSuccess,
+    functionEffects: { effects: dailyProjection.effects, diagnostics: dailyProjection.diagnostics },
+    runtimeStates: dailyProjection.runtimeStates,
+    relations: dailySnapshot.stemFacts.filter(({ id }) => dailyProjection.relationRefs.includes(id)),
+    effectFactStage: markFunctionEffects({ scopeId: dailySnapshot.id, effectivePeriod: dailySnapshot.validity,
+      periodSelectionStatus: 'confirmed' }, dailyProjection),
+  } : null
   const interpretationInputs = [great.output, year.output, month.output].map((item) => ({
     scopeId: item.interpretation.scopeId, affectedFunction: null, issueType: null, effectDirection: null, reliefLevel: null,
     functionEffectRefs: item.functionEffects.effects.filter((fact) => fact.status === 'confirmed').map((fact) => fact.effectId),
     activePeriod: item.effectivePeriod, status: item.interpretation.status, evidenceRefs: item.interpretation.evidenceIds,
   }))
+  if (day) interpretationInputs.push({
+    scopeId: day.effectFactStage.scopeId, affectedFunction: null, issueType: null, effectDirection: null, reliefLevel: null,
+    functionEffectRefs: day.functionEffects.effects.map(({ effectId }) => effectId), activePeriod: day.effectivePeriod,
+    status: day.effectFactStage.status, evidenceRefs: day.effectFactStage.evidenceIds,
+  })
   const reading = detach({
     canonical,
     natal: { pattern: pattern.judgment, yongShen: yongShen.judgments, sangShen: sangShen.judgments,
-      functionEffects: natalFunctionEffects, byeong: natalEffects.byeong, guEung: natalEffects.guEung, successState, roles: [...roles, ...natalEffects.byeong.roleStates], runtimeStates: natalCombination.states },
-    luck: { daewoon: great.output, sewoon: year.output, month: month.output },
+      functionEffects: natalFunctionEffects, roleFunctions: natalRoleFunctions, byeong: natalEffects.byeong, guEung: natalEffects.guEung, successState, structuralSuccess: natalSuccess, roles: [...roles, ...natalEffects.byeong.roleStates], runtimeStates: natalCombination.states },
+    luck: { daewoon: great.output, sewoon: year.output, month: month.output, day },
     interpretationInputs, diagnostics: {
       completeness: stages.some((item) => item.status === 'deferred') ? 'partial' : 'complete',
       stages, facts: [...chartFacts, ...producer.facts.filter((item) => Object.values(activePeriods).some((period) =>
@@ -353,8 +426,6 @@ function runSingleInternalReading({ birth, calculation, executionId, natalInspec
         sangShen: sangCandidates.candidates, byeong: natalEffects.candidates.candidates },
       evidence: [...evidenceById.values()].sort((a, b) => a.evidenceId.localeCompare(b.evidenceId)) },
   })
-  const judgmentCore = judgmentCoreFromReading(producer, executionId, natalInspectionPeriod, natalCombination,
-    [...roles, ...natalEffects.byeong.roleStates, ...natalEffects.guEung.roleStates], activePeriods, dailyLuck, resourceExcessEvidence, judgmentCoreEvidence)
   return { ...reading, judgmentCore }
 }
 
@@ -398,10 +469,8 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       : null
     const scopeId = month.calendarStage.scopeId
     const stages = reading.diagnostics.stages.filter((stage) => stage.scopeId === scopeId)
-    const successState = stageResult({ scopeId, effectivePeriod }, month.calendarStage.provenance.producerRef, 'success-state', 'deferred', {
-      ruleIds: ['I-04', 'OP-L03'], reasonCodes: ['SUCCESS_EFFECT_RULES_UNAVAILABLE'],
-    })
-    stages.push(successState)
+    const judgmentCore = reading.judgmentCore.find((state) => state.scope === 'monthlyLuck') ?? null
+    const successState = month.successStage
     const evidenceRefs = sortedUnique([
       ...stages.flatMap((stage) => stage.evidenceIds),
       ...month.relations.flatMap((relation) => relation.evidenceIds),
@@ -410,7 +479,6 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       ...month.roleEffectDeferrals.flatMap((item) => item.evidenceIds),
       ...month.functionEffects.effects.flatMap((effect) => effect.evidenceIds),
     ])
-    const judgmentCore = reading.judgmentCore.find((state) => state.scope === 'monthlyLuck') ?? null
     const parent = reading.judgmentCore.find((state) => state.id === judgmentCore?.parentScopeId)
     // Window entries can be consumed without the full parent chain from this evaluation.
     const parentJudgmentCore = parent ? {
@@ -427,6 +495,8 @@ function runMonthlyWindow(input: InternalReadingInput, natal: ReturnType<typeof 
       carryRefs: month.carryContext,
       currentApplications: month.currentApplications,
       judgmentCore, parentJudgmentCore,
+      publicationAncestors: reading.judgmentCore.filter(state => state.scope === 'greatLuck' || state.scope === 'yearlyLuck')
+        .map(({ id, parentScopeId, scope, validity }) => ({ id, parentScopeId, scope, validity })),
       status: month.interpretation.status,
       stageStatus: { calendar: month.calendarStage.status, stemState: month.stemState.status,
         byeong: stages.find((stage) => stage.stageId === 'byeong')?.status ?? 'deferred',

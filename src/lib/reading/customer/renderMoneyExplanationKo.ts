@@ -53,8 +53,8 @@ export function renderMoneyExplanation(voice: OutcomeVoice, plan: CustomerReadin
     const hasEarning = axes.includes('earning')
     const hasMethod = complete && axes.includes('earning_method')
     const method = voice === 'skill'
-      ? '익힌 기술을 실제 작업 결과로 완성하는 방식입니다. 그 결과가 다른 사람이 받아 쓸 수 있는 형태가 되는 지점에서 기술이 수익과 연결될 수 있습니다.'
-      : '아이디어나 표현을 실제로 쓸 수 있는 방식이나 작업 결과로 구체화하는 경로입니다. 표현에 담긴 발상이 다른 사람이 활용할 수 있는 형태로 정리될 때 수익과 맞닿습니다.'
+      ? '익힌 기술을 다른 사람이 받아 쓸 수 있는 결과물로 완성할 때 수익으로 연결될 수 있습니다.'
+      : '아이디어나 표현을 다른 사람이 활용할 수 있는 결과로 구체화할 때 수익으로 연결될 수 있습니다.'
     const criterion = voice === 'skill'
       ? '기술을 얼마나 익혔는지와 그 기술로 무엇을 완성해 전달할 수 있는지는 따로 살핍니다.'
       : '새로운 생각이 떠오른 단계에서는 어떤 결과로 만들어졌는지가 다음 판단 기준입니다.'

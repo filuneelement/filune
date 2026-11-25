@@ -5,6 +5,7 @@ import type { JudgmentProducerOutput } from '../../producers/types'
 import { selectExecutionCandidates } from '../../runtime/executionScopeContext'
 import type { ExecutionScopeContext } from '../../runtime/executionScopeContext'
 import { containsTime, effectEvidence, sameValue } from '../../runtime/guEungEffectEvidence'
+import type { ValidatedRoleAssignment } from '../../producers/effectFactProducer'
 
 export type RoleFunctionPath = {
   roleStateRef: string
@@ -35,6 +36,7 @@ type Input = {
   states: RuntimeStateContract[]
   paths: RoleFunctionPath[]
   evidence: EvidenceRecord[]
+  validatedRoleAssignments?: ValidatedRoleAssignment[]
   /** Current scope's applicable structural restrictions were evaluated. */
   restrictionsResolved: boolean
   /** Reproduce legacy EffectFact input references without publishing a role-wide function state. */
@@ -62,6 +64,7 @@ export function evaluateRoleFunctions(input: Input) {
     [PROJECTION_EVIDENCE, RELATION_EVIDENCE, 'producer-evidence:source-A179'].includes(item.evidenceId)
     && sameValue(item, basis.byId.get(item.evidenceId))).map((item) => item.evidenceId))
   const supported = (refs: string[]) => refs.length > 0 && refs.every((id) => canonical.has(id) || basis.eligible(id))
+  const validatedAssignments = new Map((input.validatedRoleAssignments ?? []).map((item) => [item.roleStateRef, item]))
   const currentStates = input.states.map((item) => runtimeStateSchema.parse(item)).filter((item) =>
     item.scopeId === context.scopeId && included.has(item.targetEntityId) && !item.uncertaintyIds.length && item.functionalState !== 'unknown'
     && item.causingApplicationRefs.every((app) => app.executionId === context.executionId)
@@ -97,18 +100,29 @@ export function evaluateRoleFunctions(input: Input) {
       const ownership = role.subjectKind === 'entity' && role.status === 'evaluated' && role.usage === 'runtime-result'
         && !role.provisional && !role.uncertaintyIds.length && role.validScopeId === input.natalScopeId
         && role.applicationRef?.executionId === context.executionId && role.evidenceIds.length > 0
-        && role.evidenceIds.every((id) => basis.eligible(id))
+        && (role.evidenceIds.every((id) => basis.eligible(id)) || (() => {
+          const assignment = validatedAssignments.get(role.roleStateId)
+          return !!assignment && assignment.entityId === entityId && assignment.role === role.role
+            && assignment.scopeId === role.validScopeId && assignment.executionId === context.executionId
+            && !!assignment.judgmentId && sameValue(assignment.producerRef, producer.producerRef)
+            && sameValue(sortedUnique(assignment.evidenceIds), sortedUnique(role.evidenceIds))
+        })())
       const scopeReady = context.periodSelectionStatus === 'confirmed' && included.has(entityId)
       const dependencies = (path?.requiredFunctionIds ?? []).map((id) => {
         const dependency = resolvedFunctions.get(id)
         return type === 'sangshen' && dependency?.functionType === 'yongshen' ? dependency : undefined
       })
-      const dependencyReady = dependencies.every((item) => item?.status === 'active' || item?.status === 'weakened')
+      const dependencyReady = dependencies.every((item) => ['active', 'strengthened', 'weakened'].includes(item?.status ?? ''))
       const dependencyStopped = dependencies.some((item) => item?.status === 'stopped')
       const stoppedParticipant = participants.some(({ state }) => state?.functionalState === 'stopped')
       const validRelations = edges.every((edge) => edge?.existence === 'present' && edge.assessment === 'confirmed'
         && !edge.uncertaintyIds.length && supported(edge.evidenceIds))
-      const validStructure = !!path && supported(path.evidenceIds) && !!path.structuralFactRefs.length
+      const assignment = validatedAssignments.get(role.roleStateId)
+      const judgmentHandoff = !!assignment && assignment.entityId === entityId && assignment.role === role.role
+        && assignment.scopeId === role.validScopeId && assignment.executionId === context.executionId
+        && !!assignment.judgmentId && sameValue(assignment.producerRef, producer.producerRef)
+        && sameValue(sortedUnique(assignment.evidenceIds), sortedUnique(role.evidenceIds))
+      const validStructure = !!path && (supported(path.evidenceIds) || judgmentHandoff) && !!path.structuralFactRefs.length
         && path.structuralStatus === 'confirmed'
       const period = overlap([context.effectivePeriod, ...states.map((state) => state.validity),
         ...dependencies.flatMap((item) => item ? [item.effectivePeriod] : [])], context.referenceTime)
@@ -169,7 +183,7 @@ export function evaluateRoleFunctions(input: Input) {
   }))
 }
 
-/** Final pass consumes only same-scope, effective, confirmed weaken facts, without re-running OP-P06. */
+/** Consume confirmed effects once, preserving both directions of change. */
 export function applyRoleFunctionEffects(pre: RoleFunctionState, effects: EffectFact[], referenceTime: string, requiredFunctionIds: string[] = []) {
   roleFunctionStateSchema.parse(pre)
   if (pre.phase !== 'pre-effect') throw new TypeError('Role function effects require a pre-effect snapshot')
@@ -180,15 +194,21 @@ export function applyRoleFunctionEffects(pre: RoleFunctionState, effects: Effect
       ? item.targetEntityId === pre.entityId && item.provenance.producerRef.inputFactIds.includes(pre.roleFunctionStateId)
       : item.provenance.producerRef.inputFactIds.some((id) => pre.provenance.producerRef.inputFactIds.includes(id)
         && id.startsWith('role-function-state:'))))
-  const canWeaken = containsTime(pre.effectivePeriod, referenceTime) && (pre.status === 'active' || pre.status === 'weakened')
-  const used = canWeaken ? applicable : []
+  const canChange = containsTime(pre.effectivePeriod, referenceTime) && (pre.status === 'active' || pre.status === 'weakened')
+  const used = canChange ? applicable : []
   const effectRefs = sortedUnique(used.map((item) => item.effectId))
+  const strengthens = used.some((item) => item.effectType === 'strengthen')
+  const weakens = used.some((item) => item.effectType === 'weaken'
+    || item.effectType === 'drain' && item.reducesFunction !== false)
+  const status = weakens || pre.status === 'weakened' ? 'weakened' : strengthens ? 'strengthened' : pre.status
   return roleFunctionStateSchema.parse({ ...pre, phase: 'post-effect',
     roleFunctionStateId: recordId('role-function-state', [pre.scopeId, pre.functionId, 'post-effect']),
-    status: effectRefs.length ? 'weakened' : pre.status, effectRefs,
+    status, effectRefs,
     effectivePeriod: overlap([pre.effectivePeriod, ...used.map((item) => item.effectivePeriod)], referenceTime) ?? pre.effectivePeriod,
     evidenceIds: sortedUnique([...pre.evidenceIds, ...used.flatMap((item) => item.evidenceIds)]),
-    reasonCodes: sortedUnique([...pre.reasonCodes, ...(effectRefs.length ? ['CONFIRMED_FUNCTION_WEAKEN'] : [])]),
+    reasonCodes: sortedUnique([...pre.reasonCodes, ...(weakens ? ['CONFIRMED_FUNCTION_WEAKEN'] : []),
+      ...(used.some(({ effectType }) => effectType === 'drain') ? ['CONFIRMED_FUNCTION_DRAIN'] : []),
+      ...(strengthens ? ['CONFIRMED_FUNCTION_STRENGTHEN'] : [])]),
     provenance: { ...pre.provenance, producerRef: { ...pre.provenance.producerRef, sourceRef: 'roleFunctionState/post-effect',
       inputFactIds: [pre.roleFunctionStateId, ...effectRefs] } },
   })

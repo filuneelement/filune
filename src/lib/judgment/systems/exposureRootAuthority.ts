@@ -80,6 +80,15 @@ export function exposureRootAuthority(sources: ExposureRootSources) {
   const roleOrderId = receipt('D', 'H-3-1.', 'C-10', '월지 지장간(여기·중기·본기)의 십신', 'hidden-role-order')
   const entryReceiptIds: Record<string, string[]> = {}
   for (const [branch, quote] of rowQuotes) entryReceiptIds[branch] = [roleOrderId, receipt('D', 'H-3-1.', 'C-10', quote, `hidden-entry:${branch}`)]
+  // 25-7 5-1/5-2 identify the effective earth resource and metal peer
+  // relative to 辛. These establish the branch main only, not a full row.
+  const branchMainObservations = [
+    { branch: '未', hiddenStem: '己', evidenceIds: [receipt('approval', '5-1. 원국 판단', 'I-04-2',
+      '未 편인(일지)·戌 정인(년지)이 子와 인접', 'branch-main:未')] },
+    { branch: '酉', hiddenStem: '辛', evidenceIds: [receipt('approval', '5-2. 대운 재판정', 'I-04-1',
+      '己酉 (22~32)\t혼합\t유리: 己 인성이 남은 壬 상관을 제복\t유리: 酉 상신 강화(酉酉 자형·子酉 파 동반)\t—\t',
+      'branch-main:酉')] },
+  ]
   const ruleReceiptIds: Record<string, string> = {}
   const a81 = sources.A.split('A-8-1.')[1].split('A-8-2.')[0]
   for (const ruleId of ['C-10', 'I-01', 'I-02', 'I-02a']) {
@@ -105,7 +114,7 @@ export function exposureRootAuthority(sources: ExposureRootSources) {
     if (!quote) throw new TypeError('Document pillar statement missing')
     return { pillars: quote.split(' '), evidenceId: receipt('C', 'C-10-1.', 'I-01', quote, `document-pillars:${quote}`) }
   })
-  return detach({ entryReceiptIds, ruleReceiptIds, pillarReceipts, hiddenStemSystemId: FILUNE_A179.id, entries, evidence,
+  return detach({ entryReceiptIds, ruleReceiptIds, pillarReceipts, hiddenStemSystemId: FILUNE_A179.id, entries, evidence, branchMainObservations,
     unassigned: [{ branch: '未', hiddenStem: '乙', evidenceIds: [evidenceId('C')] }],
     excluded: [{ branch: '亥', hiddenStem: '戊', evidenceIds: [evidenceId('C')] }] })
 }

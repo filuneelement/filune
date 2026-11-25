@@ -6,8 +6,9 @@ import type { ReadingCertainty, ReadingProvenance, ReadingScope, ReadingSemantic
 import type { CustomerReadingContext } from '../customerContext'
 import type { StructuralExplanationUnit } from '../structuralExplanation'
 import type { OutcomeFact } from '../../outcome/types'
+import type { WorkStudySemantic } from '../../outcome/workStudy'
 
-export type CustomerChapterId = 'CR-01' | 'CR-02' | 'CR-03' | 'CR-04' | 'CR-05' | 'CR-07' | 'CR-08' | 'CR-09'
+export type CustomerChapterId = 'CR-01' | 'CR-02' | 'CR-03' | 'CR-04' | 'CR-05' | 'CR-06' | 'CR-07' | 'CR-08' | 'CR-09'
 export type SemanticReadiness = 'ready' | 'partial' | 'deferred'
 export type PublicationReadiness = 'ready' | 'partial' | 'deferred'
 export type RelationshipTimingAvailability = 'available' | 'partial' | 'none'
@@ -19,6 +20,7 @@ export const customerChapterTitleKeys = {
   'CR-03': 'situational_responses',
   'CR-04': 'current_life_changes',
   'CR-05': 'relationship_style',
+  'CR-06': 'work_and_learning_environment',
   'CR-07': 'earning_and_retention',
   'CR-08': 'long_term_transitions',
   'CR-09': 'opportunity_and_caution_windows',
@@ -46,13 +48,19 @@ export type OutcomeVoice = 'earning' | 'skill' | 'expression' | 'retention' | 'c
   | 'contact' | 'change' | 'formation' | 'relationshipPressure'
 
 export type ParagraphExpression =
+  | { readonly kind: 'judgment_structure'; readonly unitId: string }
   | { readonly kind: 'temporal'; readonly contribution: TemporalContribution }
   | { readonly kind: 'personality'; readonly voice: PersonalityVoice; readonly traitFactIds: readonly string[];
+      readonly contentId?: import('../interpretationContent').PersonalityContentId;
       readonly scene?: CustomerReadingContext['relationshipStatus'];
       readonly composite?: 'outward_decision' | 'relation_sequence'; readonly pattern?: CustomerBehaviorPattern;
       readonly limitationFactId?: string }
   | { readonly kind: 'outcome'; readonly voice: OutcomeVoice; readonly scene?: CustomerReadingContext['relationshipStatus'];
       readonly startsAt?: string; readonly endsBefore?: string; readonly structuralExplanationUnitIds?: readonly string[] }
+  | { readonly kind: 'work_study'; readonly semantic: WorkStudySemantic; readonly mappingId: string;
+      readonly scene?: CustomerReadingContext['careerStatus'] | 'student'; readonly reduced?: boolean;
+      readonly cause?: 'output_to_wealth' | 'output_controls_pressure';
+      readonly structuralExplanationUnitIds?: readonly string[] }
 
 export interface OutcomeActivation {
   readonly semanticUnitId: string
@@ -127,6 +135,15 @@ export interface CustomerReadingPlan {
   readonly semanticUnits: readonly ReadingSemanticUnit[]
   readonly structuralExplanationUnits: readonly StructuralExplanationUnit[]
   readonly evidenceContext: CustomerEvidenceContext
+  readonly flowAxes?: readonly CustomerFlowAxisComparison[]
+}
+
+export interface CustomerFlowAxisComparison {
+  readonly snapshotId: string
+  readonly scope: 'greatLuck' | 'yearlyLuck' | 'monthlyLuck'
+  readonly period: readonly [string, string]
+  readonly favorableAxis: 'stem' | 'branch'
+  readonly evidenceIds: readonly string[]
 }
 
 export type CustomerEvidenceGapClassification = 'SOURCE_GAP' | 'ENGINE_GAP' | 'PUBLICATION_INELIGIBLE' | 'RENDERER_GAP'
@@ -182,6 +199,7 @@ export const chapterTargets = {
   'CR-02': { characters: [800, 1300], paragraphs: [4, 6] },
   'CR-03': { characters: [800, 1300], paragraphs: [4, 6] },
   'CR-04': { characters: [1500, 2400], paragraphs: [7, 10] },
+  'CR-06': { characters: [1700, 2700], paragraphs: [8, 12] },
   'CR-08': { characters: [1300, 2200], paragraphs: [6, 9] },
   'CR-09': { characters: [1700, 2800], paragraphs: [8, 12] },
   'CR-07': { characters: [1500, 2500], paragraphs: [7, 10] },

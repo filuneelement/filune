@@ -20,6 +20,16 @@ export function withinPeriod(referenceTime: string | undefined, period?: Readonl
   return Date.parse(interval[0]) <= now && now < Date.parse(interval[1])
 }
 
+export function intersectValidity(child: Validity, parent: Validity): Validity | undefined {
+  const left = bounds(child), right = bounds(parent)
+  if (!left || !right) return undefined
+  const from = Date.parse(left[0]) >= Date.parse(right[0]) ? left[0] : right[0]
+  const to = Date.parse(left[1]) <= Date.parse(right[1]) ? left[1] : right[1]
+  if (Date.parse(from) >= Date.parse(to)) return undefined
+  if (from === left[0] && to === left[1]) return child
+  return { ...child, from: { kind: 'exact', instant: from }, to: { kind: 'exact', instant: to } }
+}
+
 export type UnitInput = Omit<ReadingSemanticUnit,
   keyof ReadingProvenance | 'id' | 'semanticKey' | 'status' | 'firstOccurrenceChapterId' | 'allowedChapterIds'>
   & Partial<ReadingProvenance>

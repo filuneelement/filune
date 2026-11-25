@@ -14,6 +14,8 @@ export type ExecutionScopeRequest = {
   selectedPeriodRefs: Partial<Record<Exclude<SourceScope, 'natal'>, string>>
   /** Evaluate a year only over its overlap with the selected Great Luck period. */
   intersectYearWithGreatLuck?: boolean
+  /** Temporal restriction only. Great Luck stays outside direct monthly comparison. */
+  monthlyGreatLuckPeriodRef?: string
   /** Natal has no computed luck period; caller must provide its explicit inspection window. */
   natalInspectionPeriod?: Validity
 }
@@ -22,6 +24,7 @@ export type ExecutionScopeContext = {
   includedEntityIds: string[]; excludedEntityIds: string[]; selectedPeriodRefs: ExecutionScopeRequest['selectedPeriodRefs']
   referenceTime: string; effectivePeriod: Validity; periodSelectionStatus: 'confirmed' | 'unknown'
   intersectYearWithGreatLuck: boolean
+  monthlyGreatLuckPeriodRef?: string
   uncertaintyIds: string[]; ruleRef: { document: 'A'; revision: 179; section: 'A-8-6'; ruleId: 'OP-L01' }
   producerSnapshotIdentity: string
 }
@@ -79,6 +82,9 @@ export function createExecutionScopeContext(output: JudgmentProducerOutput, requ
     : producerPeriod(output, selectedPeriodRefs[request.stage]!)
   if (request.stage !== 'natal' && request.natalInspectionPeriod) throw new TypeError('Natal inspection window belongs only to natal stage.')
   if (request.intersectYearWithGreatLuck && request.stage !== 'yearlyLuck') throw new TypeError('Only yearly evaluation can intersect Great Luck.')
+  if (request.monthlyGreatLuckPeriodRef && request.stage !== 'monthlyLuck') {
+    throw new TypeError('Monthly inheritance boundary supplied for a different stage.')
+  }
   let effectivePeriod = canonicalPeriod
   if (request.intersectYearWithGreatLuck) {
     const great = producerPeriod(output, selectedPeriodRefs.greatLuck!)
@@ -92,6 +98,22 @@ export function createExecutionScopeContext(output: JudgmentProducerOutput, requ
       effectivePeriod = validitySchema.parse({ periodId, from: { kind: 'exact', instant: start }, to: { kind: 'exact', instant: end } })
     }
   }
+  if (request.monthlyGreatLuckPeriodRef) {
+    const ref = request.monthlyGreatLuckPeriodRef
+    if (!output.entities.some(entity => entity.sourceScope === 'greatLuck' && entity.periodRef === ref)) {
+      throw new TypeError('Monthly inheritance requires a producer Great Luck period.')
+    }
+    const great = producerPeriod(output, ref)
+    if (canonicalPeriod.from.kind !== 'exact' || canonicalPeriod.to.kind !== 'exact'
+      || great.from.kind !== 'exact' || great.to.kind !== 'exact') throw new TypeError('Exact boundaries required for monthly inheritance.')
+    const start = canonicalPeriod.from.instant > great.from.instant ? canonicalPeriod.from.instant : great.from.instant
+    const end = canonicalPeriod.to.instant < great.to.instant ? canonicalPeriod.to.instant : great.to.instant
+    if (start >= end) throw new TypeError('Monthly evaluation does not overlap selected Great Luck period.')
+    if (start !== canonicalPeriod.from.instant || end !== canonicalPeriod.to.instant) {
+      effectivePeriod = validitySchema.parse({ periodId: `period-intersection:${canonicalPeriod.periodId}:${ref}`,
+        from: { kind: 'exact', instant: start }, to: { kind: 'exact', instant: end } })
+    }
+  }
   const member = membership(effectivePeriod, referenceTime)
   if (member === 'outside') throw new TypeError('Effective period excludes referenceTime.')
   unknown ||= member === 'unknown'
@@ -103,6 +125,7 @@ export function createExecutionScopeContext(output: JudgmentProducerOutput, requ
     stage: request.stage, includedScopes, excludedScopes, includedEntityIds,
     excludedEntityIds: output.entities.filter((entity) => !includedEntityIds.includes(entity.entityId)).map((entity) => entity.entityId).sort(),
     selectedPeriodRefs, referenceTime, effectivePeriod, intersectYearWithGreatLuck: request.intersectYearWithGreatLuck ?? false,
+    ...(request.monthlyGreatLuckPeriodRef && { monthlyGreatLuckPeriodRef: request.monthlyGreatLuckPeriodRef }),
     periodSelectionStatus: unknown ? 'unknown' : 'confirmed',
     uncertaintyIds: unknown ? ['execution-period-membership-unconfirmed'] : [],
     producerSnapshotIdentity: producerSnapshotIdentity(output),
@@ -112,7 +135,8 @@ export function assertExecutionScopeContext(output: JudgmentProducerOutput, cont
   const expected = createExecutionScopeContext(output, { executionId: context.executionId, stage: context.stage,
     referenceTime: context.referenceTime, selectedPeriodRefs: context.selectedPeriodRefs,
     ...(context.stage === 'natal' ? { natalInspectionPeriod: context.effectivePeriod } : {}),
-    intersectYearWithGreatLuck: context.intersectYearWithGreatLuck })
+    intersectYearWithGreatLuck: context.intersectYearWithGreatLuck,
+    monthlyGreatLuckPeriodRef: context.monthlyGreatLuckPeriodRef })
   if (JSON.stringify(detach(expected)) !== JSON.stringify(detach(context))) throw new TypeError('Execution scope/context was altered or belongs to another producer snapshot.')
 }
 export function selectExecutionCandidates(output: JudgmentProducerOutput, context: ExecutionScopeContext) {

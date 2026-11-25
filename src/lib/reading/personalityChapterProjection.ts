@@ -65,6 +65,17 @@ export function projectNatalPersonalityChapters(natal: Readonly<NatalPersonality
       externalExpression: slot(byType('social', 'expression').filter(fact => fact.sourceType !== 'ten_god'
         || (fact.sourcePosition && fact.sourcePosition !== 'day_stem' && outwardPositions.has(fact.sourcePosition))), 'KNOWLEDGE_GAP'),
       internalDecisionStyle: slot(byType('decision'), 'KNOWLEDGE_GAP'),
+      privatePerspective: slot(byType('inner').filter(fact => fact.sourceType !== 'ten_god'), 'NOT_APPLICABLE'),
+      pillarExpression: slot(byType('expression').filter(fact => fact.sourceType === 'day_pillar'
+        && !hasBehaviorStages(fact.trait)), 'NOT_APPLICABLE'),
+      structuralDrive: slot(byType('core').filter(fact => fact.sourceType === 'ten_god'
+        && natal.structuralRoleModifiers.some(modifier => modifier.status === 'confirmed'
+          && modifier.targetPersonalityFactIds.includes(fact.id))), 'NOT_APPLICABLE'),
+      positionalJudgment: slot(byType('inner', 'decision').filter(fact =>
+        fact.sourceType === 'ten_god' && Boolean(fact.sourcePosition?.endsWith('_branch'))
+          && (fact.status === 'active' || natal.structuralRoleModifiers.some(modifier =>
+            modifier.status === 'confirmed' && modifier.targetPersonalityFactIds.includes(fact.id)))),
+      'NOT_APPLICABLE'),
       practicalDecision: slot(byType('decision').filter(fact => fact.trait === '실리를 따져 신속하게 판단함'), 'NOT_APPLICABLE'),
       judgmentBoundary: slot(byType('shadow').filter(fact => fact.trait === '자기 판단을 유일한 기준으로 삼기 쉬움'
         || fact.trait === '자기 기준이 지나치게 확고해지면 다른 의견을 듣지 않으려 함'), 'NOT_APPLICABLE'),
@@ -83,6 +94,9 @@ export function projectNatalPersonalityChapters(natal: Readonly<NatalPersonality
       overuseRisk: slot(tagged(overuse, 'shadow'), 'SOURCE_GAP', true),
     },
     'CR-03': {
+      independentResponse: slot(facts.filter(fact => !hasBehaviorStages(fact.trait)
+        && (fact.traitType === 'stress' || fact.sourceType === 'day_pillar' && fact.traitType === 'expression'
+          && fact.trait.includes('의사'))), 'NOT_APPLICABLE'),
       behaviorContext: slot(behavior, 'KNOWLEDGE_GAP'),
       behaviorConflict: slot(conflicts.flatMap(conflict => conflict.factIds.map(id => byId.get(id)!)),
         'NOT_APPLICABLE', false, conflicts.map(conflict => conflict.id)),

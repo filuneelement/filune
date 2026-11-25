@@ -18,8 +18,10 @@ try {
       provenance: { producerRef: { producerId: 'producer', version: '1', sourceRef: 'src', inputFactIds: [] }, ruleRevision: 181 },
       coverage: 'complete', effectivePeriod: inspection, reasonCodes: [], status: 'confirmed' }
     assert.deepEqual(effectFactSchema.parse(fact), fact)
+    assert.equal(effectFactSchema.is({ ...fact, effectType: 'strengthen' }), true)
+    assert.equal(effectFactSchema.is({ ...fact, effectType: 'drain', targetEntityId: 'source' }), true)
     assert.equal(effectFactSchema.is({ ...fact, status: 'deferred', coverage: 'partial', reasonCodes: ['missing'] }), true)
-    for (const invalid of [{ effectType: 'stop' }, { effectType: 'strengthen' }, { runtimeStateRefs: ['a'] },
+    for (const invalid of [{ effectType: 'stop' }, { runtimeStateRefs: ['a'] },
       { evidenceIds: [] }, { reasonCodes: ['missing'] }, { coverage: 'partial' }, { importance: 'high' }, { score: 1 },
       { polarity: 'bad' }, { status: 'deferred' }, { sourceEntityId: 'target' }]) {
       assert.equal(effectFactSchema.is({ ...fact, ...invalid }), false, JSON.stringify(invalid))
@@ -28,7 +30,7 @@ try {
     const { CURRENT_CALCULATION_VERSION } = await load('canonical/version')
     const fixture = JSON.parse(await readFile('scripts/fixtures/byeong-judgment-inputs.json', 'utf8'))['CS-005']
     const [A, draftA, C, D, approval] = await Promise.all(
-      ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((file) => readFile(`src/docs/source/${file}.md`, 'utf8')))
+      ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((file) => readFile(`src/docs/source/authority/${file}.md`, 'utf8')))
     const birth = { date: fixture.date, time: { known: true, value: fixture.time }, gender: '女性', timeCorrectionMode: 'none' }
     const calculation = { referenceTime: '2027-02-15T00:00:00.000Z', calculationVersion: CURRENT_CALCULATION_VERSION, monthlyLuckYear: 2027 }
     if (mode === 'cs005' || mode === 'cs005-role-function') {
@@ -54,15 +56,16 @@ try {
         console.log(JSON.stringify({ functionName: name, relation: candidate.relation, sourceState: candidate.sourceState,
           targetState: candidate.targetState, functionOwnership: candidate.functionOwnership, functionActive: candidate.functionActive,
           reach: candidate.reach, status: candidate.status, reasonCodes: candidate.reasonCodes }))
-        const ordinary = kind === 'ten-god'
+        const ordinary = true
         assert.equal(candidate.status, ordinary ? 'confirmed' : 'deferred')
         assert.equal(candidate.functionOwnership, 'confirmed')
         assert.equal(candidate.reach, ordinary ? 'confirmed' : 'unknown')
+        const relation = month.relations.find((item) => item.relationFactId === candidate.relationFactId)
         const record = month.functionEffects.effects.find((item) => item.relationFactId === candidate.relationFactId
           && item.targetFunctionId === candidate.targetFunctionId)
         assert.ok(effectFactSchema.is(record))
         assert.equal(record.status, candidate.status)
-        assert.equal(record.effectType, 'weaken')
+        assert.equal(record.effectType, relation?.kind === 'stem-generates' ? 'strengthen' : 'weaken')
         assert.deepEqual(record.reasonCodes, candidate.reasonCodes)
         if (!ordinary) assert.deepEqual(candidate.reasonCodes, ['ROLE_ACTION_UNSPECIFIED'])
       }
@@ -81,7 +84,7 @@ try {
           && ['용신', '상신'].includes(role.role))
         assert.equal(roles.length, 2)
         assert.ok(roles.every((role) => role.status === 'evaluated' && !role.provisional))
-        assert.ok(!month.roleFunctions.some(({ preEffect }) => roles.some((role) => role.roleStateId === preEffect.roleStateRef)))
+        assert.ok(roles.every((role) => month.roleFunctions.some(({ preEffect }) => role.roleStateId === preEffect.roleStateRef)))
         const incoming = month.relationActions.find((action) => action.sourceEntityId.includes('/pillars/year/'))
         const outgoing = month.relationActions.find((action) => action.targetEntityId.includes('/pillars/day/'))
         assert.equal(incoming?.status, 'stopped')
@@ -95,14 +98,20 @@ try {
         assert.deepEqual(context?.roleStateRefs, roles.map((role) => role.roleStateId).sort())
         for (const role of roles) {
           const deferral = month.roleEffectDeferrals.find((item) => item.roleStateRef === role.roleStateId)
-          assert.deepEqual(deferral?.reasonCodes, ['ROLE_ACTION_UNSPECIFIED'])
+          assert.equal(deferral, undefined)
+          const functionResult = month.roleFunctions.find(({ preEffect }) => preEffect.roleStateRef === role.roleStateId)
+          assert.equal(functionResult?.preEffect.status, 'active')
+          assert.equal(functionResult?.postEffect.status, 'weakened')
         }
         assert.deepEqual(withExpected.roleFunctions, month.roleFunctions)
         assert.deepEqual(withExpected.roleEffectContexts, month.roleEffectContexts)
         console.log(JSON.stringify({ roleAssignments: roles.map(({ role }) => role), incoming: incoming.status,
           outgoing: outgoing.status, effectContextCount: month.roleEffectContexts.length }))
       }
-      assert.equal(reading.natal.successState.status, 'deferred')
+      // C-10-1 items 8–9: the remaining wealth-to-killing damage is
+      // established independently of the protective action of 戌.
+      assert.equal(reading.natal.successState.status, 'confirmed')
+      assert.equal(reading.natal.structuralSuccess.overall.grade, '不利優勢')
       assert.equal(month.byeong?.status, 'deferred')
       assert.equal(month.guEung?.status, 'deferred')
     } else {
@@ -160,6 +169,52 @@ try {
       assert.ok(multiple.every((item) => item.status === 'confirmed'))
       assert.equal(new Set(multiple.map((item) => item.targetFunctionId)).size, 3)
       assert.equal(new Set(multiple.map((item) => item.relationFactId)).size, 1)
+      const { selectExecutionCandidates } = await load('judgment/runtime/executionScopeContext')
+      const generated = selectExecutionCandidates(producer, context).relations.find((item) => item.kind === 'stem-generates'
+        && item.sourceEntityId !== item.targetEntityId)
+      assert.ok(generated, 'fixture must contain an approved generated relation')
+      const generateSource = producer.entities.find((item) => item.entityId === generated.sourceEntityId)
+      const generateTarget = producer.entities.find((item) => item.entityId === generated.targetEntityId)
+      const generatedTenGod = producer.facts.find((item) => item.canonicalPointer === `/chart/basicRelations/${generateTarget.position}/value/stemTenGod`)
+      const generatedStates = [generateSource, generateTarget].map((item) => ({ contractVersion: '1', stateId: `state:${item.entityId}`,
+        targetEntityId: item.entityId, scopeId: context.scopeId, functionalState: 'active', originMode: 'local',
+        transition: 'established', causingApplicationRefs: [application], evidenceIds, uncertaintyIds: [], validity: inspection }))
+      const generatedFn = { targetEntityId: generateTarget.entityId, kind: 'ten-god', name: generatedTenGod.value,
+        scopeId: context.scopeId, effectivePeriod: inspection, ownershipFactRef: generatedTenGod.id }
+      const generatedResult = produceEffectFacts({ ...input, states: generatedStates, functions: [generatedFn] })
+      const strengthening = generatedResult.effects.find((item) => item.relationFactId === generated.relationFactId)
+      assert.equal(strengthening?.effectType, 'strengthen')
+      assert.equal(strengthening?.status, 'confirmed', JSON.stringify(generatedResult.diagnostics))
+      const { evaluateRoleFunctions, applyRoleFunctionEffects } = await load('judgment/evaluators/roleFunctionState/index')
+      const drainRole = { ...roles[0], roleStateId: 'role:generator', entityId: generateSource.entityId }
+      const assignment = { roleStateRef: drainRole.roleStateId, entityId: generateSource.entityId, role: drainRole.role,
+        scopeId: context.scopeId, executionId: context.executionId, judgmentId: 'judgment:generator',
+        producerRef: producer.producerRef, evidenceIds: drainRole.evidenceIds }
+      const drainPath = { roleStateRef: drainRole.roleStateId, judgmentRef: assignment.judgmentId, actionId: 'generation-source-function',
+        requiredRelationRefs: [generated.relationFactId], requiredParticipantIds: [generateSource.entityId, generateTarget.entityId],
+        structuralFactRefs: [generateSource.canonicalFactRef, generateTarget.canonicalFactRef], structuralStatus: 'confirmed',
+        exclusive: false, evidenceIds: drainRole.evidenceIds }
+      const drainPre = evaluateRoleFunctions({ producer, context, natalScopeId: context.scopeId, roles: [drainRole],
+        states: generatedStates, paths: [drainPath], evidence, validatedRoleAssignments: [assignment], restrictionsResolved: true })[0].fact
+      assert.equal(drainPre.status, 'active')
+      const drainedResult = produceEffectFacts({ ...input, states: generatedStates, roles: [drainRole],
+        validatedRoleAssignments: [assignment], functions: [{ targetEntityId: generateSource.entityId, kind: 'yongshen',
+          name: drainRole.role, scopeId: context.scopeId, effectivePeriod: inspection, roleStateRef: drainRole.roleStateId,
+          preRoleFunction: drainPre }] })
+      const drain = drainedResult.effects.find((item) => item.relationFactId === generated.relationFactId
+        && item.targetEntityId === generateSource.entityId)
+      assert.equal(drain?.effectType, 'drain')
+      assert.equal(drain?.status, 'confirmed', JSON.stringify(drainedResult.diagnostics))
+      const retained = applyRoleFunctionEffects(drainPre, [drain], context.referenceTime)
+      assert.equal(retained.status, 'active')
+      assert.ok(retained.reasonCodes.includes('CONFIRMED_FUNCTION_DRAIN'))
+      const restrictedDrain = produceEffectFacts({ ...input, states: generatedStates, roles: [drainRole],
+        validatedRoleAssignments: [assignment],
+        rootStates: [{ entityId: generateSource.entityId, state: 'weakened', factIds: ['clashed-root'], formationIds: [] }],
+        functions: [{ targetEntityId: generateSource.entityId, kind: 'yongshen',
+          name: drainRole.role, scopeId: context.scopeId, effectivePeriod: inspection, roleStateRef: drainRole.roleStateId,
+          preRoleFunction: drainPre }] }).effects
+      assert.equal(applyRoleFunctionEffects(drainPre, restrictedDrain, context.referenceTime).status, 'weakened')
       const historicalRole = { ...roles[0], validScopeId: 'origin-scope',
         applicationRef: { ...application, scopeId: 'origin-scope' } }
       const roleFunction = { ...fn, kind: 'yongshen', name: '용신',
@@ -235,6 +290,15 @@ try {
         const post = applyRoleFunctionEffects(pre, [direct], context.referenceTime)
         assert.equal(post.status, 'weakened')
         assert.deepEqual(post.effectRefs, [direct.effectId])
+        const strengthening = { ...direct, effectId: 'effect:strengthen', effectType: 'strengthen' }
+        const strengthened = applyRoleFunctionEffects(pre, [strengthening], context.referenceTime)
+        assert.equal(strengthened.status, 'strengthened')
+        assert.deepEqual(strengthened.effectRefs, [strengthening.effectId])
+        const conflicting = applyRoleFunctionEffects(pre, [direct, strengthening], context.referenceTime)
+        assert.equal(conflicting.status, 'weakened')
+        assert.ok(conflicting.reasonCodes.includes('CONFIRMED_FUNCTION_WEAKEN'))
+        assert.ok(conflicting.reasonCodes.includes('CONFIRMED_FUNCTION_STRENGTHEN'))
+        assert.deepEqual(conflicting.effectRefs, [direct.effectId, strengthening.effectId].sort())
         assert.equal(applyRoleFunctionEffects(pre, [{ ...direct, scopeId: 'prior-scope' }], context.referenceTime).status, 'active')
         const helperPre = find(evaluate({ paths: [path, linkedHelper] }), 'sangshen')
         assert.equal(applyRoleFunctionEffects(helperPre, [direct], context.referenceTime, [pre.functionId]).status, 'weakened')

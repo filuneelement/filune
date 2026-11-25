@@ -10,8 +10,11 @@ import { collectLuck, collectNatalJudgment, scopeNames } from './judgmentUnits'
 import { collectCurrentPersonality, collectNatalPersonality } from './personalityUnits'
 import { collectRelationshipUnits } from './relationshipUnits'
 import { collectEventTimingUnits } from './eventTimingUnits'
-import { buildStructuralExplanationUnits } from './structuralExplanation'
-import { bounds, compare, uniqueIds, withinPeriod, type RoutedUnits } from './semanticUnit'
+import { buildStructuralExplanationUnits, collectStructuralInterpretation } from './structuralExplanation'
+import { evaluateOutcomePublicationEligibility } from './publicationEligibility'
+import { bounds, compare, intersectValidity, uniqueIds, withinPeriod, type RoutedUnits } from './semanticUnit'
+import type { Validity } from '../judgment/contracts'
+import type { LuckScopeState } from '../judgment/core/luckScope'
 import type { ChapterId, ReadingAssembly, ReadingAssemblyInput, ReadingCertainty, ReadingScope, SelectionKind, TemporalSnapshot } from './types'
 
 function collectCanonical(chart: Readonly<CalculatedChart>, input: ReadingAssemblyInput, unknownHour: boolean, out: RoutedUnits) {
@@ -44,6 +47,7 @@ const sortedFacts = <T extends { readonly id: string }>(items?: readonly T[]) =>
 function temporalProjection(snapshot: NonNullable<ReadingAssemblyInput['luckScopes']>[number]): TemporalSnapshot {
   return {
     id: snapshot.id, scope: snapshot.scope, parentScopeId: snapshot.parentScopeId, validity: snapshot.validity,
+    structuralSuccess: snapshot.structuralSuccess,
     stemFacts: byId(snapshot.stemFacts), patternFacts: byId(snapshot.patternFacts),
     branchFacts: byId(snapshot.branchFacts), formationFacts: byId(snapshot.formationFacts),
     formationBranchPool: byId(snapshot.formationBranchPool),
@@ -64,9 +68,49 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     : natal?.unavailablePositions.some(position => position.startsWith('hour_')) === true
   const chapters = chapterRegistry.filter(entry => productScope === 'premium' || entry.access === 'free')
   const out = collectReadingUnits(new Set<ChapterId>(chapters.map(entry => entry.id)))
-  const snapshots = [...(judgment?.judgmentCore ?? []), ...(input.luckScopes ?? [])]
-  const explanationSnapshots = [...snapshots, ...(input.evaluatedLuckScopes ?? []).map(item => item.snapshot),
-    ...(judgment?.luck.monthlyWindow ?? []).flatMap(month => month.judgmentCore ? [month.judgmentCore] : [])]
+  const raw = [...(judgment?.judgmentCore ?? []), ...(input.luckScopes ?? [])]
+  const monthsEvaluated = judgment?.luck.monthlyWindow ?? []
+  const evaluatedAncestors = (input.evaluatedLuckScopes ?? []).flatMap(item => item.publicationAncestors ?? [])
+  const byScope = new Map([...raw, ...(input.evaluatedLuckScopes ?? [])
+    .flatMap(item => [...(item.publicationAncestors ?? []), item.snapshot]),
+    ...monthsEvaluated.flatMap(month => [...(month.publicationAncestors ?? []), ...(month.judgmentCore ? [month.judgmentCore] : [])])]
+    .map(snapshot => [snapshot.id, snapshot]))
+  function publicationValidity(scopeId: string, period: Validity) {
+    let scope = byScope.get(scopeId)
+    const seen = new Set([scopeId])
+    while (scope && (scope.scope === 'monthlyLuck' || scope.scope === 'yearlyLuck' || scope.scope === 'dailyLuck')) {
+      const parentId = scope.parentScopeId
+      if (!parentId || seen.has(parentId)) return undefined
+      seen.add(parentId)
+      const parent = byScope.get(parentId)
+      if (!parent || parent.scope === 'natal') return parent ? period : undefined
+      const overlap = intersectValidity(period, parent.validity)
+      if (!overlap) return undefined
+      period = overlap
+      scope = parent
+    }
+    return period
+  }
+  const publicSnapshot = (snapshot: LuckScopeState) => {
+    const validity = publicationValidity(snapshot.id, snapshot.validity)
+    return validity ? [{ ...snapshot, validity }] : []
+  }
+  const snapshots = raw.flatMap(publicSnapshot)
+  const adjacent = (input.evaluatedLuckScopes ?? []).flatMap(({ snapshot, evaluatedAt }) =>
+    publicSnapshot(snapshot).filter(snapshot => withinPeriod(evaluatedAt, snapshot.validity)))
+  const windows = monthsEvaluated.flatMap(month => month.judgmentCore
+    ? publicSnapshot(month.judgmentCore).filter(snapshot => withinPeriod(month.referenceTime, snapshot.validity)) : [])
+  const explanationSnapshots = [...snapshots, ...adjacent, ...windows]
+  function scopedFacts<T extends { readonly scopeId: string; readonly period?: Validity }>(facts?: readonly T[]) {
+    return facts?.flatMap(fact => {
+      if (!fact.period) return [fact]
+      const period = publicationValidity(fact.scopeId, fact.period)
+      return period ? [{ ...fact, period }] : []
+    })
+  }
+  input = { ...input, moneyOutcomes: scopedFacts(input.moneyOutcomes), healthOutcomes: scopedFacts(input.healthOutcomes),
+    relationshipOutcomes: scopedFacts(input.relationshipOutcomes), workStudyOutcomes: scopedFacts(input.workStudyOutcomes),
+    transitionOutcomes: scopedFacts(input.transitionOutcomes), eventTimingFacts: scopedFacts(input.eventTimingFacts) }
   const natalSnapshot = snapshots.filter(item => item.scope === 'natal')
   if (new Set(natalSnapshot.map(item => item.id)).size > 1) {
     throw new TypeError('Expected snapshots for one natal judgment')
@@ -76,6 +120,8 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
   const natalIds = natal ? collectNatalPersonality(natal, unknownHour, out) : new Set<string>()
   let historyEffectIds: readonly string[] = []
   if (productScope === 'premium') {
+    if (judgment && natalSnapshot[0]) collectStructuralInterpretation(natalSnapshot[0], snapshots,
+      adjacent, windows, referenceTime, out, new Map(evaluatedAncestors.map(snapshot => [snapshot.id, snapshot])))
     historyEffectIds = uniqueIds([
       ...collectLuck(input, snapshots, referenceTime, out),
       ...(current?.effectHistory.map(effect => effect.id) ?? []),
@@ -83,11 +129,24 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     collectRelationshipUnits(input.relationshipOutcomes ?? [], referenceTime, out, input.publicationConditions)
     collectHealthUnits(input.healthOutcomes ?? [], referenceTime, out, input.publicationConditions)
     collectMoneyUnits(input.moneyOutcomes ?? [], referenceTime, out, input.publicationConditions)
+    for (const fact of input.workStudyOutcomes ?? []) {
+      const eligibility = evaluateOutcomePublicationEligibility(fact, { triggerConfirmed: true, evidenceIds: fact.publicationEvidenceIds })
+      if (!eligibility.publishable || (fact.scope === 'natal' ? fact.temporalStatus !== 'baseline'
+        : fact.temporalStatus !== 'current' || !referenceTime || !withinPeriod(referenceTime, fact.period))) continue
+      out.add({ topic: fact.domain, scope: fact.scope, certainty: fact.certainty, sourceStatus: fact.temporalStatus,
+        lifecycle: fact.lifecycle, direction: fact.direction, period: fact.period,
+        publicationQualification: { kind: eligibility.qualification, evidenceIds: eligibility.evidenceIds },
+        meaningRef: { producer: 'outcome', kind: 'outcome_fact', recordId: fact.id, scopeId: fact.scopeId },
+        sourceFactIds: [...fact.sourceJudgmentIds, ...fact.sourceRelationIds, ...fact.sourceParticipantIds],
+        sourceRoleIds: fact.sourceRoleIds, sourceEffectIds: fact.sourceLuckEffectIds,
+        evidenceIds: [...fact.provenance, ...eligibility.evidenceIds],
+      }, { chapterId: 'CH-04', role: 'conclusion' })
+    }
     collectEventTimingUnits(input.eventTimingFacts ?? [], referenceTime, out)
     if (current) collectCurrentPersonality(current, natalIds, referenceTime, out)
   }
   const explanationOutcomes = productScope === 'premium'
-    ? [...(input.moneyOutcomes ?? []), ...(input.relationshipOutcomes ?? [])] : []
+    ? [...(input.moneyOutcomes ?? []), ...(input.relationshipOutcomes ?? []), ...(input.workStudyOutcomes ?? [])] : []
   const structuralExplanationUnits = buildStructuralExplanationUnits(explanationOutcomes, explanationSnapshots)
   const explanationIdsByOutcome = new Map<string, string[]>()
   for (const explanation of structuralExplanationUnits) {
@@ -111,7 +170,10 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     const relationshipEnabled = entry.id === 'CH-06' && input.relationshipOutcomes !== undefined
     const healthEnabled = entry.id === 'CH-07' && input.healthOutcomes !== undefined
     const moneyEnabled = entry.id === 'CH-05' && input.moneyOutcomes !== undefined
-    const gaps = [...chapterGaps.filter(item => item.chapterId === entry.id && !relationshipEnabled && !healthEnabled && !moneyEnabled)]
+    const workEnabled = entry.id === 'CH-04' && input.workStudyOutcomes !== undefined
+    const gaps = [...chapterGaps.filter(item => item.chapterId === entry.id && !relationshipEnabled && !healthEnabled && !moneyEnabled && !workEnabled)]
+    if (workEnabled && !placements.length) gaps.push(gap(entry.id, 'work-study-target', 'source_gap',
+      'No verified work or learning target was linked to a currently qualifying path.', 'Master 21'))
     if (moneyEnabled && !eventTimingAvailable) {
       gaps.push(gap(entry.id, 'money-coverage', 'source_gap',
         'Contract, business, spending and collaboration timing remains deferred.', 'B CH-5', 'OUT-MONEY-06'))
@@ -162,7 +224,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
       gaps.push(gap(entry.id, 'input', 'engine_gap', 'Source results are unavailable.', `B ${entry.sourceSection}`))
     }
     return {
-      id: entry.id, readiness: relationshipEnabled || healthEnabled || moneyEnabled ? 'partial' as const : entry.readiness, placements, gaps, selections,
+      id: entry.id, readiness: relationshipEnabled || healthEnabled || moneyEnabled || workEnabled ? 'partial' as const : entry.readiness, placements, gaps, selections,
       availableUnitIds: uniqueIds(placements.filter(item => item.visibility === 'available').map(item => item.unitId)),
       customerRenderable: false as const,
       ...(entry.id === 'F-LINK' && { navigationChapterIds: ['CH-04', 'CH-05', 'CH-06', 'CH-07', 'CH-08', 'CH-10'] as const }),
@@ -174,10 +236,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
   if (judgment?.luck.monthlyWindow?.length) availableScopes.add('month')
   const temporalSnapshots = productScope === 'premium' ? [
     ...snapshots.filter(snapshot => snapshot.scope === 'natal' || (referenceTime && withinPeriod(referenceTime, snapshot.validity))),
-    ...(input.evaluatedLuckScopes ?? []).flatMap(({ snapshot, evaluatedAt }) =>
-      withinPeriod(evaluatedAt, snapshot.validity) ? [snapshot] : []),
-    ...(judgment?.luck.monthlyWindow ?? []).flatMap(month => month.judgmentCore
-      && withinPeriod(month.referenceTime, month.judgmentCore.validity) ? [month.judgmentCore] : []),
+    ...adjacent, ...windows,
   ] : []
   const comparisonSnapshots = byId([...new Set(temporalSnapshots)].filter(snapshot => snapshot.runtimeStatus === 'resolved')
     .map(temporalProjection))
@@ -191,6 +250,7 @@ export function assembleReading(input: ReadingAssemblyInput): ReadingAssembly {
     ...(productScope === 'premium' && { temporalSnapshots: comparisonSnapshots,
       transitionOutcomes: sortedFacts(input.transitionOutcomes), temporalMoneyOutcomes: sortedFacts(input.moneyOutcomes),
       temporalRelationshipOutcomes: sortedFacts(input.relationshipOutcomes), temporalHealthOutcomes: sortedFacts(input.healthOutcomes) }),
+    ...(productScope === 'premium' && input.workStudyOutcomes && { workStudyOutcomes: sortedFacts(input.workStudyOutcomes) }),
     version: '1', productScope,
     ...(Object.keys(customerReadingContext).length > 0 && { customerReadingContext }),
     ...(natal && { natalPersonalityChapters: projectNatalPersonalityChapters(natal, unknownHour) }), ...(productScope === 'premium' && referenceTime && { referenceTime }),

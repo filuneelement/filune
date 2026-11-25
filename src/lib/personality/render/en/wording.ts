@@ -197,6 +197,8 @@ const phrases: ReadonlyMap<string, string> = new Map([
   ["먼저 나서고 싶은 의욕이 검토 과정에서 제동이 걸리는 경향", "rein in the urge to get started as you weigh things up"],
   ["가능성을 반복해 검토하면서 결단을 늦추는 경향", "delay a decision while weighing the possibilities over and over"],
   ["더디게 진행되는 일에 끈기를 발휘함", "show patience with things that move slowly"],
+  ["속도가 더뎌도 목표를 쉽게 포기하지 않음", "hold on to a goal through slow progress"],
+  ["인내하며 자기 의사를 바로 드러내지 않는 편", "take time before expressing your own view"],
   ["차분해 보이면서도 안으로는 확장과 변화를 지향함", "look calm while privately looking for room to grow and change"],
   ["호기심이 질문과 행동으로 이어지는 경향", "turn curiosity into questions and action"],
   ["크게 생각한 끝에 중간 선택지를 놓치기 쉬움", "tend to overlook middle-ground options when you're thinking big"],
@@ -350,6 +352,10 @@ const phrases: ReadonlyMap<string, string> = new Map([
   ["외부 표현과 내부 욕구 사이의 간극이 커짐", "feel a growing gap between what you show and what you want inside"],
   ["빠른 판단", "make quick judgments"],
 ])
+
+export function hasTraitPhraseEn(trait: string): boolean {
+  return phrases.has(trait.trim())
+}
 
 export function traitPhraseEn(trait: string): string {
   const phrase = phrases.get(trait.trim())

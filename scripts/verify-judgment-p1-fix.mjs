@@ -143,6 +143,13 @@ try {
   })
   assert.equal(actual(brokenProtection, 'wealth', 'guard', 'control').policyId, 'OFF-04')
   assert.equal(actual(brokenProtection, 'hurt', 'officer', 'control').function, 'operating')
+  // SG-030/031/035: material damage to the required controller reopens the
+  // original officer attack, with the controller's exact loss in the evidence.
+  const controllerDamage = actual(brokenProtection, 'wealth', 'guard', 'control').relationFactId
+  const reopened = brokenProtection.roleEngine.damagePaths.find(({ sourceEntityId, targetEntityId, state }) =>
+    sourceEntityId === 'hurt' && targetEntityId === 'officer' && state === 'active')
+  assert.ok(reopened?.relationRefs.includes(controllerDamage))
+  assert.equal(brokenProtection.roleEngine.byeongStatus, 'confirmed')
   console.log('PASS E — active helper stops once and its verified protection ends')
 
   // F. Standby transitions are projected from the same role history.

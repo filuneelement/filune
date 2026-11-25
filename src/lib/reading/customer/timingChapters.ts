@@ -1,6 +1,7 @@
 import type { HealthOutcomeFact, MoneyOutcomeFact } from '../../outcome'
-import { relationshipUnitInput } from '../relationshipUnits'
-import { moneyUnitInput } from '../moneyUnits'
+import type { WorkStudyOutcomeFact } from '../../outcome/workStudy'
+import { relationshipComparisonUnitInput } from '../relationshipUnits'
+import { moneyComparisonUnitInput } from '../moneyUnits'
 import { bounds, compare, makeUnit, uniqueIds, withinPeriod } from '../semanticUnit'
 import type { ReadingAssembly, ReadingSemanticUnit, TemporalSnapshot } from '../types'
 import { mapMoney, mapRelationship, outcomeMeaningKey, type CustomerOutcome } from './outcomeMapping'
@@ -22,8 +23,9 @@ export interface TemporalQuality {
   opportunityCount?: number
   cautionCount?: number
 }
-type TimingOutcome = CustomerOutcome | HealthOutcomeFact
-type Voice = 'healthPressure' | OutcomeVoice | NonNullable<ReadingSemanticUnit['eventType']>
+type TimingOutcome = CustomerOutcome | HealthOutcomeFact | WorkStudyOutcomeFact
+type Voice = 'healthPressure' | 'workSupport' | 'workPressure' | 'studySupport' | 'studyPressure'
+  | OutcomeVoice | NonNullable<ReadingSemanticUnit['eventType']>
 interface Observation {
   readonly unit: ReadingSemanticUnit
   readonly fact?: TimingOutcome
@@ -48,6 +50,15 @@ export interface TemporalActivation {
   readonly mechanism: string
   readonly direction?: string
   readonly lifecycle?: string
+}
+
+/** Calendar windows qualify a claim without creating another life meaning. */
+export function timingClaimIdentity(value: TemporalContribution) {
+  const claim = (item: TemporalActivation) => [
+    item.voice, item.target, item.mechanism, item.direction, item.lifecycle, item.certainty,
+  ]
+  return JSON.stringify(['time', value.change, value.before && claim(value.before),
+    [...new Set(value.activations.map(item => JSON.stringify(claim(item))))].sort()])
 }
 export interface TimingCard {
   readonly periodRef: string
@@ -122,6 +133,13 @@ function observe(unit: ReadingSemanticUnit, fact?: TimingOutcome): Observation[]
       key: JSON.stringify([event, unit.meaningRef.recordId]), windowRole: events[event] }]
   }
   if (!fact || !['active', 'reduced'].includes(fact.lifecycle)) return []
+  if ('publicationEvidenceIds' in fact) {
+    if (unit.publicationQualification?.kind !== 'conditional' || !fact.sourceRelationIds.length) return []
+    const support = fact.direction === 'favorable'
+    return [{ unit, fact, voice: fact.domain === 'work' ? support ? 'workSupport' : 'workPressure' : support ? 'studySupport' : 'studyPressure',
+      mappingId: fact.mappingId, mechanism: fact.semanticType, target: fact.target.targetId,
+      key: JSON.stringify([fact.domain, fact.semanticType, fact.target.targetId, fact.target.entityId, fact.direction]) }]
+  }
   if (health(fact)) {
     if (fact.semanticType !== 'health_attention_period' || unit.scope === 'natal'
       || !fact.provenance.includes('OUT-HEALTH-02') || !fact.sourceRelationIds.length
@@ -235,7 +253,8 @@ const intervalOrder = (a: Observation, b: Observation) =>
 export function buildTimingChapters(assembly: ReadingAssembly, facts: readonly CustomerOutcome[],
   used: Map<string, ReadingSemanticUnit>, referenceTime?: string): CustomerChapterPlan[] {
   const now = date(referenceTime ?? '')
-  const byId = new Map([...facts, ...(assembly.temporalHealthOutcomes ?? [])].map(fact => [fact.id, fact]))
+  const byId = new Map([...facts, ...(assembly.temporalHealthOutcomes ?? []), ...(assembly.workStudyOutcomes ?? [])]
+    .map(fact => [fact.id, fact]))
   const observations = assembly.semanticUnits.flatMap(unit => observe(unit, byId.get(unit.meaningRef.recordId)))
     .sort((a, b) => compare(a.unit.id, b.unit.id))
   const snapshots = [...new Set(assembly.temporalSnapshots ?? [])].sort((a, b) => compare(a.id, b.id))
@@ -243,13 +262,23 @@ export function buildTimingChapters(assembly: ReadingAssembly, facts: readonly C
     const matches = snapshots.filter(value => value.id === id)
     return matches.length === 1 ? matches[0] : undefined
   }
-  // Adjacent evaluations have a private comparison route so they do not
-  // introduce new periods into existing Money and Relationship chapters.
+  // Independently evaluated periods are routed through the timing chapter.
+  // They do not alter the current Money or Relationship chapters.
   const published = new Set(observations.map(({ unit }) => unit.meaningRef.recordId))
+  const evaluatedYearIds = new Set(assembly.semanticUnits.flatMap(unit =>
+    unit.scope === 'sewoon' && unit.structuralInterpretation?.kind === 'axis'
+      && unit.structuralInterpretation.evaluatedWindow ? [unit.meaningRef.scopeId] : []))
   const comparisonOnly = [...facts, ...(assembly.transitionOutcomes ?? [])].flatMap(fact => {
-    if (published.has(fact.id) || fact.scope !== 'daewoon' || !snapshot(fact.scopeId)
+    const evaluated = snapshot(fact.scopeId)
+    const interval = bounds(fact.period)
+    const condition = assembly.publicationConditions?.[fact.id]
+    const nextYear = fact.scope === 'sewoon' && fact.temporalStatus === 'future' && evaluatedYearIds.has(fact.scopeId)
+      && (fact.lifecycle === 'active' || fact.lifecycle === 'reduced') && fact.certainty !== 'deferred'
+    if (published.has(fact.id) || (fact.scope !== 'daewoon' && !nextYear) || !evaluated || !interval
+      || JSON.stringify(interval) !== JSON.stringify(bounds(evaluated.validity))
+      || (fact.certainty === 'conditional' && (!condition?.triggerConfirmed || !condition.evidenceIds.length))
       || !['future', 'expired'].includes(fact.temporalStatus)) return []
-    const unit = money(fact) ? moneyUnitInput(fact) : relationshipUnitInput(fact)
+    const unit = money(fact) ? moneyComparisonUnitInput(fact) : relationshipComparisonUnitInput(fact)
     return observe(makeUnit(unit, [{ chapterId: money(fact) ? 'CH-05' : 'CH-06', role: 'conclusion' }]), fact)
   })
   const comparables = [...observations, ...comparisonOnly].filter(({ fact }) =>
@@ -360,23 +389,28 @@ export function buildTimingChapters(assembly: ReadingAssembly, facts: readonly C
   const pairs = decades.flatMap((to, index) => {
     const from = decades[index - 1]
     const exact = bounds(to.validity)!
-    return from && bounds(from.validity)![1] === exact[0] && date(exact[0]) >= now
+    return from && bounds(from.validity)![1] === exact[0] && date(exact[1]) > now
       ? [{ from, to, boundary: exact[0] }] : []
   }).slice(0, 2)
+  const futurePairs = pairs.filter(({ boundary }) => date(boundary) >= now).length
   const transitions = new Set<string>()
   for (const { from, to, boundary } of pairs) {
+    const entered = date(boundary) < now
+    const chapter = entered ? 'CR-04' : 'CR-08'
+    const role = entered ? 'current_change' : 'long_term_transition'
+    const currentStatus = entered ? { status: 'current' as const } : {}
     const prior = comparables.filter(({ unit }) => unit.meaningRef.scopeId === from.id)
     const next = comparables.filter(({ unit }) => unit.meaningRef.scopeId === to.id)
     const changes = new Set<string>()
     for (const item of next) {
       const diff = comparePath(from, to, item, prior)
       const key = JSON.stringify([item.key, diff?.change])
-      if (!diff || changes.has(key)) continue
+      if (!diff || changes.has(key) || (entered && !diff.before)) continue
       changes.add(key)
-      transitions.add(boundary)
+      if (!entered) transitions.add(boundary)
       const significance = diff.change === 'protection_change' || diff.change === 'direction_change' || diff.change === 'burden_change'
         ? 'major' : diff.change === 'weakening' || diff.change === 'strengthening' ? 'minor' : 'meaningful'
-      add('CR-08', 'long_term_transition', [item], { change: diff.change, boundary, significance,
+      add(chapter, role, [item], { change: diff.change, boundary, significance, ...currentStatus,
         ...('structuralEvidenceIds' in diff && { structuralEvidenceIds: diff.structuralEvidenceIds }) }, diff.before, [from, to])
     }
     for (const before of prior) {
@@ -384,8 +418,8 @@ export function buildTimingChapters(assembly: ReadingAssembly, facts: readonly C
       const key = JSON.stringify([before.key, stopped?.change])
       if (!stopped || changes.has(key)) continue
       changes.add(key)
-      transitions.add(boundary)
-      add('CR-08', 'long_term_transition', [stopped.item], { change: stopped.change, boundary,
+      if (!entered) transitions.add(boundary)
+      add(chapter, role, [stopped.item], { change: stopped.change, boundary, ...currentStatus,
         significance: stopped.change === 'burden_ended' ? 'major' : 'meaningful',
         structuralEvidenceIds: stopped.structuralEvidenceIds }, before, [from, to])
     }
@@ -403,7 +437,8 @@ export function buildTimingChapters(assembly: ReadingAssembly, facts: readonly C
       || compare(left?.activations[0]?.interval?.[0] ?? '', right?.activations[0]?.interval?.[0] ?? '')
       || compare(a.id, b.id)
   })
-  const windowItems = observations.filter(item => item.windowRole && item.unit.scope !== 'natal'
+  const windowItems = [...observations, ...comparisonOnly.filter(item => item.unit.scope === 'sewoon')]
+    .filter(item => item.windowRole && item.unit.scope !== 'natal'
     && ['current', 'future'].includes(item.unit.sourceStatus) && now < date(bounds(item.unit.period)![1]))
     .sort((a, b) => Number(!withinPeriod(referenceTime, a.unit.period)) - Number(!withinPeriod(referenceTime, b.unit.period))
       || intervalOrder(a, b))
@@ -433,7 +468,7 @@ export function buildTimingChapters(assembly: ReadingAssembly, facts: readonly C
   }
   const counts: Record<TimingId, TemporalQuality> = {
     'CR-04': { baselineCoverage: baselineScopes.size, currentCoverage: current.length, changeCount: paragraphs['CR-04'].filter(p => p.slots.length > 1).length },
-    'CR-08': { evaluatedPairCount: pairs.length, transitionCount: transitions.size, unknownSideCount: Number(!pairs.length && decades.length > 0) },
+    'CR-08': { evaluatedPairCount: futurePairs, transitionCount: transitions.size, unknownSideCount: Number(!futurePairs && decades.length > 0) },
     'CR-09': { timingWindowCount: independent.size, opportunityCount: paragraphs['CR-09'].filter(p => p.slots.includes('opportunity_window')).length,
       cautionCount: paragraphs['CR-09'].filter(p => p.slots.includes('caution_window')).length },
   }
@@ -441,7 +476,7 @@ export function buildTimingChapters(assembly: ReadingAssembly, facts: readonly C
     const plan = paragraphs[chapterId]
     const ready = chapterId === 'CR-04' ? currentChanges.size > 0 : chapterId === 'CR-08' ? transitions.size > 0
       : independent.size >= 2 || windowRoles.size === 2
-    const partial = plan.length > 0 || (chapterId === 'CR-08' && pairs.length > 0)
+    const partial = plan.length > 0 || (chapterId === 'CR-08' && futurePairs > 0)
     const slot = chapterId === 'CR-04' ? 'current_comparison' : chapterId === 'CR-08' ? 'adjacent_daewoon_transition' : 'independent_timing_windows'
     return {
       chapterId, titleKey: customerChapterTitleKeys[chapterId], semanticReadiness: ready ? 'ready' : partial ? 'partial' : 'deferred',

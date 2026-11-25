@@ -19,6 +19,10 @@ const labels: Record<TemporalActivation['voice'], string> = {
   change: '이미 이어진 관계의 구도가 움직일 여지',
   formation: '관계의 접점이 좀 더 구체적인 관계로 이어질 여지',
   healthPressure: '일상의 리듬을 평소보다 세심히 살필 만한 부담',
+  workSupport: '확인된 업무에 힘을 쓰는 데 도움이 되는 조건',
+  workPressure: '확인된 업무나 역할을 수행할 때 부담이 생길 수 있는 조건',
+  studySupport: '확인된 학습 활동에 힘을 쓰는 데 도움이 되는 조건',
+  studyPressure: '확인된 학습 활동을 이어갈 때 부담이 생길 수 있는 조건',
   relationshipPressure: '가까운 관계에서 표현과 역할의 기준을 맞추는 데 따르는 부담',
   contract_favorable: '계약을 진행하는 데 힘이 실리는 조건',
   contract_delay: '계약 일정이 늦어질 수 있는 조건',
@@ -44,7 +48,7 @@ const criteria: Partial<Record<TemporalActivation['voice'], string>> = {
   relationshipPressure: '서로 기대하는 역할과 실제로 표현하는 방식이 어디서 어긋나는지가 판단 기준입니다.',
 }
 const koDate = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric',
-  hour: 'numeric', minute: 'numeric', second: 'numeric', hourCycle: 'h23' })
+  hour: 'numeric', minute: 'numeric', hourCycle: 'h23' })
 const display = (value: string) => koDate.format(new Date(value))
 const scopeTitle = { natal: '원국', daewoon: '대운', sewoon: '세운', month: '월운', day: '일운' }
 const range = (item: TemporalActivation) => item.interval
@@ -81,15 +85,17 @@ export function renderTimingContribution(value: TemporalContribution): string | 
   const qualification = [...value.activations, ...(value.before ? [value.before] : [])].some(item => item.certainty !== 'confirmed')
     ? ' 조건이 유지되는 범위에서 볼 수 있는 해석입니다.' : ''
   if (value.role === 'current_change' || value.role === 'long_term_transition') {
-    const prefix = value.boundary ? `${display(value.boundary)}에 대운의 경계가 있습니다. ` : ''
+    const prefix = value.boundary ? `장기 흐름이 바뀌는 ${display(value.boundary)}부터는 다음 조건을 볼 수 있습니다. ` : ''
     const prior = value.before && labels[value.before.voice]
     const span = first.interval ? ` 적용 범위는 ${value.activations.map(range).join(', 그 안의 ')}입니다.` : ''
     switch (value.change) {
       case 'new_activation':
       case 'burden_change':
-        return prefix + (prior
-          ? `${value.before?.scope === 'natal' ? '원래' : '앞선 범위에서'} 확인된 ‘${prior}’에 이 구간의 별도 작용이 더해집니다.`
-          : `앞선 평가와 비교해 이번 구간에는 ‘${label}’이 새로 활성될 수 있습니다.`)
+        return prefix + (first.voice === 'formation'
+          ? '사람을 만날 접점이 실제로 생긴다면 그 만남을 더 가까운 관계로 이어 갈 조건이 있습니다.'
+          : prior === label ? `이 기간에도 ‘${label}’ 조건을 활용할 수 있습니다.`
+            : prior ? `${value.before?.scope === 'natal' ? '기존' : '이전 기간'}에 확인한 ‘${prior}’에 ‘${label}’ 조건이 더해집니다.`
+            : `이 시기에는 새롭게 ‘${label}’ 조건을 볼 수 있습니다.`)
           + earningCause + span + qualification
       case 'protection_change':
       case 'direction_change':
@@ -99,7 +105,7 @@ export function renderTimingContribution(value: TemporalContribution): string | 
           + earningCause + span + qualification
       case 'suppression':
       case 'burden_ended':
-        return prefix + `앞선 평가에서 작동했던 ‘${label}’은 이 구간에서는 그 경로의 작동이 제어됩니다.` + span + qualification
+        return prefix + `앞서 ‘${label}’으로 이어지던 조건은 이 시기에 힘을 잃습니다.` + span + qualification
       case 'weakening':
       case 'strengthening':
         return prefix + `‘${label}’이 이어지며, 앞선 범위보다 작용이 ${value.change === 'weakening' ? '줄어들' : '회복될'} 수 있습니다.` + span + qualification

@@ -9,8 +9,9 @@ import type { runInternalReading } from '../judgment/pipeline/internalReading'
 import type { CurrentPersonalityResult, PersonalityPeriod, PersonalityScope } from '../personality/current/types'
 import type { NatalPersonalityResult } from '../personality/types'
 import type { EventTimingFact } from '../eventTiming/types'
-import type { StructuralExplanationUnit } from './structuralExplanation'
+import type { StructuralExplanationUnit, StructuralReadingMeaning } from './structuralExplanation'
 import type { PublicationConditionEvidence } from './publicationEligibility'
+import type { WorkStudyOutcomeFact } from '../outcome/workStudy'
 
 export type ReadingScope = PersonalityScope
 export type ChapterId =
@@ -37,12 +38,17 @@ export interface ReadingAssemblyInput {
   readonly moneyOutcomes?: readonly MoneyOutcomeFact[]
   readonly healthOutcomes?: readonly HealthOutcomeFact[]
   readonly relationshipOutcomes?: readonly RelationshipOutcomeFact[]
+  readonly workStudyOutcomes?: readonly WorkStudyOutcomeFact[]
   readonly eventTimingFacts?: readonly EventTimingFact[]
   readonly luckScopes?: readonly LuckScopeState[]
   /** Independently projected Outcomes reserved for comparing adjacent Daewoon. */
   readonly transitionOutcomes?: readonly (MoneyOutcomeFact | RelationshipOutcomeFact)[]
   /** Additional snapshots already evaluated at their own in-period reference instants. */
-  readonly evaluatedLuckScopes?: readonly { readonly snapshot: LuckScopeState; readonly evaluatedAt: string }[]
+  readonly evaluatedLuckScopes?: readonly {
+    readonly snapshot: LuckScopeState
+    readonly evaluatedAt: string
+    readonly publicationAncestors?: readonly LuckScopeState[]
+  }[]
   /** Required for external scope snapshots when a canonical reference instant is unavailable. */
   readonly referenceTime?: string
   /** Explicit source evidence for conditional publication; absent means the trigger is unverified. */
@@ -51,7 +57,7 @@ export interface ReadingAssemblyInput {
   readonly productScope: ProductScope
 }
 
-export type ReadingTopic = 'birth' | 'structure' | 'relationship' | 'health' | 'money' | 'event_timing' | 'personality' | 'strength' | 'challenge' | 'daewoon' | 'year' | 'month'
+export type ReadingTopic = 'birth' | 'structure' | 'relationship' | 'health' | 'money' | 'work' | 'study' | 'event_timing' | 'personality' | 'strength' | 'challenge' | 'daewoon' | 'year' | 'month'
 export type ReadingCertainty = 'confirmed' | 'contextual' | 'conditional' | 'provisional' | 'deferred'
   | 'unknown' | 'unsupported' | 'not-applicable' | 'rejected'
 export type ChapterReadiness = 'ready' | 'partial' | 'source_gap' | 'engine_gap' | 'outcome_not_implemented'
@@ -86,6 +92,7 @@ export interface ReadingMeaningRef {
 }
 
 export interface ReadingSemanticUnit extends ReadingProvenance {
+  readonly structuralInterpretation?: StructuralReadingMeaning
   readonly publicationQualification?: { readonly kind: 'confirmed' | 'contextual' | 'reduced' | 'conditional'; readonly evidenceIds: readonly string[] }
   readonly structuralExplanationUnitIds?: readonly string[]
   readonly moneyAxis?: MoneyAxis
@@ -157,7 +164,7 @@ export interface ReadingChapterAssembly {
 
 export type TemporalSnapshot = Pick<LuckScopeState, 'id' | 'scope' | 'parentScopeId' | 'validity'
   | 'stemFacts' | 'patternFacts' | 'branchFacts' | 'formationFacts' | 'formationBranchPool'
-  | 'runtime' | 'actualFunctions' | 'inheritedRoleFunctions'>
+  | 'runtime' | 'actualFunctions' | 'inheritedRoleFunctions' | 'structuralSuccess'>
 
 export interface ReadingAssembly {
   readonly version: '1'
@@ -167,6 +174,7 @@ export interface ReadingAssembly {
   readonly temporalSnapshots?: readonly TemporalSnapshot[]
   readonly temporalMoneyOutcomes?: readonly MoneyOutcomeFact[]
   readonly temporalHealthOutcomes?: readonly HealthOutcomeFact[]
+  readonly workStudyOutcomes?: readonly WorkStudyOutcomeFact[]
   readonly temporalRelationshipOutcomes?: readonly RelationshipOutcomeFact[]
   readonly customerReadingContext?: CustomerReadingContext
   readonly natalPersonalityChapters?: NatalPersonalityChapterProjection

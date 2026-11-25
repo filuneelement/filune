@@ -75,7 +75,7 @@ try {
     const assembly = readBirthChart({ date: fixture.date, time: { known: true, value: fixture.time },
       gender: fixture.gender ?? '女性', timeCorrectionMode: 'none' }, { referenceTime: at, productScope: 'premium', ...extra })
     const plan = buildCustomerReadingPlan({ assembly })
-    return { id, plan, rendered: renderCustomerReadingKo(plan).filter(row => row.quality.supportedSemanticCount !== undefined) }
+    return { id, plan, assembly, rendered: renderCustomerReadingKo(plan).filter(row => row.quality.supportedSemanticCount !== undefined) }
   }
   const nested = canonical('CS-126', '2027-07-15T00:00:00.000Z')
   const chapter = (row, id) => row.rendered.find(value => value.chapterId === id)
@@ -109,6 +109,11 @@ try {
   assert(chapter(coexist, 'CR-09').quality.opportunityCount > 0 && chapter(coexist, 'CR-09').quality.cautionCount > 0)
   assert(chapter(coexist, 'CR-09').timingCards.some(card => card.opportunity.length && card.caution.length))
   assert.equal(chapter(nested, 'CR-08').quality.evaluatedPairCount, 1)
+  const decades = nested.assembly.temporalSnapshots.filter(snapshot => snapshot.scope === 'greatLuck')
+    .sort((a, b) => Date.parse(a.validity.from.instant) - Date.parse(b.validity.from.instant))
+  assert.equal(decades.length, 3)
+  assert.equal(decades[0].validity.to.instant, decades[1].validity.from.instant)
+  assert.equal(decades[1].validity.to.instant, decades[2].validity.from.instant)
   const report = [protectedToDamage, newActivation, major, reversedProtection, noTransition, currentOnly, empty, coexist, nested].map(({ id, rendered }) => ({
     id, chapters: rendered.map(({ chapterId, semanticReadiness, publicationReadiness, quality, gaps, paragraphs }) =>
       ({ chapterId, semanticReadiness, publicationReadiness, quality, gaps,

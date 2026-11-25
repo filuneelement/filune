@@ -84,7 +84,7 @@ try {
     assert.equal(events(stoppedChild, 'weakens_sangshen').length, 0)
   })
   check('E — SangShen stop expiry with next selected period', () => {
-    const restored = run(guarded, [next], boundary, undefined, stopped).at(-1)
+    const restored = run(guarded, [great('next-luck', '乙', '未', nextPeriod)], boundary, undefined, stopped).at(-1)
     assert.equal(current(restored, guard).currentState, 'active')
     assert.equal(current(restored, guard).currentFunction, 'operating')
     assert.equal(events(restored, 'weakens_sangshen').length, 0)
@@ -115,14 +115,21 @@ try {
     assert.equal(current(relieved, byeong).currentFunction, 'inactive')
     assert.equal(current(reliefChild, byeong).currentFunction, 'inactive')
     assert.ok(events(relieved, 'relieves_byeong').length)
+    assert.equal(relieved.roleEngine.guEungStatus, 'confirmed')
+    assert.ok(relieved.roleEngine.resolutionPaths.some(({ remedyEntityId, relationRefs }) =>
+      remedyEntityId === 'relief' && relationRefs.length >= 2))
+    assert.equal(reliefChild.roleEngine.guEungStatus, 'confirmed')
     assert.equal(events(reliefChild, 'relieves_byeong').length, 0)
     assert.equal(current(laterDamage, byeong).currentFunction, 'operating')
+    assert.equal(laterDamage.roleEngine.resolutionPaths.length, 0)
   })
 
   const pattern = { day: pillar('dm', '丙', '午'), month: pillar('month', '壬', '申') }
   const manifestation = great('manifestation', '庚', '亥')
   const [transformed, combined] = run(pattern, [manifestation])
-  const laterPattern = run(pattern, [next], boundary, undefined, combined).at(-1)
+  // A-8-1 I-02: the shared 己 replacement would independently expose 申's 戊.
+  const nonManifestingReplacement = great('next-luck', '乙', '未', nextPeriod)
+  const laterPattern = run(pattern, [nonManifestingReplacement], boundary, undefined, combined).at(-1)
   check('H — manifestation and pattern mode expire', () => {
     assert.equal(transformed.patternContext.patternMode, 'transformed')
     assert.equal(combined.patternContext.patternMode, 'combined')

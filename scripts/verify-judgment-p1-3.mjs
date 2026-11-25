@@ -70,7 +70,8 @@ try {
     assert.equal(state.patternContext.specialYongShen.evidenceStatus, 'FILUNE_APPROVED_OVERRIDE')
     assert.equal(state.patternContext.specialYongShen.sevenKillingAsMainYongShen, false)
     assert.ok(state.patternContext.specialYongShen.mainCandidates.every(({ id }) => id !== 'kill'))
-    assert.equal(state.roleEngine.byeongStatus, 'none')
+    assert.equal(state.roleEngine.byeongStatus, 'deferred')
+    assert.ok(state.roleEngine.incompleteDamageChecks.includes('STRUCTURE_COVERAGE_INCOMPLETE'))
     const [manifested] = run({ day: pillar('dm', '己'), month: pillar('peer', '己', '未'), year: pillar('kill', '乙', '卯') })
     assert.ok(manifested.patternContext.manifestationHistory.some(({ entityId }) => entityId === 'kill'))
     assert.ok(manifested.roleEngine.roleHistory.every(({ entityId, role }) => entityId !== 'kill' || role !== 'YongShen'))
@@ -204,7 +205,9 @@ try {
     assert.equal(current.currentFunction, 'favorable')
   })
   check('ROLE-T2', () => {
-    const [state] = run(standardOfficer)
+    const [state] = run({ ...standardOfficer, day: pillar('dm', '甲', '寅'),
+      year: pillar('same-officer', '辛', '丑'), time: pillar('same-element', '甲', '亥') }, [],
+    { natalCapacityEvidence: { state: 'killing_capacity_adequate', evidenceIds: ['capacity-review'] } })
     assert.equal(state.roleEngine.byeongStatus, 'none')
     assert.equal(state.roleEngine.guEungStatus, 'not_applicable')
   })
@@ -215,7 +218,8 @@ try {
     const role = natal.roleEngine.roleHistory.find(({ conditionalThreat }) => conditionalThreat)
     assert.equal(role.conditionalThreat.attackerStem, '丁')
     assert.equal(natal.roleEngine.currentRoles.find(({ roleId }) => roleId === role.roleId).currentState, 'protective_standby')
-    assert.equal(natal.roleEngine.byeongStatus, 'none')
+    assert.equal(natal.roleEngine.byeongStatus, 'deferred')
+    assert.ok(natal.roleEngine.incompleteDamageChecks.includes('STRUCTURE_COVERAGE_INCOMPLETE'))
     assert.equal(current.roleEngine.currentRoles.find(({ roleId }) => roleId === role.roleId).currentState, 'active')
     assert.ok(current.luckEffects.some(({ effectType, subjectId }) => effectType === 'activates_sangshen_function' && subjectId === role.roleId))
   })

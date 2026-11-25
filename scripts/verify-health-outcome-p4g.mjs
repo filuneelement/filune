@@ -60,7 +60,9 @@ try {
   const seen = new Map()
   for (let day = 1; day <= 10; day++) {
     const canonical = calculateCanonicalChart({ ...birth, date: { year: 2000, month: 1, day } }, calculation)
-    const [fact] = buildHealthOutcome({ canonical, natal: judgment.judgmentCore[0] })
+    const fact = buildHealthOutcome({ canonical, natal: judgment.judgmentCore[0] })
+      .find(({ semanticType }) => semanticType === 'traditional_body_correspondence')
+    assert.ok(fact)
     const isElementOnly = ['乙', '丁', '庚', '壬'].includes(fact.dayStem)
     assert.equal(fact.specificity, isElementOnly ? 'element-level-only' : 'direct-source-specific')
     assert.equal(fact.traditionalBodyAreas.length === 0, isElementOnly)

@@ -62,9 +62,9 @@ try {
   const { produceStemPathEffects } = await load('producers/stemPathEffectProducer')
   const { verifyDocumentClaim, DOCUMENT_PINS } = await load('systems/documentReceipt')
   const { readFile } = await import('node:fs/promises')
-  const A = await readFile('src/docs/source/A_rev179.md','utf8')
+  const A = await readFile('src/docs/source/authority/A_rev179.md','utf8')
   const rawId = 'test:raw-A'
-  const citedRule = verifyDocumentClaim({ documentId: 'A', ...DOCUMENT_PINS.A, path: 'src/docs/source/A_rev179.md', text: A, rawEvidenceId: rawId },
+  const citedRule = verifyDocumentClaim({ documentId: 'A', ...DOCUMENT_PINS.A, path: 'src/docs/source/authority/A_rev179.md', text: A, rawEvidenceId: rawId },
     { evidenceId: 'test:I-04c', section: 'A-8-2.', ruleId: 'I-04c', quote: '운이 병을 합거·제어해 격국 손상을 풀면 유리로 인정한다.', claimRef: 'test-rule' })
   const raw = { ...citedRule, evidenceId: rawId, status: 'provisional', uncertaintyIds: ['raw-source'],
     verification: { claimRef: 'raw-source', method: 'fixture-document-input', basisEvidenceIds: [] } }

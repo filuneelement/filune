@@ -15,6 +15,9 @@ export function guEungFactClaim(fact: { evidenceIds: string[] }): string {
   return recordId('gu-eung-upstream-claim', [JSON.stringify(detach(payload))])
 }
 
+const pinnedAuthorityPath = (path: string, documentId: string, revision: number) =>
+  [`src/docs/source/authority/${documentId}_rev${revision}.md`, `src/docs/source/${documentId}_rev${revision}.md`].includes(path)
+
 export function effectEvidence(records: EvidenceContextContract['records'], matchingNatalPillars?: string) {
   // A matching pillar receipt may support a natal assignment. It supplies no expected role or effect.
   const permitsCasePillarReceipt = (item: EvidenceContextContract['records'][number]) =>
@@ -47,7 +50,7 @@ export function effectEvidence(records: EvidenceContextContract['records'], matc
           && !parent.verification.basisEvidenceIds.length
           && item.verification.checkedByRef === 'src/lib/judgment/systems/documentReceipt.ts:verifyDocumentClaim'
           && item.verification.method === 'pinned-document-bytes-and-direct-clause-comparison-v1'
-          && pin && doc.documentRevision === pin.revision && doc.path === `src/docs/source/${doc.documentId}_rev${pin.revision}.md`
+          && pin && doc.documentRevision === pin.revision && pinnedAuthorityPath(doc.path, doc.documentId, pin.revision)
           && item.hash.value === pin.sha256) return true
       }
       return eligible(basis, new Set([...visited, id]))
@@ -72,7 +75,7 @@ export function effectEvidence(records: EvidenceContextContract['records'], matc
       if (item.ruleId === ruleId && item.sourceRef.kind === 'source-document') {
         const doc = item.sourceRef.document
         const pin = DOCUMENT_PINS[doc.documentId as keyof typeof DOCUMENT_PINS]
-        if (pin && doc.documentRevision === pin.revision && doc.path === `src/docs/source/${doc.documentId}_rev${pin.revision}.md`
+        if (pin && doc.documentRevision === pin.revision && pinnedAuthorityPath(doc.path, doc.documentId, pin.revision)
           && item.hash?.value === pin.sha256) return true
       }
       pending.push(...item.verification.basisEvidenceIds)

@@ -226,12 +226,16 @@ try {
   assert.throws(() => validateReadingAssembly({ ...f, semanticUnits: [...f.semanticUnits, p.semanticUnits.find(unit => unit.scope === 'daewoon')] }),
     /scope leakage/u)
   const dir = 'src/lib/reading'
-  const architecture = readdirSync(new URL(`../${dir}/`, import.meta.url)).map(file => read(`${dir}/${file}`))
-  assert.equal(architecture.filter(code => /export function assembleReading\(/u.test(code)).length, 1)
-  for (const code of architecture) {
+  const architecture = readdirSync(new URL(`../${dir}/`, import.meta.url), { withFileTypes: true })
+    .filter(entry => entry.isFile() && entry.name.endsWith('.ts')).map(({ name }) => ({ name, code: read(`${dir}/${name}`) }))
+  assert.equal(architecture.filter(({ code }) => /export function assembleReading\(/u.test(code)).length, 1)
+  for (const { code } of architecture) {
     assert.doesNotMatch(code, /runInternalReading\(|runJudgmentCore\(|renderPersonality(?:Ko|Ja|En)\(|\bfetch\(|openai|Math.random\(/iu)
-    assert.doesNotMatch(code, /import(?! type)[^\n]+from ['"]\.\.\/(?:judgment|personality|canonical)\//u)
   }
+  // Master 13 constrains the Assembly owner. Independent personality projectors
+  // elsewhere in this directory may consume knowledge and evaluated evidence.
+  const assemblySource = architecture.find(({ name }) => name === 'assembleReading.ts').code
+  assert.doesNotMatch(assemblySource, /import(?! type)[^\n]+from ['"]\.\.\/(?:judgment|personality|canonical)\//u)
   console.log('PASS validation rejects duplicate/missing provenance and assembly has no runtime engine dependencies')
   console.log('METRICS', JSON.stringify({
     totalUnits: reading.semanticUnits.length, provenance: reading.semanticUnits.filter(item =>

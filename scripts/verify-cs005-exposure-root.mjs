@@ -12,8 +12,8 @@ try {
   const contracts = await load('judgment/contracts/index')
   const { calculateCanonicalChart } = await load('canonical/calculateCanonicalChart')
   const { CURRENT_CALCULATION_VERSION } = await load('canonical/version')
-  const A = await readFile('src/docs/source/A_rev179.md', 'utf8')
-  const C = await readFile('src/docs/source/C_rev215.md', 'utf8')
+  const A = await readFile('src/docs/source/authority/A_rev179.md', 'utf8')
+  const C = await readFile('src/docs/source/authority/C_rev215.md', 'utf8')
   const clone = (x) => JSON.parse(JSON.stringify(x))
   const freeze = (x) => { if (x && typeof x === 'object') { Object.values(x).forEach(freeze); Object.freeze(x) } return x }
   const jan = '2027-01-15T00:00:00.000Z', july = '2027-07-15T00:00:00.000Z'
@@ -47,7 +47,7 @@ try {
   }
   const { produceExposureRootFacts: derive } = await load('judgment/producers/exposureRootProducer')
   const { exposureRootAuthority } = await load('judgment/systems/exposureRootAuthority')
-  const sources = freeze({ A, C, D: await readFile('src/docs/source/D_rev152.md', 'utf8'), approval: await readFile('src/docs/source/25-7_rev16.md', 'utf8') })
+  const sources = freeze({ A, C, D: await readFile('src/docs/source/authority/D_rev152.md', 'utf8'), approval: await readFile('src/docs/source/authority/25-7_rev16.md', 'utf8') })
   const serverModuleNatal = await load('judgment/evaluators/natalStemCombination/index')
   const natalInput = { producer, context: context(producer, 'natal', jan) }
   const before = JSON.stringify(natalInput); freeze(natalInput)
@@ -90,10 +90,10 @@ try {
       if (f.assessment === 'unknown') assert.ok(f.uncertaintyIds.length)
     }
   })
-  check(() => { const ids = [...result.exposures,...result.roots,...result.hiddenObservations].map((f) => f.id); assert.equal(new Set(ids).size, ids.length) })
+  check(() => { const ids = [...result.exposures,...result.roots,...result.hiddenObservations,...result.branchMainObservations].map((f) => f.id); assert.equal(new Set(ids).size, ids.length) })
   check(() => assert.deepEqual(result.roleStates, []))
   check(() => {
-    const allowed = ['exposures','roots','hiddenObservations','authority','evidence','scopeId','roleStates'].sort()
+    const allowed = ['exposures','roots','hiddenObservations','branchMainObservations','authority','evidence','scopeId','roleStates'].sort()
     assert.deepEqual(Object.keys(result).sort(), allowed)
     assert.ok(!/percentage|rootStrength|weight|structureJudgment|supportingGod|remedy|favorable/.test(JSON.stringify(result)))
   })
@@ -159,6 +159,10 @@ try {
     assert.ok(!derived.hiddenObservations.some((h)=>h.branchEntityId===branch('month').entityId&&h.hiddenStem==='戊'))
     assert.ok(derived.roots.some((f)=>output.entities.find((e)=>e.entityId===f.stemEntityId).value==='戊'&&f.rootBranchEntityId===branch('month').entityId&&f.rootExistence==='absent'))
     assert.ok(derived.hiddenObservations.some((h)=>h.branchEntityId===branch('day').entityId&&h.hiddenStem==='乙'&&h.role===null))
+    // 25-7 §§5-1/5-2 supplies main-only receipts for 未 and 酉.
+    // The exposure/root table retains its original incomplete coverage.
+    assert.deepEqual(derived.branchMainObservations.map(({ hiddenStem, role, assessment }) =>
+      [hiddenStem, role, assessment]).sort(), [['己', 'main', 'confirmed'], ['辛', 'main', 'confirmed']].sort())
   })
   check(() => {
     const facts=clone(chart)

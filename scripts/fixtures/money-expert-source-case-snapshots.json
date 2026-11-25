@@ -20,6 +20,7 @@
     "fixtureId": "SRC-07-0952",
     "source": "src/docs/source/primary/07-사주풀이예시.md:952-961",
     "pillars": { "year": "戊辰", "month": "癸亥", "day": "辛卯", "time": "戊子" },
+    "natalStops": [["year", "month"]],
     "gender": "남성",
     "sourceScope": { "kind": "daewoon+sewoon", "daewoon": "丁卯", "sewoon": "乙巳" },
     "expectation": {
@@ -68,10 +69,9 @@
     }
   },
   {
-    "fixtureId": "SRC-07-2328",
-    "source": "src/docs/source/primary/07-사주풀이예시.md:2328-2338",
-    "pillars": { "year": "乙巳", "month": "戊寅", "day": "乙未", "time": "丙戌" },
-    "gender": "남성",
+    "fixtureId": "SRC-07-2301",
+    "source": "src/docs/source/primary/07-사주풀이예시.md:2301-2327",
+    "pillars": { "year": "戊寅", "month": "甲寅", "day": "乙酉", "time": "癸未" },
     "sourceScope": { "kind": "daewoon+sewoon", "daewoon": "丙辰", "sewoon": "癸卯", "laterDaewoon": "丁巳" },
     "expectation": {
       "money_acquisition": "favorable",
@@ -83,6 +83,22 @@
         "丁巳: 食神生財 improves earning while internal pressure remains"
       ],
       "explicitEvent": "source reports family hardship in 乙卯 luck; no specific later money event is asserted in these lines"
+    }
+  },
+  {
+    "fixtureId": "SRC-07-2328",
+    "source": "src/docs/source/primary/07-사주풀이예시.md:2328-2338",
+    "pillars": { "year": "乙巳", "month": "戊寅", "day": "乙未", "time": "丙戌" },
+    "gender": "남성",
+    "sourceScope": { "kind": "daewoon+sewoon", "daewoon": "壬申", "sewoon": ["甲辰", "乙巳"] },
+    "expectation": {
+      "money_acquisition": "favorable",
+      "causalPaths": [
+        "Natal expressive skill supports wealth and mediates peer pressure",
+        "壬申 brings resource and officer functions with 寅巳申 punishment",
+        "乙巳 hurts the officer in 申 and exposes occupational pressure"
+      ],
+      "explicitEvent": null
     }
   }
 ]

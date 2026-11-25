@@ -106,10 +106,13 @@ try {
     assert.ok(premium.chapters.find(chapter => chapter.id === 'CH-08').placements.some(item => item.unitId === unit.id))
     assert.ok(healthUnits(free).every(unit => unit.scope === 'natal'))
 
-    // P1 closure E evaluates the next Daewoon with the old snapshot as history.
-    const restored = run([scope(0, pillar('next-luck', '己', '未'), next)], { referenceTime: boundary, priorHistory: current })
+    // SG-110/112 and P1 closure E distinguish expiration from an independent new attack.
+    // 乙 supplies the unopposed recovery fixture. The original 己 still controls the protector.
+    const restored = run([scope(0, pillar('next-luck', '乙', '未'), next)], { referenceTime: boundary, priorHistory: current })
     const guard = restored[1].roleEngine.roleHistory.find(role => role.role === 'SangShen' && role.entityId === 'guard')
     assert.ok(restored[1].roleEngine.currentRoles.some(role => role.roleId === guard.roleId && role.currentFunction === 'operating'))
+    const independentlyAttacked = run([scope(0, pillar('next-luck', '己', '未'), next)], { referenceTime: boundary, priorHistory: current })
+    assert.ok(independentlyAttacked[1].roleEngine.currentRoles.some(role => role.roleId === guard.roleId && role.currentFunction === 'reduced'))
     // Replacement luck can supply independent damage. Compare the old event by its own identity.
     const history = [{ snapshot: current, evaluatedAt: referenceTime }]
     const after = outcomes(restored, boundary, history)

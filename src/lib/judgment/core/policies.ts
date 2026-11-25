@@ -1,4 +1,5 @@
-import type { StructuralEffect } from './structuralEffect'
+import { generationCanReach } from './structuralEffect'
+import type { StemFunctionEffect, StructuralEffect } from './structuralEffect'
 import type { EvidenceStatus, FinalPatternContext, PatternMode, RootState, StemRuntime } from './types'
 
 import { conditions, directions, isGod, matchesPolicyFact, p11Policies, p12Policies, p13Policies, relationTypes } from './patternPolicyRegistry'
@@ -23,9 +24,14 @@ export type ActualStructuralFunction = PolicyResolution & {
   capacityEvidence?: readonly string[]
   resolutionEvidence?: readonly string[]
   structuralEffect?: StructuralEffect
+  sourceFunctionEffects?: readonly StemFunctionEffect[]
   flowConstraint?: 'excessive_resource_and_day'
   function: 'operating' | 'reduced' | 'inactive' | 'deferred'
 }
+
+export const functionDamageEstablished = (actual: ActualStructuralFunction) => actual.byeongCandidate
+  && (actual.function === 'operating' || actual.function === 'reduced')
+  && (actual.direction === 'unfavorable' || actual.policyId === 'HO-supported-wealth-pressure')
 
 export function validatePatternEffectRegistry(registry: readonly PatternEffectPolicy[]) {
   const ids = new Set<string>()
@@ -96,7 +102,8 @@ export function resolvePatternEffectPolicy(context: FinalPatternContext, relatio
   return { policyId: policy?.policyId ?? null, selectedPolicy: policy?.policyId ?? null, matchedPolicies, selectionReason,
     direction: policy?.defaultDirection ?? 'deferred', ruleId: policy?.ruleId ?? null,
     evidenceStatus: policy?.evidenceStatus ?? 'DEFERRED',
-    byeongCandidate: policy?.defaultDirection === 'unfavorable' || ['WEALTH-05', 'WEALTH-06', 'RES-09', 'FOOD-03', 'FOOD-08', 'ROB-05-harmful', 'BLADE-04', 'BLADE-05'].includes(policy?.policyId ?? ''),
+    byeongCandidate: policy?.defaultDirection === 'unfavorable' || ['WEALTH-05', 'WEALTH-06', 'RES-09', 'FOOD-03', 'FOOD-08', 'ROB-05-harmful', 'BLADE-04', 'BLADE-05',
+      'HO-supported-wealth-pressure'].includes(policy?.policyId ?? ''),
     ...((policy?.requiredConditions.length || requiredControl || unresolved || conflicting) && conditionEvidence.length ? { conditionEvidence } : {}) }
 }
 
@@ -109,7 +116,9 @@ export function resolveActualFunction(policy: PolicyResolution, context: FinalPa
   })
   const stopped = runtimeEvidence.some(({ state }) => state === 'stopped')
   const current = relation.action === 'coexist' && coexistEffective ? 'operating' : relation.action === 'combine' && !validCombination || relation.action !== 'combine' && stopped ? 'inactive'
-    : runtimeEvidence.length !== 2 ? 'deferred'
+    : runtimeEvidence.length !== 2 || relation.action === 'generate'
+      && !generationCanReach(runtime.get(relation.source.id), runtime.get(relation.target.id),
+        rootEvidence.find(({ entityId }) => entityId === relation.source.id)?.state) ? 'deferred'
       : runtimeEvidence.some(({ state }) => state === 'weakened') ? 'reduced' : 'operating'
   return { ...policy, byeongCandidate: policy.byeongCandidate && (current === 'operating' || current === 'reduced'), relationFactId: relation.id, patternContextId: context.id, runtimeEvidence, rootEvidence,
     formationEvidence, ...(capacityEvidence?.length ? { capacityEvidence } : {}), function: current }

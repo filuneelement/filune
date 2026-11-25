@@ -25,7 +25,8 @@ export type JudgmentCoreEvidence = Pick<JudgmentCoreInput, 'roleFunctionBases' |
 export function judgmentCoreFromReading(producer: JudgmentProducerOutput, executionId: string, natalValidity: Validity,
   natalCombination: ReturnType<typeof evaluateNatalStemCombination>, roleHistory: readonly RoleStateContract[],
   periods: Partial<Record<'greatLuck' | 'yearlyLuck' | 'monthlyLuck', Validity>>,
-  dailyLuck?: Omit<LuckScopeInput, 'scope'>, resourceExcessEvidence?: ResourceExcessEvidence, evidence?: JudgmentCoreEvidence) {
+  dailyLuck?: Omit<LuckScopeInput, 'scope'>, resourceExcessEvidence?: ResourceExcessEvidence, evidence?: JudgmentCoreEvidence,
+  unconfirmedBranchMainIds?: readonly string[]) {
   const natal: JudgmentCoreInput['natal'] = {}
   for (const position of ['year', 'month', 'day', 'time'] as const) {
     natal[position] = pillar(producer.entities.filter((entity) => entity.origin === 'natal' && entity.position === position))
@@ -47,7 +48,8 @@ export function judgmentCoreFromReading(producer: JudgmentProducerOutput, execut
   }
   return runJudgmentCore({ executionId, referenceTime: producer.canonicalContext.referenceTime,
     priorHistory: evidence?.priorHistory, roleFunctionBases: evidence?.roleFunctionBases, conditionalByeong: evidence?.conditionalByeong,
-    natalCapacityEvidence: evidence?.natalCapacityEvidence, natalPolicyEvidence: evidence?.natalPolicyEvidence, natalValidity, natal, roleHistory, luck, resourceExcessEvidenceIds: resourceExcessEvidence?.natal,
+    natalCapacityEvidence: evidence?.natalCapacityEvidence, natalPolicyEvidence: evidence?.natalPolicyEvidence, natalValidity, natal, roleHistory, luck,
+    unconfirmedBranchMainIds, resourceExcessEvidenceIds: resourceExcessEvidence?.natal,
     natalCombinations: natalCombination.status === 'evaluated'
       ? natalCombination.events.filter((event) => event.stopping).map((event) => event.participantEntityIds) : null })
 }

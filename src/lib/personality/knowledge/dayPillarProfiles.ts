@@ -97,6 +97,8 @@ export const DAY_PILLAR_PROFILES = {
     ['branchNature', '겨울에서 봄으로 더디게 넘어가는 얼어 있는 땅', '119-123', 'source_explicit'],
     ['expressionPattern', '차분해 보이면서도 안으로는 확장과 변화를 지향함', '187', 'source_explicit'],
     ['strengths', '더디게 진행되는 일에 끈기를 발휘함', '199', 'source_explicit'],
+    ['strengths', '속도가 더뎌도 목표를 쉽게 포기하지 않음', '121-127', 'source_explicit'],
+    ['expressionPattern', '인내하며 자기 의사를 바로 드러내지 않는 편', '129-132', 'source_explicit'],
   ], [
     ['relationship_prediction', 220],
     ['gender_determinism', 118],

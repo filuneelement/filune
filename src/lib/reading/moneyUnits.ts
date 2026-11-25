@@ -30,10 +30,14 @@ export function collectMoneyUnits(facts: readonly MoneyOutcomeFact[], referenceT
 export function moneyUnitInput(fact: MoneyOutcomeFact,
   publication = evaluateOutcomePublicationEligibility(fact)): UnitInput {
   if (!publication.publishable) throw new TypeError(`Outcome is not publication-eligible: ${fact.id}`)
+  return { ...moneyComparisonUnitInput(fact), publicationQualification: { kind: publication.qualification, evidenceIds: publication.evidenceIds } }
+}
+
+/** Independently evaluated comparison evidence is routed by the timing planner. */
+export function moneyComparisonUnitInput(fact: MoneyOutcomeFact): UnitInput {
   return {
     topic: 'money', scope: fact.scope, certainty: fact.certainty,
     sourceStatus: fact.temporalStatus, lifecycle: fact.lifecycle,
-    publicationQualification: { kind: publication.qualification, evidenceIds: publication.evidenceIds },
     direction: fact.direction, moneyAxis: moneyAxisFor(fact), moneyTargetId: fact.wealthEntityId,
     ...(fact.burdenPath && { moneyBurdenPath: fact.burdenPath }),
     meaningRef: { producer: 'outcome', kind: 'outcome_fact', recordId: fact.id, scopeId: fact.scopeId },

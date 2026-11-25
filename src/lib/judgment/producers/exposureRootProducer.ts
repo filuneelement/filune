@@ -50,6 +50,7 @@ export function produceExposureRootFacts(input: ExposureRootSelection, sources: 
     hiddenStemSystemId: string; sourceScope: typeof branches[number]['sourceScope']; scopeId: string
     evidenceIds: string[]; uncertaintyIds: string[]; assessment: HiddenStemFact['assessment']
     provenance: DerivedStemFactBasis['provenance'] }[] = []
+  const branchMainObservations: typeof hiddenObservations = []
   for (const branch of branches) {
     const entry = authority.entries.find((e) => e.branch === branch.value)!
     const known: { hiddenStem: string; role: HiddenStemFact['role'] | null; evidenceIds: string[] }[] =
@@ -57,11 +58,17 @@ export function produceExposureRootFacts(input: ExposureRootSelection, sources: 
     known.push(...authority.unassigned.filter((e) => e.branch === branch.value).map((e) => ({ ...e, role: null })))
     const entryClaims = authority.entryReceiptIds[branch.value] ?? []
     const rules = (ids: string[]) => ids.map((id) => authority.ruleReceiptIds[id]).filter((id): id is string => !!id)
-    for (const observation of known) {
+    const main = branch.origin === 'natal' && !entry.roles.main
+      && authority.branchMainObservations.find(item => item.branch === branch.value)
+    const mainObservation = main ? [{ ...main, role: 'main' as const }] : []
+    for (const observation of [...known, ...mainObservation]) {
       const id = recordId('document-hidden-observation', [context.scopeId, branch.entityId, observation.hiddenStem])
       const method = 'document-hidden-membership-and-explicit-role-extraction'
-      const state = assess(id, [branch.entityId], observation, entry.completeness, [...entryClaims, ...rules(['C-10'])], method)
-      hiddenObservations.push({ id, branchEntityId: branch.entityId, hiddenStem: observation.hiddenStem, role: observation.role,
+      const mainOnly = main && observation.role === 'main' && observation.hiddenStem === main.hiddenStem
+      const state = assess(id, [branch.entityId], observation, mainOnly ? 'complete' : entry.completeness,
+        [...entryClaims, ...rules(['C-10']), ...(mainOnly ? main.evidenceIds : [])], method)
+      const observations = mainOnly ? branchMainObservations : hiddenObservations
+      observations.push({ id, branchEntityId: branch.entityId, hiddenStem: observation.hiddenStem, role: observation.role,
         hiddenStemSystemId: authority.hiddenStemSystemId, sourceScope: branch.sourceScope, scopeId: context.scopeId,
         evidenceIds: sortedUnique([...branch.evidenceIds, ...observation.evidenceIds, 'exposure-root:source-A', state.receiptId,
           ...state.assessmentBasis.receiptEvidenceIds]), uncertaintyIds: state.uncertaintyIds, assessment: state.assessment,
@@ -116,7 +123,7 @@ export function produceExposureRootFacts(input: ExposureRootSelection, sources: 
           assessmentBasis: rootAssessment.assessmentBasis } })
     }
   }
-  return detach({ exposures, roots, hiddenObservations, authority,
+  return detach({ exposures, roots, hiddenObservations, branchMainObservations, authority,
     evidence: evidenceContextSchema.parse({ contractVersion: '1', evidenceContextId: recordId('exposure-root-evidence', [context.scopeId]),
       records: [...producer.evidence.records, ...authority.evidence, ...factReceipts] }),
     scopeId: context.scopeId, roleStates: [] })

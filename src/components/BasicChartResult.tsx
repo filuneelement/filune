@@ -6,6 +6,7 @@ import type { FourPillars, ThreePillars } from '../lib/calculateEightChar'
 import { CURRENT_CALCULATION_VERSION } from '../lib/canonical/version'
 import { buildNatalPersonality, type CurrentPersonalityResult } from '../lib/personality'
 import { singleReadingPrice } from '../lib/product/singleReadingOffer'
+import type { LocalizedCustomerReading } from '../lib/product/readBirthChart'
 import { personalTopics, type Messages, type Locale } from '../i18n'
 import PremiumResultPreview from './result/PremiumResultPreview'
 import ResultChapter from './result/ResultChapter'
@@ -28,6 +29,7 @@ type BasicChartResultProps = {
   messages: Messages
   locale: Locale
   name: string
+  authorizedPremiumReading?: LocalizedCustomerReading
 }
 
 export default function BasicChartResult({
@@ -45,6 +47,7 @@ export default function BasicChartResult({
   messages: t,
   locale,
   name,
+  authorizedPremiumReading,
 }: BasicChartResultProps) {
   const calculation = useMemo(() => {
     const now = new Date()
@@ -55,8 +58,11 @@ export default function BasicChartResult({
     })
   }, [birth])
   const natal = useMemo(() => buildNatalPersonality(calculation.chart), [calculation])
+  const authorizedChapters = authorizedPremiumReading?.[locale]
+  const showFullReading = authorizedChapters?.length === 7
   const [premium, setPremium] = useState<{ birth: BirthInput; current: CurrentPersonalityResult }>()
   useEffect(() => {
+    if (showFullReading) return
     let active = true
     void import('../lib/product/prepareSingleReadingPreview').then(({ prepareSingleReadingPreview }) => {
       if (!active) return
@@ -66,8 +72,8 @@ export default function BasicChartResult({
       if (active) setPremium(undefined)
     })
     return () => { active = false }
-  }, [birth, calculation])
-  const current = premium?.birth === birth ? premium.current : undefined
+  }, [birth, calculation, showFullReading])
+  const current = !showFullReading && premium?.birth === birth ? premium.current : undefined
   const selectedTopic = t.flow.topics[personalTopics.findIndex(topic => topic === interestTopic)]
   const reading = useMemo(() => synthesizeSingleResult(natal, current, calculation.context.referenceTime, {
     topic: interestTopic, careerStatus, relationshipStatus,
@@ -96,7 +102,8 @@ export default function BasicChartResult({
           locale={locale} showSolarTermAmbiguity={showSolarTermAmbiguity} />
         <PremiumResultPreview copy={t.resultPreview} selectedTopic={selectedTopic} selectedStatus={selectedStatus}
           selectedTopicPreview={reading.selectedTopicPreview} currentFlow={reading.paid.currentFlow}
-          priceLabel={singleReadingPrice(locale)} />
+          priceLabel={singleReadingPrice(locale)}
+          authorizedReading={showFullReading ? { locale, chapters: authorizedChapters } : undefined} />
       </div>
     </section>
   )

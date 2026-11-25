@@ -19,7 +19,7 @@ export function mapMoney(fact: MoneyOutcomeFact): Mapping | undefined {
     case 'skill_and_output': return refs.includes('OUT-MONEY-01') && refs.includes('07:L1256') ? skill : undefined
     case 'ingenuity_and_expression': return refs.includes('OUT-MONEY-01') && refs.includes('07:L764,L984') ? expression : undefined
     case 'harder_to_retain':
-      if (refs.includes('OUT-MONEY-04') && refs.includes('07:L140-L144,L1250-L1251')) {
+      if (refs.includes('OUT-MONEY-04') && (refs.includes('07:L140-L144,L1250-L1251') || refs.includes('07:L1026-L1031'))) {
         return rule('CL-M04', 'wealth_damage', 'divisionRetention', 'retention')
       }
       if (refs.includes('OUT-MONEY-02') && refs.includes('07:L140-L144,L1117')) {
@@ -30,7 +30,7 @@ export function mapMoney(fact: MoneyOutcomeFact): Mapping | undefined {
       return refs.includes('OUT-MONEY-02') && refs.includes('07:L140-L144,L1117')
         ? rule('CL-M03', 'capacity_constraint', 'sustainability', 'accumulation', 'qualitative_sustainability') : undefined
     case 'wealth_can_be_divided_or_flow_out':
-      return refs.includes('OUT-MONEY-04') && refs.includes('07:L140-L144,L1250-L1251')
+      return refs.includes('OUT-MONEY-04') && (refs.includes('07:L140-L144,L1250-L1251') || refs.includes('07:L1026-L1031'))
         ? rule('CL-M04', 'wealth_damage', 'division', 'combined_loss_or_division') : undefined
     case 'retention_supported_by_protection':
       return refs.includes('OUT-MONEY-02') && refs.includes('07:L1067,L2322')

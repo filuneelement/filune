@@ -29,10 +29,14 @@ export function collectRelationshipUnits(facts: readonly RelationshipOutcomeFact
 export function relationshipUnitInput(fact: RelationshipOutcomeFact,
   publication = evaluateOutcomePublicationEligibility(fact)): UnitInput {
   if (!publication.publishable) throw new TypeError(`Outcome is not publication-eligible: ${fact.id}`)
+  return { ...relationshipComparisonUnitInput(fact), publicationQualification: { kind: publication.qualification, evidenceIds: publication.evidenceIds } }
+}
+
+/** Independently evaluated comparison evidence is routed by the timing planner. */
+export function relationshipComparisonUnitInput(fact: RelationshipOutcomeFact): UnitInput {
   return {
     topic: 'relationship', scope: fact.scope, certainty: fact.certainty,
     sourceStatus: fact.temporalStatus, lifecycle: fact.lifecycle,
-    publicationQualification: { kind: publication.qualification, evidenceIds: publication.evidenceIds },
     ...('currentFunction' in fact && { currentFunction: fact.currentFunction }),
     meaningRef: { producer: 'outcome', kind: 'outcome_fact', recordId: fact.id, scopeId: fact.scopeId },
     period: fact.period,

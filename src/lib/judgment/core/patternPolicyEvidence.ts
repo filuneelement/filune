@@ -3,9 +3,10 @@ import type { CombinationHistory } from './combineHistory'
 import { isGod, matchesPolicyFact } from './patternPolicyRegistry'
 import type { Condition, PolicyFact } from './patternPolicyRegistry'
 import type { ActualStructuralFunction } from './policies'
+import { generationCanReach } from './structuralEffect'
 import { buildPeerConditions } from './peerPatterns'
 import { buildP12Conditions } from './patternPolicyP12Evidence'
-import type { CapacityEvidence, FinalPatternContext, StemParticipant, StemRelationFact, StemRuntime } from './types'
+import type { CapacityEvidence, FinalPatternContext, Scope, StemParticipant, StemRelationFact, StemRuntime } from './types'
 
 export type PatternPolicyEvidence = {
   entityId: string
@@ -39,10 +40,15 @@ export function observePolicyFacts(scopeId: string, context: FinalPatternContext
 
 export function buildPolicyConditions(context: FinalPatternContext, facts: readonly StemRelationFact[],
   runtime: ReadonlyMap<string, StemRuntime>, roots: RootEvidence, combinations: readonly CombinationHistory[],
-  evidence: readonly PatternPolicyEvidence[], capacity?: CapacityEvidence | null, bladeFacts: readonly PolicyFact[] = []) {
+  evidence: readonly PatternPolicyEvidence[], capacity?: CapacityEvidence | null, bladeFacts: readonly PolicyFact[] = [],
+  luckClashes: readonly { id: string; scopes: readonly Scope[] }[] = [],
+  requiredResourceRefs: ReadonlyMap<string, readonly string[]> = new Map()) {
   const live = (id: string) => runtime.get(id) === 'active' || runtime.get(id) === 'weakened'
   const rooted = (id: string) => roots.some(({ entityId, state }) => entityId === id && (state === 'present' || state === 'strengthened'))
-  const observed = (fact: StemRelationFact) => live(fact.source.id) && live(fact.target.id)
+  const observed = (fact: StemRelationFact) => fact.action === 'generate'
+    ? generationCanReach(runtime.get(fact.source.id), runtime.get(fact.target.id),
+      roots.find(({ entityId }) => entityId === fact.source.id)?.state)
+    : live(fact.source.id) && live(fact.target.id)
   const supplied = (id: string, condition: PatternPolicyEvidence['condition']) =>
     evidence.find((item) => item.entityId === id && item.condition === condition && item.relatedEntityId === undefined && item.evidenceIds.length)
   const center = (id: string, god: 'officer' | 'killing') =>
@@ -88,6 +94,22 @@ export function buildPolicyConditions(context: FinalPatternContext, facts: reado
       if (mixed && removedOfficer && runtime.get(fact.target.id) === 'active') add('officer_removed', [...mixed, removedOfficer.relation.id])
     }
     if (fact.action !== 'coexist') {
+      if (context.branchPattern === '劫財' && matchesPolicyFact(fact, 'OutputGeneratesWealth') && observed(fact)
+        && context.effectiveManifestedYongShen.some(({ entityId }) => entityId === fact.target.id)
+        && rooted(fact.source.id) && rooted(fact.target.id)) add('output_bridge', [fact.id, context.id, 'SRC-07-2328'])
+      if (context.branchPattern === '傷官' && matchesPolicyFact(fact, 'PeerControlsWealth') && observed(fact) && rooted(fact.source.id)) {
+        const feed = facts.find((path) => path.target.id === fact.target.id
+          && matchesPolicyFact(path, 'HurtingGeneratesWealth') && observed(path))
+        if (feed) add('peer_pressure_on_supported_wealth', [fact.id, feed.id])
+      }
+      if (context.branchPattern === '傷官' && matchesPolicyFact(fact, 'WealthControlsResource') && observed(fact)
+        && context.monthHiddenStemCandidates.some(({ tenGod }) => isGod(tenGod, 'resource'))
+        && rooted(fact.source.id) && rooted(fact.target.id) && fact.source.scope !== fact.target.scope) {
+        const clash = luckClashes.find(({ scopes }) => scopes.includes(fact.source.scope) && scopes.includes(fact.target.scope))
+        if (clash) add('necessary_hurting_resource', [fact.id, context.id, clash.id, 'SRC-07-0999'])
+        const inherited = requiredResourceRefs.get(fact.target.id)
+        if (inherited) add('necessary_hurting_resource', [fact.id, ...inherited])
+      }
       const protectedAttack = protection(fact)
       if (protectedAttack) add('protects_officer', [fact.id, protectedAttack.id])
       if (matchesPolicyFact(fact, 'WealthControlsResource') && observed(fact) && rooted(fact.source.id)) {

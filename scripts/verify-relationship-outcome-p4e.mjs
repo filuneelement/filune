@@ -115,12 +115,18 @@ try {
   assert.ok(natalRelation)
   assert.equal(natalRelation.certainty, 'contextual')
 
-  const assemble = (facts, chart = canonical, productScope = 'premium') => {
-    const reading = assembleReading({ judgment, canonical: chart, productScope, relationshipOutcomes: facts })
+  const assemble = (facts, chart = canonical, productScope = 'premium', publicationConditions) => {
+    const reading = assembleReading({ judgment, canonical: chart, productScope, relationshipOutcomes: facts, publicationConditions })
     validateReadingAssembly(reading)
     return reading
   }
-  const premium = assemble(relationshipOutcomes)
+  // Masters 13/17 require an independently confirmed condition and current exact
+  // applicability. Historical and future facts remain independently inspectable.
+  const pending = assemble(relationshipOutcomes)
+  assert.ok(pending.semanticUnits.every(unit => unit.meaningRef.recordId !== jan.id))
+  const conditions = Object.fromEntries(relationshipOutcomes.filter(fact => fact.certainty === 'conditional'
+    && fact.temporalStatus === 'current').map(fact => [fact.id, { triggerConfirmed: true, evidenceIds: ['fixture:confirmed-condition'] }]))
+  const premium = assemble(relationshipOutcomes, canonical, 'premium', conditions)
   const free = assemble(relationshipOutcomes, canonical, 'free')
   assert.ok(free.semanticUnits.every(unit => unit.topic !== 'relationship'))
   assert.equal(section(premium, 'CH-06').readiness, 'partial')
@@ -144,10 +150,10 @@ try {
   assert.ok(assemble(history, expiredChart).semanticUnits.every(unit => unit.meaningRef.recordId !== jan.id))
   const future = relationshipOutcomes.filter(fact => fact.temporalStatus === 'future')
   assert.ok(future.length && future.every(fact => !fact.currentlyEffective))
-  assert.ok(units.some(unit => future.some(fact => fact.id === unit.meaningRef.recordId)))
+  assert.ok(units.every(unit => future.every(fact => fact.id !== unit.meaningRef.recordId)))
   const annual = relationshipOutcomes.find(fact => fact.scope === 'sewoon' && fact.relationKind === 'clash')
   assert.ok(annual)
-  assert.ok(section(premium, 'CH-09').placements.some(placement => placement.role === 'timing'
+  if (annual.temporalStatus === 'current') assert.ok(section(premium, 'CH-09').placements.some(placement => placement.role === 'timing'
     && units.some(unit => unit.id === placement.unitId && unit.meaningRef.recordId === annual.id)))
   assert.ok(!section(premium, 'CH-10').placements.some(placement =>
     units.some(unit => unit.id === placement.unitId && unit.meaningRef.recordId === annual.id)))
@@ -172,7 +178,10 @@ try {
   assert.equal(greatFact.scopeId, great.id)
   assert.deepEqual(greatFact.period, fixturePeriod)
   assert.ok(great.branchFacts.some(relation => relation.id === greatFact.sourceRelationIds[0]))
-  assert.ok(section(assemble([greatFact]), 'CH-06').availableUnitIds.length)
+  assert.equal(section(assemble([greatFact]), 'CH-06').availableUnitIds.length, 0)
+  assert.ok(section(assemble([greatFact], canonical, 'premium', {
+    [greatFact.id]: { triggerConfirmed: true, evidenceIds: ['fixture:confirmed-great-luck-condition'] },
+  }), 'CH-06').availableUnitIds.length)
 
   const allowedTypes = new Set(['relationship_palace_context', 'relationship_significator', 'relationship_palace_relation',
     'relationship_contact_signal', 'relationship_change_signal', 'relationship_formation', 'relationship_pressure'])

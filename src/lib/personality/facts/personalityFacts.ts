@@ -47,6 +47,25 @@ export const TEN_GOD_INNER_FIELDS = {
   stressResponse: 'stress',
 } as const satisfies Partial<Record<keyof TenGodTraits, PersonalityTraitType>>
 
+// The caller must match an evaluated condition and an approved interpretation.
+// Presence, count, or reduced expression alone never selects one of these fields.
+export const TEN_GOD_CONDITION_FIELDS = {
+  excessive: 'excessiveExpression',
+  deficient: 'deficientExpression',
+  caution: 'cautionPatterns',
+} as const satisfies Record<string, keyof TenGodTraits>
+
+export function supportedConditionTrait(
+  profile: TenGodTraits & { evidenceNotes: readonly PersonalityEvidence[] },
+  condition: keyof typeof TEN_GOD_CONDITION_FIELDS,
+  trait: string,
+) {
+  const field = TEN_GOD_CONDITION_FIELDS[condition]
+  if (!profile[field].includes(trait)) return []
+  return canonicalIds(profile.evidenceNotes.flatMap(note => note.fields.includes(field) && note.sourceRef
+    ? [note.sourceRef, ...(note.corroboratingRefs ?? [])] : []))
+}
+
 type FactContext = Omit<PersonalityFact, 'id' | 'trait' | 'traitType' | 'provenanceIds'>
 
 export function compareId(a: string, b: string): number {

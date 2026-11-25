@@ -1,11 +1,12 @@
 import type { HealthOutcomeFact, MoneyOutcomeFact, RelationshipOutcomeFact } from '../../outcome'
 import type { OutcomeFact } from '../../outcome/types'
+import type { WorkStudyOutcomeFact } from '../../outcome/workStudy'
 import type { ReadingAssembly } from '../types'
 import { evaluateOutcomePublicationEligibility, type PublicationConditionEvidence } from '../publicationEligibility'
 import { compare, uniqueIds } from '../semanticUnit'
 import type { CustomerEvidenceContext, CustomerEvidenceGap, CustomerEvidenceOutcome } from './types'
 
-type EvidenceOutcome = MoneyOutcomeFact | RelationshipOutcomeFact | HealthOutcomeFact
+type EvidenceOutcome = MoneyOutcomeFact | RelationshipOutcomeFact | HealthOutcomeFact | WorkStudyOutcomeFact
 
 const publicationReason = (fact: OutcomeFact, hasAssemblyUnit: boolean, hasCustomerUnit: boolean,
   condition?: PublicationConditionEvidence) => {
@@ -22,6 +23,7 @@ export function buildCustomerEvidenceContext(assembly: ReadingAssembly,
     ...(assembly.productScope === 'premium' ? assembly.temporalMoneyOutcomes ?? [] : []),
     ...(assembly.productScope === 'premium' ? assembly.temporalRelationshipOutcomes ?? [] : []),
     ...(assembly.productScope === 'premium' ? assembly.temporalHealthOutcomes ?? [] : []),
+    ...(assembly.productScope === 'premium' ? assembly.workStudyOutcomes ?? [] : []),
     ...(assembly.productScope === 'premium' ? supplied : []),
   ]) outcomes.set(fact.id, fact)
 
@@ -37,6 +39,8 @@ export function buildCustomerEvidenceContext(assembly: ReadingAssembly,
   const outcomeEvidence: CustomerEvidenceOutcome[] = ineligible.map(fact => {
     const explanationUnitIds = uniqueIds(explanationByOutcome.get(fact.id))
     const hasAssemblyUnit = assembly.semanticUnits.some(unit => unit.meaningRef.kind === 'outcome_fact' && unit.meaningRef.recordId === fact.id)
+    const condition = 'publicationEvidenceIds' in fact ? { triggerConfirmed: true, evidenceIds: fact.publicationEvidenceIds }
+      : assembly.publicationConditions?.[fact.id]
     return {
       outcomeFactId: fact.id, domain: fact.domain, semanticType: fact.semanticType,
       lifecycle: fact.lifecycle, temporalStatus: fact.temporalStatus, currentlyEffective: fact.currentlyEffective,
@@ -44,8 +48,8 @@ export function buildCustomerEvidenceContext(assembly: ReadingAssembly,
       sourceJudgmentIds: fact.sourceJudgmentIds, sourceRelationIds: fact.sourceRelationIds,
       sourceRoleIds: fact.sourceRoleIds, sourceLuckEffectIds: fact.sourceLuckEffectIds,
       sourceParticipantIds: fact.sourceParticipantIds, provenance: fact.provenance,
-      publicationEvidenceIds: assembly.publicationConditions?.[fact.id]?.evidenceIds ?? [],
-      explanationUnitIds, publicationReason: publicationReason(fact, hasAssemblyUnit, false, assembly.publicationConditions?.[fact.id]),
+      publicationEvidenceIds: condition?.evidenceIds ?? [],
+      explanationUnitIds, publicationReason: publicationReason(fact, hasAssemblyUnit, false, condition),
     }
   })
   const explanationUnitIds = uniqueIds(outcomeEvidence.flatMap(item => item.explanationUnitIds))

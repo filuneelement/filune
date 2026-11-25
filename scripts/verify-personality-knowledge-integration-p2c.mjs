@@ -110,11 +110,13 @@ function inspectImports() {
   const options = ts.parseJsonConfigFileContent(config.config, ts.sys, root).options
   const graph = new Map()
   const cache = ts.createModuleResolutionCache(root, file => file, options)
-  for (const file of ts.sys.readDirectory(path.join(root, 'src'), ['.ts', '.tsx', '.js', '.jsx', '.mts', '.cts'])) {
+  for (const listedFile of ts.sys.readDirectory(path.join(root, 'src'), ['.ts', '.tsx', '.js', '.jsx', '.mts', '.cts'])) {
+    const file = path.normalize(listedFile)
     const imports = ts.preProcessFile(readFileSync(file, 'utf8'), true, /\.[cm]?jsx?$/.test(file)).importedFiles
     graph.set(file, imports.flatMap(({ fileName }) => {
       const target = ts.resolveModuleName(fileName, file, options, ts.sys, cache).resolvedModule?.resolvedFileName
-      return target?.startsWith(path.join(root, 'src') + path.sep) ? [target] : []
+      const normalized = target && path.normalize(target)
+      return normalized?.startsWith(path.join(root, 'src') + path.sep) ? [normalized] : []
     }))
   }
 
@@ -124,7 +126,7 @@ function inspectImports() {
     seen.add(from)
     return (graph.get(from) ?? []).some(to => match(to) || reaches(to, match, seen))
   }
-  const structural = [...graph.keys()].filter(file => /^src\/lib\/(judgment|canonical)\//.test(path.relative(root, file)))
+  const structural = [...graph.keys()].filter(file => /^src\/lib\/(judgment|canonical)\//.test(path.relative(root, file).split(path.sep).join('/')))
   const personality = [...graph.keys()].filter(isPersonality)
   assert.ok(structural.length && personality.length)
   assert.deepEqual(structural.filter(file => reaches(file, isPersonality)), [], 'Structural import from Personality')

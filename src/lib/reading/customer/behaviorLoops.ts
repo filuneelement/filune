@@ -70,6 +70,13 @@ export function buildBehaviorPatterns(
       judgment: standard ? [standard.id] : reaction.judgment ? ids : [], result: reaction.result ? ids : [], recurrence: [],
     })
   }
+  const outward = facts.find(fact => fact.trait === '불편한 말도 그 자리에서는 웃어넘김')
+  const delegation = outward && facts.find(fact => fact.trait === '불편한 말을 한 사람에게 중요한 일을 맡기지 않음'
+    && sourceRefsFor(fact).some(ref => sourceRefsFor(outward).includes(ref)))
+  if (outward && delegation) add({
+    mechanism: 'outward_composure_limits_delegation', trigger: [outward.id], response: [outward.id],
+    judgment: [delegation.id], behavior: [outward.id, delegation.id], result: [], recurrence: [],
+  })
   for (const conflict of conflicts) {
     if (conflict.conflictType === 'source_explicit' && conflict.explanationEvidence.length) {
       const linked = facts.filter(fact => conflict.factIds.includes(fact.id))

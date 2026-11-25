@@ -86,6 +86,7 @@ function branchInteractions(first: Person, second: Person) {
       sourceFactIds: sourceIds(participants), provenance: ['Master03'] })
   }
   for (const relation of branchRelations('compatibility', pool)) {
+    if (relation.kind === 'wonjin' || relation.participants.length !== 2) continue
     add(relation.kind, relation.participants.map(id => byKey.get(id)!))
   }
   for (const a of first.branches) for (const b of second.branches) {

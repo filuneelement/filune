@@ -15,7 +15,7 @@ try {
   const { CURRENT_CALCULATION_VERSION } = await load('canonical/version')
   const fixture = JSON.parse(await readFile(new URL('./fixtures/byeong-judgment-inputs.json', import.meta.url), 'utf8'))['CS-005']
   const [A, draftA, C, D, approval] = await Promise.all(
-    ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((name) => readFile(`src/docs/source/${name}.md`, 'utf8')),
+    ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((name) => readFile(`src/docs/source/authority/${name}.md`, 'utf8')),
   )
   const time = '2027-01-15T00:00:00.000Z'
   const input = freeze({
@@ -59,7 +59,10 @@ try {
   check(() => {
     assert.equal(natal.byeong.status, 'deferred')
     assert.equal(natal.guEung.status, 'deferred')
-    assert.equal(natal.successState.status, 'deferred')
+    // C-10-1 items 8–9 and 11: verified residual harm remains alongside the
+    // protection, even while the legacy candidate's attribution stays open.
+    assert.equal(natal.successState.status, 'confirmed')
+    assert.equal(natal.structuralSuccess.overall.grade, '不利優勢')
     assert.equal(diagnostics.completeness, 'partial')
     assert.ok(natal.byeong.judgments.some((item) => item.reasonCodes.includes('A180_7_POST_CONTROL_DAMAGE_AND_WEALTH_ATTRIBUTION_UNVERIFIED')))
   })

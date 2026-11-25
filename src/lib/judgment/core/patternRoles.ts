@@ -27,9 +27,11 @@ const damageFunctions = {
   'wealth-controls-resource-in-resource': 'resource', 'RES-06': 'resource', 'RES-08': 'output', 'RES-09': 'resource',
   'FOOD-03': 'killing_control', 'FOOD-05': 'output', 'FOOD-08': 'output_capacity',
   'HO-03': 'officer', 'HO-05-needed': 'necessary_killing', 'HO-06': 'resource',
+  'HO-supported-wealth-pressure': 'wealth',
   'PEER-05': 'day_master', 'ROB-05-harmful': 'day_master', 'PEER-06': 'wealth', 'ROB-03': 'wealth',
   'BLADE-04': 'necessary_killing', 'BLADE-05': 'necessary_killing', 'BLADE-06': 'necessary_killing',
   'KILL-05': 'day_master', 'WEALTH-05': 'wealth', 'WEALTH-06': 'day_master',
+  'killing-pressure-after-protection': 'day_master',
 } as const
 export function officerProtectionPath(attack: ScopedPath, paths: readonly ScopedPath[]) {
   return paths.find((guard) =>
@@ -79,7 +81,7 @@ export function policyRoleCandidates(scope: Scope, paths: readonly ScopedPath[],
     const relief = damagedFunction === 'day_master' && combineRelief(fact.target.id)
     const protection = policyId === 'OFF-03' && officerProtectionPath(path, paths)
     const foodProtection = policyId === 'FOOD-05' ? foodProtectionPath(path, paths) : undefined
-    const sourceStop = ['RES-06', 'RES-08', 'RES-09', 'wealth-controls-resource-in-resource'].includes(policyId)
+    const sourceStop = (prior || ['RES-06', 'RES-08', 'RES-09', 'wealth-controls-resource-in-resource'].includes(policyId))
       ? effectiveCombinations.find(({ effect, participants }) => effect === 'stopped' && participants.includes(fact.source.id))
       : undefined
     const natalResolver = scope === 'natal'
@@ -95,16 +97,21 @@ export function policyRoleCandidates(scope: Scope, paths: readonly ScopedPath[],
       && evidence.some((item) => item.condition === 'restores_blade_control' && item.entityId === replacement.fact.source.id
         && item.relatedEntityId === fact.target.id && item.evidenceIds.length)) : undefined
     const currentState = bladeRestorer || sourceStop || relief || protection || foodProtection || !live(path)
-      || ['PEER-06', 'ROB-03'].includes(policyId) && !actual.byeongCandidate ? 'inactive' : actual.function === 'reduced' ? 'weakened' : 'active'
+      || ['PEER-06', 'ROB-03'].includes(policyId) && !actual.byeongCandidate ? 'inactive'
+        : actual.function === 'reduced' || policyId === 'HO-supported-wealth-pressure' ? 'weakened' : 'active'
     if (!prior && protection) continue
     const supportingRelations = paths.map(({ fact }) => fact.id)
-    const evidenceRefs = [...new Set([fact.id, ...(actual.conditionEvidence ?? []), ...(relief ? [relief.relation.id] : []), ...(foodProtection ? [foodProtection.fact.id] : []), ...(sourceStop ? [sourceStop.relation.id] : []), ...(bladeRestorer ? [bladeRestorer.fact.id] : [])])]
+    const evidenceRefs = [...new Set([fact.id, ...(actual.conditionEvidence ?? []), ...(actual.resolutionEvidence ?? []),
+      ...(relief ? [relief.relation.id] : []), ...(foodProtection ? [foodProtection.fact.id] : []),
+      ...(sourceStop ? [sourceStop.relation.id] : []), ...(bladeRestorer ? [bladeRestorer.fact.id] : [])])]
     const relationFactIds = evidenceRefs.filter((ref) => supportingRelations.includes(ref) || ref === (relief && relief.relation.id) || ref === sourceStop?.relation.id)
     byeong.set(id, { id, policyId, sourceEntityId: fact.source.id, targetEntityId: fact.target.id, action: fact.action,
       relationFactIds, evidenceRefs, status: 'candidate', damagedFunction, structuralConsequence: 'damage_candidate', currentState, originScope: prior?.originScope ?? scope })
-    if (natalResolver) {
-      guEung.push({ status: 'candidate', entityId: natalResolver.source.id === fact.source.id ? natalResolver.target.id : natalResolver.source.id, targetByeongId: id,
-        supportingPath: [...new Set([natalResolver.id, ...relationFactIds])] })
+    const resolver = natalResolver ?? (prior ? (protection ? protection.fact : undefined) ?? foodProtection?.fact ?? (relief ? relief.relation : undefined)
+      ?? sourceStop?.relation ?? bladeRestorer?.fact : undefined)
+    if (resolver) {
+      guEung.push({ status: 'candidate', entityId: resolver.source.id === fact.source.id ? resolver.target.id : resolver.source.id, targetByeongId: id,
+        supportingPath: [...new Set([resolver.id, ...relationFactIds])] })
     }
     if (scope === 'natal' && bladeRestorer?.fact.source.scope === 'natal') {
       guEung.push({ status: 'candidate', entityId: bladeRestorer.fact.source.id, targetByeongId: id, supportingPath: relationFactIds })
@@ -113,6 +120,10 @@ export function policyRoleCandidates(scope: Scope, paths: readonly ScopedPath[],
       && ['BLADE-04', 'BLADE-05', 'BLADE-06'].includes(policyId)
       && [fact.source.id, fact.target.id].includes(luck.id)) {
       luckEffects.push({ effectType: 'attacks_yongshen', scope, sourceLuckEntityId: luck.id, subjectId: fact.target.id, evidenceRefs })
+    }
+    if (scope !== 'natal' && luck && !prior && currentState !== 'inactive' && actual.resolutionEvidence?.length
+      && actual.structuralEffect?.currentlyEffective) {
+      luckEffects.push({ effectType: 'activates_byeong', scope, sourceLuckEntityId: luck.id, subjectId: id, evidenceRefs })
     }
     if (scope !== 'natal' && luck && prior && prior.currentState !== currentState) {
       const effectType = currentState === 'inactive' ? 'relieves_byeong'

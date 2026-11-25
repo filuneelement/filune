@@ -11,6 +11,8 @@ const pillar = (id, stem, branch) => ({ ...(stem && { stem: { id, value: stem } 
 
 try {
   const { runJudgmentCore } = await load('judgment/core/luckScope')
+  const { evaluateStructuralSuccess } = await load('judgment/core/structuralSuccess')
+  const { evaluateBranchDamage } = await load('judgment/core/branches')
   const { resolveStemRuntime, killingFormula } = await load('judgment/core/stems')
   const { validatePatternEffectRegistry } = await load('judgment/core/policies')
   const run = (natal, luck = [], resourceExcessEvidenceIds, natalCombinations = [], roleHistory = []) => runJudgmentCore({
@@ -18,6 +20,121 @@ try {
   })
   const luck = (scope, stem, branch) => ({ scope, pillar: pillar(scope, stem, branch), validity })
   const stateOf = (state, id) => state.runtime.find((item) => item.entityId === id)?.state
+  const [soundOfficer] = runJudgmentCore({ executionId: 'structural-success', natalValidity: validity, luck: [],
+    natalCombinations: [], natalCapacityEvidence: { state: 'killing_capacity_adequate', evidenceIds: ['capacity-review'] },
+    natal: { day: pillar('self', '甲', '寅'), month: pillar('officer', '辛', '酉'),
+      year: pillar('same-officer', '辛', '丑'), time: pillar('same-element', '甲', '亥') } })
+  assert.equal(soundOfficer.roleEngine.byeongStatus, 'none')
+  assert.equal(soundOfficer.roleEngine.guEungStatus, 'not_applicable')
+  assert.deepEqual(['stem', 'branch', 'overall'].map((axis) => soundOfficer.structuralSuccess[axis].grade), ['成', '成', '成'])
+  const gradeWithBurden = evaluateStructuralSuccess(soundOfficer.patternContext, soundOfficer.roleEngine, soundOfficer.rootStates,
+    { state: 'killing_capacity_insufficient', evidenceIds: ['capacity-review'] }, false, true)
+  assert.equal(gradeWithBurden.overall.grade, '不利優勢')
+  const gradeWithDisruption = evaluateStructuralSuccess(soundOfficer.patternContext, soundOfficer.roleEngine, soundOfficer.rootStates,
+    soundOfficer.capacity, true, true)
+  assert.equal(gradeWithDisruption.stem.grade, '成')
+  assert.equal(gradeWithDisruption.branch.grade, '有利優勢')
+  assert.equal(gradeWithDisruption.overall.grade, '有利優勢')
+  const stoppedIds = new Set(soundOfficer.roleEngine.roleHistory.filter(({ role }) => role === 'YongShen').map(({ roleId }) => roleId))
+  const gradeAfterStop = evaluateStructuralSuccess({ ...soundOfficer.patternContext, effectiveManifestedYongShen: [] },
+    { ...soundOfficer.roleEngine, currentRoles: soundOfficer.roleEngine.currentRoles.map((role) =>
+      stoppedIds.has(role.roleId) ? { ...role, currentState: 'stopped', currentFunction: 'inactive' } : role) },
+    soundOfficer.rootStates, soundOfficer.capacity, false, true)
+  assert.equal(gradeAfterStop.overall.grade, '敗')
+  // Authority C-10-1: an independently established wealth-to-killing path can
+  // be adverse at the same time that food generates wealth favorably.
+  const [mixedWealth] = runJudgmentCore({ executionId: 'mixed-wealth', natalValidity: validity,
+    natalCombinations: [], luck: [],
+    natal: { year: pillar('killing', '辛', '未'), month: pillar('wealth', '戊', '戌'),
+      day: pillar('self', '乙', '丑'), time: pillar('food', '丁', '丑') },
+    natalPolicyEvidence: [{ entityId: 'killing', condition: 'harmful_killing', evidenceIds: ['C-10-1:8'] }],
+  })
+  assert.ok(mixedWealth.patternContext.yongShenRelations.some(({ stems, relationQuality }) =>
+    stems.join('') === '辛戊' && relationQuality === 'unfavorable_conflict'))
+  assert.ok(mixedWealth.patternContext.yongShenRelations.some(({ stems, relationQuality }) =>
+    stems.join('') === '戊丁' && relationQuality === 'favorable_harmony'))
+  // I-04-2: use only the branch main stems. The adjacent resource reaches the
+  // month-command food. The directed wealth control protects that exact target.
+  const branchFood = [
+    { id: 'year', branch: '卯', scope: 'natal' }, { id: 'food', branch: '亥', scope: 'natal' },
+    { id: 'resource', branch: '戌', scope: 'natal' }, { id: 'wealth', branch: '卯', scope: 'natal' },
+  ]
+  const branchCases = (unconfirmed = [], bound = [], entries = branchFood) => evaluateBranchDamage('i-04-2', '庚', '食神',
+    entries, branchFood.map(({ id }) => id), 'food', [], [], new Set(unconfirmed), bound)
+  const protectedFood = branchCases()
+  assert.deepEqual(protectedFood.paths.map(({ state, protection }) => [state, protection?.entityId]), [['weakened', 'wealth']])
+  assert.ok(protectedFood.paths[0].relationRefs.every((id) => protectedFood.relations.some((relation) => relation.id === id)))
+  const exposedFood = branchCases([], ['wealth'])
+  assert.equal(exposedFood.paths[0].state, 'active')
+  assert.equal(exposedFood.paths[0].protection, undefined)
+  assert.equal(branchCases(['resource']).paths.length, 0)
+  assert.deepEqual(branchCases(['resource']).incomplete, ['BRANCH_FOOD_ATTACK_REACH_UNRESOLVED'])
+  const separated = branchCases([], [], branchFood.map((branch) => branch.id === 'resource' ? { ...branch, id: 'wealth', branch: '戌' }
+    : branch.id === 'wealth' ? { ...branch, id: 'resource', branch: '卯' } : branch))
+  assert.equal(separated.paths.length, 0)
+  // A182 §7 requires damage remaining after a distinct transformation or control.
+  const killingBranches = [
+    { id: 'kill', branch: '寅', scope: 'natal' }, { id: 'mediator', branch: '午', scope: 'natal' },
+    { id: 'peer', branch: '辰', scope: 'natal' }, { id: 'feed', branch: '子', scope: 'yearlyLuck' },
+  ]
+  const killingBranchReview = (formations = []) => evaluateBranchDamage('a182-7', '戊', '偏官',
+    killingBranches, ['kill', 'mediator', 'peer'], 'kill', ['mediator'], formations, new Set(), ['peer'])
+  const residual = killingBranchReview()
+  assert.deepEqual(residual.paths.map(({ targetEntityId, damagedFunction }) => [targetEntityId, damagedFunction]),
+    [['mediator', 'branch_killing_protection']])
+  const supported = killingBranchReview([{ id: 'fire-formation', kind: 'three', elementStem: '丙', participants: ['kill', 'mediator', 'other'] }])
+  assert.equal(supported.paths.length, 0)
+  assert.ok(supported.protectivePaths.some(({ relationRefs }) => relationRefs.includes('fire-formation')))
+  const peerBranches = [
+    { id: 'rob', branch: '寅', scope: 'natal' }, { id: 'wealth', branch: '未', scope: 'natal' },
+    { id: 'output', branch: '巳', scope: 'greatLuck' },
+  ]
+  const peerBranchReview = (branches) => evaluateBranchDamage('bg-042', '乙', '劫財',
+    branches, ['rob', 'wealth'], 'rob', [], [], new Set())
+  assert.equal(peerBranchReview(peerBranches.slice(0, 2)).paths[0].state, 'active')
+  const bridgedWealth = peerBranchReview(peerBranches)
+  assert.equal(bridgedWealth.paths[0].state, 'weakened')
+  assert.equal(bridgedWealth.paths[0].protection.entityId, 'output')
+  const [branchClash] = run({ day: pillar('bd', '丙', '午'), month: pillar('bm', null, '子') })
+  const directClash = branchClash.branchFacts.find((fact) => fact.kind === 'clash')
+  assert.ok(directClash)
+  assert.equal(branchClash.branchRelationEffects.find(({ relationId }) => relationId === directClash.id).effect, 'active')
+  assert.equal(branchClash.rootStates.find(({ entityId }) => entityId === 'bd').state, 'weakened')
+  assert.ok(branchClash.branchRuntimeStates.filter(({ entityId }) => directClash.participants.includes(entityId))
+    .every(({ state }) => state === 'conflicted'))
+  const [branchMitigation] = run({ day: pillar('bd', '丙', '寅'), month: pillar('bm', null, '亥'), year: pillar('by', null, '巳') })
+  const mitigatedClash = branchMitigation.branchFacts.find((fact) => fact.kind === 'clash')
+  assert.ok(mitigatedClash)
+  assert.ok(branchMitigation.branchFacts.some((fact) => fact.kind === 'six_combination'
+    && fact.participants.some((id) => mitigatedClash.participants.includes(id))))
+  assert.equal(branchMitigation.branchRelationEffects.find(({ relationId }) => relationId === mitigatedClash.id).effect, 'mitigated')
+  const mitigatedRoot = run({ day: pillar('bd', '甲', '寅'), month: pillar('bm', null, '申'),
+    year: pillar('by', null, '亥') })[0]
+  assert.equal(mitigatedRoot.rootStates.find(({ entityId }) => entityId === 'bd').state, 'present')
+
+  const [sourceDrain] = run({ day: pillar('wood', '甲', '卯'), month: pillar('fire', '丙', '子') })
+  const transfer = sourceDrain.stemFunctionEffects.filter(({ sourceEntityId }) => sourceEntityId === 'wood')
+  assert.ok(transfer.some(({ kind, targetEntityId }) => kind === 'strengthen' && targetEntityId === 'fire'))
+  assert.equal(sourceDrain.stemEffectiveness.find(({ entityId }) => entityId === 'fire').currentFunction, 'strengthened')
+  assert.ok(transfer.some(({ kind, targetEntityId, reducesFunction }) => kind === 'drain' && targetEntityId === 'wood' && !reducesFunction))
+  const [damagedRoot] = run({ day: pillar('wood', '甲', '卯'), month: pillar('fire', '丙', '酉') })
+  assert.ok(damagedRoot.stemFunctionEffects.some(({ kind, targetEntityId, reducesFunction }) =>
+    kind === 'drain' && targetEntityId === 'wood' && reducesFunction))
+  assert.equal(damagedRoot.stemEffectiveness.find(({ entityId }) => entityId === 'wood').currentFunction, 'reduced')
+  for (const [older, younger] of [['甲', '丙'], ['丙', '甲'], ['甲', '戊'], ['戊', '甲']]) {
+    // Keep this a direction test, without independently rooted water
+    // controlling fire after OP-Z11 mitigates a clash.
+    const scoped = run({ day: pillar('dm', '壬', '寅') }, [
+      luck('greatLuck', older, '寅'), luck('yearlyLuck', younger, '午'),
+    ]).at(-1)
+    const source = older === '甲' ? 'greatLuck' : 'yearlyLuck'
+    const target = source === 'greatLuck' ? 'yearlyLuck' : 'greatLuck'
+    const kind = [older, younger].includes('丙') ? 'strengthen' : 'weaken'
+    assert.ok(scoped.stemFunctionEffects.some(({ sourceEntityId, targetEntityId, kind: effectKind }) =>
+      sourceEntityId === source && targetEntityId === target && effectKind === kind))
+    const targetFunction = scoped.stemEffectiveness.find(({ entityId }) => entityId === target)
+    assert.equal(targetFunction.currentFunction, kind === 'strengthen' ? 'strengthened' : 'reduced')
+  }
 
   // A natal stop changes the final effective pattern without deleting either manifestation.
   const pattern = { day: pillar('dm', '丙', '午'), month: pillar('m', '壬', '申'), year: pillar('y', '丁'), time: pillar('t', '庚') }
@@ -27,6 +144,7 @@ try {
   assert.deepEqual(natal.patternContext.heavenlyPatterns, ['偏財'])
   assert.equal(natal.patternContext.manifestationHistory.length, 2)
   assert.equal(natal.patternContext.effectiveManifestedYongShen.length, 1)
+  assert.equal(natal.stemEffectiveness.find(({ entityId }) => entityId === 'm').currentFunction, 'inactive')
 
   const transformed = { day: pillar('dm', '丙', '午'), month: pillar('m', '壬', '申') }
   const [base, great, year, month, day] = run(transformed, [
@@ -38,6 +156,7 @@ try {
   assert.equal(stateOf(great, 'greatLuck'), 'active')
   assert.equal(stateOf(year, 'greatLuck'), 'weakened')
   assert.equal(stateOf(year, 'yearlyLuck'), 'weakened')
+  assert.equal(year.stemEffectiveness.find(({ entityId }) => entityId === 'yearlyLuck').currentFunction, 'reduced')
   assert.equal(year.patternContext.effectiveManifestedYongShen.find(({ entityId }) => entityId === 'greatLuck').effectiveness, 'weakened')
   assert.ok(Object.isFrozen(base.patternContext.effectiveManifestedYongShen))
   assert.equal(day.parentScopeId, month.id)
@@ -88,7 +207,11 @@ try {
   assert.ok(stopped.patternContext.manifestationHistory.some(({ entityId }) => entityId === 'yearlyLuck'))
   assert.ok(!stopped.patternContext.effectiveManifestedYongShen.some(({ entityId }) => entityId === 'yearlyLuck'))
   assert.equal(stopped.provisionalPatternContext.patternMode, 'combined')
-  assert.equal(stopped.patternContext.patternMode, 'transformed')
+  // A-8-1 I-02: 己 exposes the earth element of 申's residual 戊, even
+  // after the 乙/庚 combination stops the incoming metal manifestation.
+  assert.equal(stopped.patternContext.patternMode, 'combined')
+  assert.ok(stopped.patternContext.effectiveManifestedYongShen.some(({ stem, sourceClass }) =>
+    stem === '己' && sourceClass === 'residual'))
   const stoppedControl = stopped.stemFacts.find((item) => item.source.id === 'natal-year' && item.target.id === 'greatLuck' && item.action === 'control')
   assert.equal(stopped.actualFunctions.find(({ relationFactId }) => relationFactId === stoppedControl.id).function, 'inactive')
 
@@ -244,13 +367,45 @@ try {
   const fixture = JSON.parse(await readFile(new URL('./fixtures/byeong-judgment-inputs.json', import.meta.url), 'utf8'))['CS-005']
   const [A, draftA, C, D, approval] = await Promise.all(['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16']
     .map((name) => readFile(new URL(`../src/docs/source/authority/${name}.md`, import.meta.url), 'utf8')))
+  const { calculateEightCharWithoutBirthTime } = await load('calculateEightChar')
+  const dailyPillar = calculateEightCharWithoutBirthTime({ year: 2027, month: 1, day: 15 }).day
   const reading = runInternalReading({
     birth: { date: fixture.date, time: { known: true, value: fixture.time }, gender: '女性', timeCorrectionMode: 'none' },
     calculation: { calculationVersion: CURRENT_CALCULATION_VERSION, referenceTime: '2027-01-15T00:00:00.000Z', monthlyLuckYear: 2027 },
     sources: { A, draftA, C, D, approval }, executionId: 'p0-reading', natalInspectionPeriod: validity,
-    dailyLuck: luck('dailyLuck', '甲', '子'),
+    dailyLuck: { pillar: pillar('dailyLuck', dailyPillar[0], dailyPillar[1]), validity: {
+      periodId: 'fixture-day-2027-01-15', from: { kind: 'exact', instant: '2027-01-14T15:00:00.000Z' },
+      to: { kind: 'exact', instant: '2027-01-15T15:00:00.000Z' },
+    } },
   })
   assert.deepEqual(reading.judgmentCore.map(({ scope }) => scope), ['natal', 'greatLuck', 'yearlyLuck', 'monthlyLuck', 'dailyLuck'])
+  const [csNatal, csGreat] = reading.judgmentCore
+  // C-10-1 items 8–9 and OP-Z11: 辰戌 remains observable, but 戌
+  // can still mitigate the damage reaching the month command from 子.
+  assert.ok(csNatal.branchDamage.paths.some(({ damagedFunction, state, protection }) =>
+    damagedFunction === 'branch_killing_protection' && state === 'weakened'
+      && protection?.entityId.includes('/pillars/time/')))
+  const natalKilling = csNatal.patternContext.effectiveManifestedYongShen.find(({ tenGod }) => tenGod === '偏官')
+  assert.ok(csGreat.runtime.some(({ entityId, state }) => entityId === natalKilling.entityId && state === 'stopped'))
+  // C-1 and SG-069/101 prohibit treating the removal of pressure as automatic damage.
+  assert.ok(csGreat.roleEngine.damagePaths.every(({ action, targetEntityId }) => action !== 'combine' || targetEntityId !== natalKilling.entityId))
+  const natalResource = csNatal.patternContext.effectiveManifestedYongShen.find(({ tenGod }) => tenGod === '偏印')
+  // C-10-1/2 and OP-T10 keep natal 丙 active in the January 辛丑 scope.
+  assert.ok(reading.judgmentCore[3].runtime.some(({ entityId, state }) =>
+    entityId === natalResource.entityId && state === 'active'))
+  assert.ok(reading.luck.month.runtimeStates.some(({ targetEntityId, functionalState }) =>
+    targetEntityId === natalResource.entityId && functionalState === 'active'))
+  const daily = reading.luck.day
+  const dailyCore = reading.judgmentCore.at(-1)
+  assert.ok(daily.functionEffects.effects.length)
+  assert.equal(new Set(daily.functionEffects.effects.map(({ effectId }) => effectId)).size, daily.functionEffects.effects.length)
+  assert.deepEqual(reading.interpretationInputs.at(-1).functionEffectRefs, daily.functionEffects.effects.map(({ effectId }) => effectId))
+  const dailyStateIds = new Set(daily.runtimeStates.map(({ stateId }) => stateId))
+  assert.ok(daily.functionEffects.effects.every((effect) => effect.scopeId === dailyCore.id
+    && effect.runtimeStateRefs.every((id) => dailyStateIds.has(id))
+    && dailyCore.stemFunctionEffects.some(({ relationFactId, sourceEntityId, targetEntityId, kind }) =>
+      relationFactId === effect.relationFactId && sourceEntityId === effect.sourceEntityId
+      && targetEntityId === effect.targetEntityId && kind === effect.effectType)))
   const monthBranch = reading.canonical.chart.pillars.month.value.branch
   const dayStem = reading.canonical.chart.pillars.day.value.stem
   const { calculateTenGod } = await load('dayRelationships')
@@ -258,6 +413,12 @@ try {
   const expectedPattern = calculateTenGod(dayStem, HIDDEN_STEM_ROLE_TABLE[monthBranch].find(({ role }) => role === 'main').stem)
   assert.ok(Object.isFrozen(reading.judgmentCore))
   assert.ok(reading.judgmentCore.every((snapshot) => Object.isFrozen(snapshot) && snapshot.patternContext.branchPattern === expectedPattern))
+  console.log(JSON.stringify(reading.judgmentCore.map(({ scope, structuralSuccess, roleEngine, stemFunctionEffects }) => ({
+    scope, stem: structuralSuccess.stem.grade, branch: structuralSuccess.branch.grade, overall: structuralSuccess.overall.grade,
+    byeong: roleEngine.byeongStatus, guEung: roleEngine.guEungStatus, appliedStemEffects: stemFunctionEffects.length,
+    stemReasons: structuralSuccess.stem.reasonCodes, damageChecks: roleEngine.incompleteDamageChecks,
+    damage: roleEngine.damagePaths.map(({ damagedFunction, action, state }) => ({ damagedFunction, action, state })),
+  }))))
   console.log('P0 judgment regressions passed')
 } finally {
   await server.close()

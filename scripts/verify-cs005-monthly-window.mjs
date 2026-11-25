@@ -17,7 +17,7 @@ try {
   const { findJieBoundariesForGregorianYear, findRisshunBoundary } = await load('solarTermPillars')
   const fixture = JSON.parse(await readFile(new URL('./fixtures/byeong-judgment-inputs.json', import.meta.url), 'utf8'))['CS-005']
   const [A, draftA, C, D, approval] = await Promise.all(
-    ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((name) => readFile(`src/docs/source/${name}.md`, 'utf8')),
+    ['A_rev179', 'A_rev180', 'C_rev215', 'D_rev152', '25-7_rev16'].map((name) => readFile(`src/docs/source/authority/${name}.md`, 'utf8')),
   )
   const input = freeze({
     birth: { date: fixture.date, time: { known: true, value: fixture.time }, gender: '女性', timeCorrectionMode: 'none' },
@@ -113,7 +113,7 @@ try {
       && (month.stageStatus.stemState === 'confirmed'
         || (month.reasonCodes.includes('PRIOR_STOP_LUCK_PAIR_UNSUPPORTED')
           && month.runtimeStates.every((state) => state.originMode === 'inherited') && !month.currentApplications.length))
-      && month.stageStatus.successState === 'deferred'
+      && month.stageStatus.successState === (month.judgmentCore?.structuralSuccess.overall.grade ? 'confirmed' : 'deferred')
       && month.stageStatus.byeong === 'deferred' && month.stageStatus.guEung === 'deferred'))
     assert.ok(window.every((month) => month.evidenceRefs.every((id) => month.evidence.some((item) => item.evidenceId === id))))
   })

@@ -49,7 +49,7 @@ export type EvaluatedMoneyScope = {
 }
 const scopes = { natal: 'natal', greatLuck: 'daewoon', yearlyLuck: 'sewoon', monthlyLuck: 'month' } as const
 const earningPolicies = new Set(['FOOD-01', 'FOOD-04', 'WEALTH-01', 'HO-01', 'PEER-03', 'ROB-04'])
-const wealthDamagePolicies = new Set(['WEALTH-05', 'PEER-06', 'ROB-03'])
+const wealthDamagePolicies = new Set(['WEALTH-05', 'PEER-06', 'ROB-03', 'HO-supported-wealth-pressure'])
 const harmfulFeedPolicies = new Set(['KILL-05', 'WEALTH-06', 'PEER-05', 'ROB-05-harmful'])
 const isWealth = (god: string) => god === '正財' || god === '偏財'
 const live = (fn: string) => fn === 'operating' || fn === 'reduced'
@@ -69,8 +69,12 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
     const { id, source, target, action } = relation
     const actual = actualById.get(id)
     const effect = actual?.structuralEffect
+    const residual = action === 'generate' && isWealth(source.tenGod) && target.tenGod === '偏官'
+      ? snapshot.policyRoles.byeong.find(item => item.policyId === 'killing-pressure-after-protection'
+        && item.sourceEntityId === target.id && item.currentState !== 'inactive' && item.relationFactIds.includes(id))
+      : undefined
     if (!effect?.currentlyEffective || !actual || !live(actual.function)
-      || actual.patternContextId !== snapshot.patternContext.id || actual.direction === 'deferred'
+      || actual.patternContextId !== snapshot.patternContext.id || actual.direction === 'deferred' && !residual
       || [source.id, target.id].some(entity => !runtime.has(entity) || runtime.get(entity) === 'stopped')) continue
 
     const policy = actual.policyId ?? ''
@@ -89,7 +93,7 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
     const conditional = snapshot.conditionalByeong.find(item => item.triggerRelationFactId === id
       && item.currentState === 'active' && item.requiresHarmfulKilling && live(item.currentFunction))
     const attack = action === 'generate' && isWealth(source.tenGod) && target.tenGod === '偏官'
-      && (harmful && harmfulFeedPolicies.has(policy) && actual.conditionEvidence?.length || conditional)
+      && (harmful && harmfulFeedPolicies.has(policy) && actual.conditionEvidence?.length || conditional || residual)
       ? relations.find(item => item.action === 'control' && item.source.id === target.id && item.target.dayMaster
         && actualById.get(item.id)?.structuralEffect?.currentlyEffective) : undefined
     // HO-06 establishes that this particular resource is needed to regulate output.
@@ -102,7 +106,10 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
         return item.source.id === target.id && item.action === 'control' && item.target.tenGod === '傷官'
           && actual.conditionEvidence?.includes(item.id) && support?.policyId === 'HO-02'
           && support.structuralEffect?.currentlyEffective && live(support.function)
-      })
+      }) ?? (actual.conditionEvidence?.some(ref => ref.startsWith('p0-branch-relation:'))
+        && snapshot.rootStates.some(root => root.entityId === target.id && root.formationIds.length)
+        && snapshot.roleEngine.damagePaths.some(path => path.damagedFunction === 'resource' && path.targetEntityId === target.id
+          && path.relationRefs.includes(id) && (path.state === 'active' || path.state === 'weakened')) ? relation : undefined)
       : undefined
     if (!earning && !outflow && !protection.length && !attack && !neededResource) continue
 
@@ -119,7 +126,7 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
       ? localCombinations.filter(item => item.effect === 'weakened'
         && item.participants.some(entity => entity === source.id || entity === target.id)).map(item => item.sourceRelationFactId)
       : []
-    const refs = unique([id, ...(actual.conditionEvidence ?? []), ...(actual.resolutionEvidence ?? []),
+    const refs = unique([id, ...(actual.conditionEvidence ?? []), ...(actual.resolutionEvidence ?? []), ...(residual?.relationFactIds ?? []),
       ...damage.flatMap(item => item.relationFactIds), ...(attack ? [attack.id] : []),
       ...(conditional && attack ? [conditional.supportingRelationFactId] : []), ...reactivation, ...attenuation])
     const subjects = new Set([...damage.map(item => item.id), ...(conditional ? [conditional.sourceEntityId] : [])])
@@ -180,7 +187,7 @@ function project(snapshot: LuckScopeState, temporalStatus: OutcomeFact['temporal
       add({ semanticType: 'money_duration', result: 'harder_to_sustain_accumulation' }, 'unfavorable', provenance, { capacityBased: true })
     }
     if (outflow) {
-      const provenance = ['OUT-MONEY-04', '07:L140-L144,L1250-L1251']
+      const provenance = ['OUT-MONEY-04', policy === 'HO-supported-wealth-pressure' ? '07:L1026-L1031' : '07:L140-L144,L1250-L1251']
       add({ semanticType: 'money_loss_or_division', result: 'wealth_can_be_divided_or_flow_out' }, 'unfavorable', provenance)
       add({ semanticType: 'money_retention', result: 'harder_to_retain' }, 'unfavorable', provenance)
     }

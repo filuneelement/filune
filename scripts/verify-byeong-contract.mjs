@@ -19,8 +19,8 @@ try {
   const { issueByeongRuleReceipts } = await load('evaluators/byeongCandidates/ruleEvidence')
   const { evaluateByeongJudgment } = await load('evaluators/byeongJudgment/index')
   const { createExecutionScopeContext } = await load('runtime/executionScopeContext')
-  const A = await readFile('src/docs/source/A_rev179.md', 'utf8')
-  const C = await readFile('src/docs/source/C_rev215.md', 'utf8')
+  const A = await readFile('src/docs/source/authority/A_rev179.md', 'utf8')
+  const C = await readFile('src/docs/source/authority/C_rev215.md', 'utf8')
   const direct = issueByeongRuleReceipts(A, 'raw-A179')
   const reference = C.split('C-10-1. 사례별 20항목')[1].split('\n').find((line) => line.startsWith('8 병\t')).split('\t')
   check(() => {
@@ -276,7 +276,7 @@ try {
     trial.sign(review)
     assert.equal(resultFor(run(trial.input), 'day:branch').status, 'deferred')
   })
-  const draftRuleSource = await readFile('src/docs/source/A_rev180.md', 'utf8')
+  const draftRuleSource = await readFile('src/docs/source/authority/A_rev180.md', 'utf8')
   check(() => {
     const trial = setup('CS-127')
     assert.throws(() => evaluateByeongCandidates({ ...trial.input, draftRuleSource }), /does not accept supplied damage reviews/)

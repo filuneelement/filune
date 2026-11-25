@@ -13,8 +13,8 @@ try {
   const contracts = await load('judgment/contracts/index')
   const { calculateCanonicalChart } = await load('canonical/calculateCanonicalChart')
   const { CURRENT_CALCULATION_VERSION } = await load('canonical/version')
-  const A = await readFile('src/docs/source/A_rev179.md', 'utf8')
-  const C = await readFile('src/docs/source/C_rev215.md', 'utf8')
+  const A = await readFile('src/docs/source/authority/A_rev179.md', 'utf8')
+  const C = await readFile('src/docs/source/authority/C_rev215.md', 'utf8')
   const clone = (x) => JSON.parse(JSON.stringify(x))
   const freeze = (x) => { if (x && typeof x === 'object') { Object.values(x).forEach(freeze); Object.freeze(x) } return x }
   const jan = '2027-01-15T00:00:00.000Z', july = '2027-07-15T00:00:00.000Z'
@@ -50,7 +50,7 @@ try {
   const { evaluateNatalStemCombination: natalEvaluate } = await load('judgment/evaluators/natalStemCombination/index')
   const { evaluatePatternCandidates: candidates, patternCandidateSchema } = await load('judgment/evaluators/patternCandidates/index')
   const { calculateDayRelationships, calculateTenGod } = await load('dayRelationships')
-  const sources = { A, C, D: await readFile('src/docs/source/D_rev152.md','utf8'), approval: await readFile('src/docs/source/25-7_rev16.md','utf8') }
+  const sources = { A, C, D: await readFile('src/docs/source/authority/D_rev152.md','utf8'), approval: await readFile('src/docs/source/authority/25-7_rev16.md','utf8') }
   function prepare(output) {
     const ctx=context(output,'natal',jan)
     const input={producer:output,context:ctx}

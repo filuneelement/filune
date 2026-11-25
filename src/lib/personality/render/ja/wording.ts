@@ -198,6 +198,8 @@ const phrases: ReadonlyMap<string, string> = new Map([
   ['먼저 나서고 싶은 의욕이 검토 과정에서 제동이 걸리는 경향', '先に動きたい気持ちに、検討を重ねるうちに歯止めがかかる'],
   ['가능성을 반복해 검토하면서 결단을 늦추는 경향', '可能性を何度も検討して決断を先延ばしにする'],
   ['더디게 진행되는 일에 끈기를 발휘함', '進みが遅いことにも粘り強く取り組む'],
+  ['속도가 더뎌도 목표를 쉽게 포기하지 않음', '進み方が遅くても目標を簡単には手放さない'],
+  ['인내하며 자기 의사를 바로 드러내지 않는 편', '時間を置いて自分の意見を伝える'],
   ['차분해 보이면서도 안으로는 확장과 변화를 지향함', '落ち着いて見えても、内心では広がりや変化を求める'],
   ['호기심이 질문과 행동으로 이어지는 경향', '好奇心を質問や行動につなげる'],
   ['크게 생각한 끝에 중간 선택지를 놓치기 쉬움', '大きく考えるうちに中間の選択肢を見落としやすい'],
@@ -351,6 +353,10 @@ const phrases: ReadonlyMap<string, string> = new Map([
   ['외부 표현과 내부 욕구 사이의 간극이 커짐', '表で見せる態度と内にある願いの隔たりが広がる'],
   ['빠른 판단', '素早く判断する'],
 ])
+
+export function hasTraitPhraseJa(trait: string): boolean {
+  return phrases.has(trait.trim())
+}
 
 export function traitPhraseJa(trait: string): string {
   const phrase = phrases.get(trait.trim())

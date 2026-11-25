@@ -103,6 +103,14 @@ try {
         assert(paragraph.sourcePersonalityFactIds.every(id => facts.has(id)))
         assert(paragraph.sourceOutcomeIds.every(id => outcomes.has(id)))
         assert.equal(paragraph.reasonStatus === 'complete', paragraph.causeAvailable && paragraph.lifeMappingAvailable)
+        if (paragraph.expression.kind === 'judgment_structure') {
+          const unit = plan.semanticUnits.find(item => item.id === paragraph.expression.unitId)
+          assert.equal(unit.meaningRef.producer, 'judgment')
+          assert.ok(unit.evidenceIds.length && unit.structuralInterpretation)
+          assert.equal(unit.period?.periodId, paragraph.periodRef)
+          assert.deepEqual(paragraph.sourceOutcomeIds, [])
+          continue
+        }
         if (paragraph.expression.kind === 'temporal') {
           assert(paragraph.expression.contribution.activations.every(item => item.interval && item.periodRef))
           continue
@@ -268,7 +276,15 @@ try {
     assert.deepEqual(money.paragraphs[0].plan.activations.map(item => item.scope).filter((scope, index, all) =>
       all.indexOf(scope) === index), ['natal', 'sewoon', 'month'])
     assert.equal(money.quality.repeatedScopeMeaningCount, 2)
-    assert.equal(money.quality.distinctSemanticCount, 6)
+    // Phase 3-B confirmed the separate wealth-to-pressure path (C-10-1).
+    const pressure = money.paragraphs.filter(({ plan }) => plan.expression.kind === 'outcome' && plan.expression.voice === 'pressure')
+    assert.ok(pressure.length)
+    const pressureIds = new Set(pressure.flatMap(({ plan }) => plan.semanticUnitIds))
+    const outcomeSemanticIds = new Set(money.paragraphs
+      .filter(({ plan }) => plan.expression.kind === 'outcome')
+      .flatMap(({ plan }) => plan.semanticUnitIds)
+      .filter(id => !pressureIds.has(id)))
+    assert.equal(outcomeSemanticIds.size, 6)
     assert.equal(rel.quality.repeatedScopeMeaningCount, 0)
     assert.equal(rel.paragraphs.filter(p => p.plan.slots.includes('formation')).length, 2)
     assert.equal(contactOnly.quality.unsupportedClaimCount, 0)
@@ -294,8 +310,12 @@ try {
       assert.equal(rendered.quality.responsePatternCount, ready)
       assert.equal(rendered.semanticReadiness, ready >= 2 ? 'ready' : ready ? 'partial' : 'deferred')
       assert.equal(rendered.publicationReadiness, ready ? 'partial' : 'deferred')
-      assert.equal(rendered.quality.densityGap, Boolean(ready))
-      assert.equal(rendered.gaps.some(gap => gap.type === 'RENDERER_GAP' && gap.slot === 'density_target'), Boolean(ready))
+      // Master 20 treats density as an independent check on the published chapter.
+      const { characterCount, paragraphCount } = rendered.quality
+      const densityGap = rendered.semanticReadiness !== 'deferred'
+        && (characterCount < 800 || characterCount > 1300 || paragraphCount < 4 || paragraphCount > 6)
+      assert.equal(rendered.quality.densityGap, densityGap, id)
+      assert.equal(rendered.gaps.some(gap => gap.type === 'RENDERER_GAP' && gap.slot === 'density_target'), densityGap, id)
       assert.doesNotMatch(textOf(rendered).join(' '), /늘 반복|계속 같은 선택|비슷한 일이 되풀이|항상 이런 결과/u)
       assert.equal(rendered.quality.unsupportedRecurrenceCount, 0)
     }

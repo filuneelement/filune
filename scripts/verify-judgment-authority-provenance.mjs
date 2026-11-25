@@ -92,7 +92,7 @@ try {
   await check(async () => {
     // The source supplies a reverse-inferred DATE and hour RANGE, not an observed exact birth instant.
     // Test authority routing with unknown time; do not invent a midpoint or a judgment fixture.
-    const text = await readFile('src/docs/source/C_rev215.md', 'utf8')
+    const text = await readFile('src/docs/source/authority/C_rev215.md', 'utf8')
     const section = text.split('C-1. CS-005')[1].split('③ 전문가')[0]
     const date = /출생일\t(\d{4})-(\d{2})-(\d{2})/.exec(section)
     assert.ok(date)

@@ -69,6 +69,7 @@ export const conditions = [
   'peer_needs_control', 'rob_needs_control', 'safe_killing_control', 'output_bridge',
   'material_harmful_feed', 'feeds_needed_rob_killing', 'safe_needed_blade_killing', 'feeds_blade_controller',
   'attacks_needed_blade_killing', 'combines_needed_blade_killing', 'wealth_is_harmful', 'protected_peer_wealth',
+  'peer_pressure_on_supported_wealth',
 ] as const
 export type Condition = typeof conditions[number]
 export const directions = ['favorable', 'unfavorable', 'favorable_candidate', 'unfavorable_candidate', 'context_dependent', 'favorable_auxiliary', 'favorable_priority'] as const
@@ -133,6 +134,8 @@ export const p12Policies = [
   entry('FOOD-05', 'food_god', 'IndirectResourceControlsFood', 'unfavorable', 'PA-504', 'core_food'),
   entry('FOOD-08', 'food_god', 'DayGeneratesFood', 'unfavorable_candidate', 'PP-507', 'insufficient_output_capacity'),
   entry('HO-01', 'hurting', 'HurtingGeneratesWealth', 'favorable', 'PA-600'),
+  { ...entry('HO-supported-wealth-pressure', 'hurting', 'PeerControlsWealth', 'unfavorable_candidate',
+    'SRC-07-1026', 'peer_pressure_on_supported_wealth'), evidenceStatus: 'SOURCE_EXPLICIT' },
   entry('HO-02', 'hurting', 'ResourceControlsHurting', 'favorable_candidate', 'PA-601', 'necessary_hurting_regulation'),
   entry('HO-03', 'hurting', 'HurtingControlsOfficer', 'unfavorable_candidate', 'PA-602'),
   entry('HO-04', 'hurting', 'HurtingControlsKilling', 'favorable_candidate', 'PA-603', 'harmful_killing'),

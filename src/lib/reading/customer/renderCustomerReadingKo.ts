@@ -1,12 +1,18 @@
 import { renderTimingContribution, validTimingContribution } from './renderTimingChaptersKo'
 import type { NatalPersonalityResult } from '../../personality/types'
 import { isCustomerSafeKo } from '../../personality/render/ko/guardrails'
+import { isCustomerSafeJa } from '../../personality/render/ja/guardrails'
+import { isCustomerSafeEn } from '../../personality/render/en/guardrails'
 import { traitPhrase } from '../../personality/render/ko/wording'
 import { bounds } from '../semanticUnit'
 import { moneyContrastAxes } from './moneyExplanation'
 import { moneyContrastCopy, renderMoneyExplanation } from './renderMoneyExplanationKo'
 import type { buildCustomerReadingPlan } from './buildCustomerReadingPlan'
 import { chapterTargets, type CustomerChapterTitleKey, type CustomerChapterQuality, type PublicationReadiness, type RelationshipTimingAvailability, type CustomerReadingParagraphPlan, type OutcomeVoice } from './types'
+import { customerTitle, localizedContrast, localizedIndependentPersonality, localizedMoney, localizedParagraph, localizedPeriod, localizedPersonalityPosition, localizedWorkApplication, type CustomerReadingLocale } from './customerLanguage'
+import { describeCustomerCause } from './describeCustomerCause'
+import { renderJudgmentStructure } from './renderJudgmentStructure'
+import { personalityContent } from '../interpretationContent'
 
 const relationshipOutcomeMappings = new Set(['CL-R01', 'CL-R02', 'CL-R03'])
 
@@ -18,6 +24,7 @@ const titles: Record<CustomerChapterTitleKey, string> = {
   long_term_transitions: '앞으로 삶의 흐름이 크게 바뀌는 때',
   opportunity_and_caution_windows: '기회를 활용할 때와 신중하게 판단할 때',
   relationship_style: '관계에서 드러나는 나의 방식',
+  work_and_learning_environment: '일과 배움에서 힘을 쓰는 방식',
   earning_and_retention: '돈을 만드는 방식과 돈을 지키는 힘',
 }
 
@@ -59,9 +66,15 @@ const traitCopy = new Map<string, string>([
   ['pattern:속상한 일이 생기면 말을 아끼는 경향', '속상한 일이 생기면 말수가 줄어드는 쪽에 가깝습니다. 같은 질문을 받아도 평상시와 달리 바로 설명하기보다 대답을 줄이는 모습으로 읽힙니다.'],
   ['pattern:힘들 때도 자신의 어려움을 말하지 않음', '일이 힘들어지는 상황에서도 자신의 어려움을 먼저 말하지 않는 쪽에 가깝습니다. 어려움이 바깥으로 공유되는 정도와 실제로 감당하는 정도가 다를 수 있습니다.'],
   ['pattern:자기 기준이 지나치게 확고해지면 다른 의견을 듣지 않으려 함', '판단 기준이 지나치게 굳어지는 상황에서는 다른 의견을 들으려는 여지가 줄어들 수 있습니다. 기준이 생기는 것과 새로운 근거를 받아들이기 어려워지는 지점을 함께 살펴볼 만합니다.'],
+  ['ability:계획대로 꼼꼼하게 완성함', '마무리의 기준이 분명한 과제에서는 계획을 따라 세부를 챙기는 방식이 잘 드러납니다. 여러 단계로 나뉜 일이라면, 처음 맞춘 조건이 마지막 결과물에도 반영됐는지 확인하는 장면에서 이 기질을 활용할 수 있습니다.'],
+  ['ability:관심 분야에 깊게 몰입함', '관심이 생긴 주제는 한 번 훑고 지나가기보다 더 깊이 파고드는 편입니다. 한 가지 문제에 시간을 들일 수 있는 환경이라면, 자료를 좁혀 가며 세부 차이를 알아보는 데 이 몰입을 쓰기 좋습니다.'],
+  ['ability:기존 방식에 얽매이지 않고 새로운 방식을 적용함', '기존 절차로 문제를 풀기 어려울 때 다른 방법을 실제로 써 보는 쪽에 열려 있습니다. 진행이 막힌 과제라면 목표 자체를 바꾸기 전에, 같은 목표로 갈 수 있는 다른 작업 방식을 적용해 보는 장면에서 이 강점이 드러날 수 있습니다.'],
 ])
 
 const behaviorCopy = new Map<string, { response: string; result?: string }>([
+  ['outward_composure_limits_delegation', {
+    response: '불편한 말을 들어도 그 자리에서는 웃어넘길 수 있습니다. 이후 중요한 일을 맡길 사람을 고를 때는 앞서 들은 말이 판단 기준에 들어갈 수 있습니다. 대화를 이어 가는 태도와 책임을 나눌 때의 판단에 서로 다른 기준이 작동하는 모습입니다.',
+  }],
   ['intent_reconsideration_delays_start', {
     response: '하고 싶은 일이 생기면 먼저 나서고 싶은 마음이 들다가도, 실제로 움직이려는 순간에는 지금 시작해도 되는지 다시 살펴볼 수 있습니다.',
     result: '이 확인에 시간이 걸리면 첫 행동이 늦어질 수 있습니다.',
@@ -137,7 +150,7 @@ function renderTiming(plan: CustomerReadingParagraphPlan) {
     return `${scopeWording[scope]}${qualification} ${from}부터 ${to} 직전까지`
   })
   if (!labels.length) return ''
-  const lead = plan.scope === 'natal' ? ' 이 경로가 다시 활성되는 범위는 ' : ' 이 작용이 확인되는 범위는 '
+  const lead = plan.scope === 'natal' ? ' 이 조건이 다시 확인된 기간은 ' : ' 이 판단이 적용되는 기간은 '
   return lead + labels.join(', 그 안에서는 ') + '입니다(한국 시간).'
 }
 
@@ -155,8 +168,37 @@ function relationshipSequence(traits: readonly (string | undefined)[], scene: st
   ].join(' ') + scene
 }
 
+const workStudyCopy: Record<import('../../outcome/workStudy').WorkStudySemantic, string> = {
+  work_capacity: '확인된 업무에서는 생각을 설명하거나 직접 결과물로 만드는 방식에 힘을 쓸 여지가 있습니다.',
+  work_difficulty: '맡은 역할의 기준과 자신의 일 처리 방식이 충돌하면 역할을 이어가는 데 부담이 생길 수 있습니다.',
+  work_resolution: '같은 난제를 막던 경로가 완화되어, 그 일에 다시 힘을 쓸 여지가 생깁니다.',
+  role_acquisition: '이미 확인된 제안에서는 역할을 수행하는 데 걸리던 제약이 완화되어 조건을 검토할 여지가 생깁니다.',
+  organizational_pressure: '확인된 조직 역할에서는 요구되는 기준과 자신의 처리 방식이 맞물릴 때 부담이 커질 수 있습니다.',
+  study_capacity: '배울 내용을 직접 설명하거나 실습으로 다시 만들어 볼 때 이해를 넓히는 데 도움이 될 수 있습니다.',
+  study_difficulty: '배운 내용을 흡수하고 쌓아 가는 과정에 마찰이 생길 수 있습니다.',
+  learning_accumulation: '배운 내용을 다시 확인하고 차곡차곡 쌓는 과정에 힘을 쓰기 좋습니다.',
+  distraction_pressure: '또래와의 경쟁이 두드러지는 학습 환경에서는 주의가 분산되어 자기 속도를 지키기 어려울 수 있습니다.',
+  expression_vs_formal_learning_conflict: '스스로 실험해서 답을 찾는 방식과 정해진 절차에 맞춰야 하는 학습 사이에 마찰이 생길 수 있습니다.',
+}
+
 function renderParagraph(plan: CustomerReadingParagraphPlan, facts: ReadonlyMap<string, string>): string | undefined {
   const expression = plan.expression
+  if (expression.kind === 'judgment_structure') return undefined
+  if (expression.kind === 'work_study') {
+    const copy = expression.cause === 'output_to_wealth'
+      ? '확인된 업무에서는 아이디어를 실제로 쓰이는 결과물로 만들어 수익으로 이어 갈 여지가 있습니다.'
+      : expression.cause === 'output_controls_pressure'
+        ? '예시를 따라 해 보고 배운 내용을 자신의 말이나 실습으로 다시 풀어내는 방식이 어려운 과제를 다루는 데 도움이 될 수 있습니다.'
+        : expression.mappingId === 'Master 21:study_difficulty'
+          ? '어려운 과제를 풀어내는 힘이 있어도, 부담이 이어지면 같은 속도로 공부를 계속하기 어려울 수 있습니다.'
+          : expression.mappingId === 'CL-S04'
+            ? '눈앞의 결과에 힘이 실리면 배운 내용을 다시 살피고 쌓을 시간이 줄어들 수 있습니다.'
+            : workStudyCopy[expression.semantic]
+    const scene = expression.semantic === 'work_capacity' && expression.scene === 'employed'
+      ? ' 맡은 과제를 설명하거나 결과물을 보여 주는 상황이 한 예입니다.' : ''
+    const limited = expression.reduced ? ' 이 작용은 제한적으로 나타날 수 있습니다.' : ''
+    return copy + limited + scene + renderTiming(plan)
+  }
   if (expression.kind === 'temporal') return renderTimingContribution(expression.contribution)
   if (expression.kind === 'outcome') {
     const copy = expression.voice === 'formation' && plan.lifeMechanismIds.includes('three_formation_with_active_stem')
@@ -171,6 +213,10 @@ function renderParagraph(plan: CustomerReadingParagraphPlan, facts: ReadonlyMap<
   const traits = expression.traitFactIds.map(id => facts.get(id))
   if (traits.some(trait => !trait)) return undefined
   const trait = traits[0]!
+  const independent = traits.length === 1 && localizedIndependentPersonality(trait, 'ko')
+  if (independent) return independent
+  const workApplication = localizedWorkApplication(plan, trait, 'ko')
+  if (workApplication) return workApplication
   const scene = expression.scene && expression.voice === 'relationship' ? ' ' + settings[expression.scene] : ''
   if (expression.composite === 'relation_sequence') return relationshipSequence(traits, scene)
   if (expression.composite === 'outward_decision') {
@@ -198,7 +244,7 @@ function renderParagraph(plan: CustomerReadingParagraphPlan, facts: ReadonlyMap<
   switch (expression.voice) {
     case 'core': return `${phrase} 쪽에 가깝습니다.`
     case 'outward': return contextual ? `사람들과 어울리는 자리에서는 ${phrase} 모습이 먼저 전해질 수 있습니다.` : `바깥으로는 ${phrase} 태도가 먼저 보입니다.`
-    case 'decision': return `결정을 앞두면 ${phrase} 방식으로 판단하는 편입니다.`
+    case 'decision': return `결정을 앞두면 ${phrase} 편입니다.`
     case 'information': return `새로운 정보나 상황을 마주할 때는 ${phrase} 쪽에 힘이 실립니다.`
     case 'relationship': return `사람을 대할 때는 ${phrase} 태도를 보일 수 있습니다.` + scene
     case 'stress': return `부담이 있는 상황에서는 ${phrase} 반응을 보일 수 있습니다.`
@@ -222,10 +268,25 @@ const moneyActorKo = /가족|배우자|동업자|직원|거래처|경쟁사|친�
 const unsupportedMoneySlots = new Set(['loss', 'division', 'competition', 'cost', 'sustainability'])
 
 export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerReadingPlan>, natal?: NatalPersonalityResult) {
+  return renderCustomerReading(plan, natal, 'ko')
+}
+
+export function renderCustomerReading(plan: ReturnType<typeof buildCustomerReadingPlan>, natal: NatalPersonalityResult | undefined,
+  locale: CustomerReadingLocale) {
   const facts = new Map(natal?.facts.map(fact => [fact.id, fact.trait]))
+  const personalityFacts = new Map(natal?.facts.map(fact => [fact.id, fact]))
   const units = new Map(plan.semanticUnits.map(unit => [unit.id, unit]))
+  const explanations = new Map(plan.structuralExplanationUnits.map(unit => [unit.id, unit]))
+  const customerSafe = { ko: isCustomerSafeKo, ja: isCustomerSafeJa, en: isCustomerSafeEn }[locale]
+  const timing = (paragraph: CustomerReadingParagraphPlan) => locale === 'ko' ? renderTiming(paragraph) : localizedPeriod(paragraph, locale)
+  const title = (key: CustomerChapterTitleKey) => locale === 'ko' ? titles[key] : customerTitle(key, locale)
+  const moneyActor = locale === 'ko' ? moneyActorKo : locale === 'ja'
+    ? /家族|配偶者|従業員|取引先|競合他社|兄弟|税金|広告費|人件費/u
+    : /\b(?:spouse|employee|business partner|competitor|sibling|tax|payroll)\b/iu
   return plan.chapters.map(chapter => {
     let unsupportedClaimCount = 0
+    let excludedCandidateCount = 0
+    let rejectedPlannedClaimCount = 0
     let unsupportedChangeCount = 0
     let unsupportedTransitionCount = 0
     let unsupportedOpportunityCount = 0
@@ -241,12 +302,35 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
     const expressed = chapter.paragraphPlans.flatMap(paragraph => {
       const references = paragraph.semanticUnitIds.map(id => units.get(id))
       const expression = paragraph.expression
+      if (expression.kind === 'judgment_structure') {
+        const unit = units.get(expression.unitId)
+        const text = unit && unit.structuralInterpretation?.chapter === chapter.chapterId
+          && unit.meaningRef.producer === 'judgment' && unit.status === 'ready'
+          && references.length === 1 && references[0] === unit && unit.evidenceIds.length
+          && unit.scope === paragraph.scope && unit.period?.periodId === paragraph.periodRef
+          && (unit.scope === 'natal' || bounds(unit.period))
+          ? renderJudgmentStructure(unit, locale) : undefined
+        if (!text || !customerSafe(text)) { unsupportedClaimCount++; rejectedPlannedClaimCount++; return [] }
+        if (texts.has(text)) { duplicateMeaningCount++; return [] }
+        texts.add(text)
+        return [{ text, plan: paragraph, money: undefined, moneyBody: undefined }]
+      }
       const money = chapter.chapterId === 'CR-07' && expression.kind === 'outcome'
         ? renderMoneyExplanation(expression.voice, paragraph) : undefined
-      const moneyBody = money && [money.text, money.criterion].filter(Boolean).join(' ')
-      const text = chapter.chapterId === 'CR-07'
-        ? moneyBody && moneyBody + renderTiming(paragraph)
-        : renderParagraph(paragraph, facts)
+      const moneyBody = money && expression.kind === 'outcome' && (locale === 'ko'
+        ? [money.text, money.criterion].filter(Boolean).join(' ')
+        : localizedMoney(expression.voice, paragraph, locale, Boolean(money.criterion)))
+      const body = chapter.chapterId === 'CR-07'
+        ? moneyBody && moneyBody + timing(paragraph)
+        : locale === 'ko' ? renderParagraph(paragraph, facts) : localizedParagraph(paragraph, facts, locale)
+      const position = expression.kind === 'personality'
+        && localizedPersonalityPosition(paragraph, personalityFacts.get(expression.traitFactIds[0]), locale)
+      const editorial = expression.kind === 'personality' && expression.contentId
+        && expression.traitFactIds.length === 1 && references.length === 1
+        && personalityContent[expression.contentId].trait.some(trait => facts.get(expression.traitFactIds[0]) === trait)
+        ? personalityContent[expression.contentId].copy[locale] : undefined
+      const copy = editorial ?? body
+      const text = copy && position ? `${copy} ${position}` : copy
       const pattern = expression.kind === 'personality' ? expression.pattern : undefined
       const recurrence = paragraph.slots.includes('recurrence') || paragraph.slots.includes('relationshipRecurrence')
         || paragraph.sourceMappingIds.includes('CL-P05') || Boolean(pattern?.recurrence.length)
@@ -277,12 +361,16 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
         const claimed = new Set(paragraph.moneyAxes ?? [])
         const invalidSubdivision = paragraph.slots.some(slot => unsupportedMoneySlots.has(slot))
           || axes.size !== claimed.size || [...claimed].some(axis => !axes.has(axis))
-        const actorInference = Boolean(text && moneyActorKo.test(text))
+        const actorInference = Boolean(text && moneyActor.test(text))
         if (invalidSubdivision) unsupportedMoneySubdivisionCount++
         if (actorInference) moneyActorInferenceCount++
         if (invalidSubdivision || actorInference) return []
       }
-      const patternEvidenceValid = chapter.chapterId !== 'CR-03' || (pattern?.status === 'ready'
+      const independentResponse = expression.kind === 'personality' && paragraph.slots.includes('independentResponse')
+        && !pattern && expression.traitFactIds.length === 1 && expression.voice === 'stress'
+        && paragraph.sourceMappingIds.includes('CL-P01') && !paragraph.sourceOutcomeIds.length
+        && references.every(unit => unit?.meaningRef.producer === 'personality' && unit.evidenceIds.length)
+      const patternEvidenceValid = chapter.chapterId !== 'CR-03' || independentResponse || (pattern?.status === 'ready'
         && pattern.context.length && (pattern.response.length || pattern.judgment.length) && pattern.behavior.length
         && (pattern.resultCoverage === 'supported') === Boolean(pattern.result.length)
         && paragraph.sourceMappingIds.includes('CL-P04') === Boolean(pattern.result.length)
@@ -294,7 +382,7 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
       const temporalIds = expression.kind === 'temporal'
         ? [...expression.contribution.activations, ...(expression.contribution.before ? [expression.contribution.before] : [])]
           .map(item => item.semanticUnitId) : []
-      const permitted = moneyEvidenceValid && patternEvidenceValid && text && isCustomerSafeKo(text)
+      const permitted = moneyEvidenceValid && patternEvidenceValid && text && customerSafe(text)
         && references.length > 0 && references.every(unit => unit !== undefined)
         && (paragraph.expression.kind === 'personality'
           ? references.every(unit => unit?.scope === 'natal')
@@ -321,6 +409,8 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
           }
         }
         unsupportedClaimCount++
+        if (!text || !patternEvidenceValid) excludedCandidateCount++
+        else rejectedPlannedClaimCount++
         return []
       }
       if (texts.has(text) || paragraph.contributionKeys.some(key => keys.has(key))) {
@@ -349,20 +439,25 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
           unsupportedContrastCount++
           return []
         }
-        const copy = contrast.kind === 'earning_burden' && plan.expression.kind === 'outcome'
+        const copy = locale !== 'ko' ? localizedContrast(contrast.kind, locale)
+          : contrast.kind === 'earning_burden' && plan.expression.kind === 'outcome'
           && plan.expression.voice === 'supportPressure'
           ? '수익화에 필요한 결과를 만들 수 있더라도, 그 활동을 조절하는 기반에는 별도의 제약이 남을 수 있습니다.'
           : moneyContrastCopy[contrast.kind]
-        if (!isCustomerSafeKo(copy) || moneyActorKo.test(copy)) {
+        if (!customerSafe(copy) || moneyActor.test(copy)) {
           unsupportedContrastCount++
           return []
         }
         moneyContrasts.add(contrast.kind)
         return [copy]
       })
+      const cause = describeCustomerCause(plan, explanations, locale)
+      const permittedCause = cause && customerSafe(cause) && (plan.chapterId !== 'CR-07' || !moneyActor.test(cause)) ? cause : undefined
       return {
-        text: moneyBody ? [moneyBody, ...contrasts].join(' ') + renderTiming(plan) : text,
+        text: moneyBody ? [moneyBody, permittedCause, ...contrasts].filter(Boolean).join(' ') + timing(plan)
+          : permittedCause ? text + ' ' + permittedCause : text,
         plan,
+        ...((permittedCause || plan.expression.kind === 'judgment_structure') && { renderedCause: true as const }),
         ...(money && { explainedMoneyAxes: money.axes, hasMoneyCriterion: Boolean(money.criterion) }),
       }
     })
@@ -378,8 +473,9 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
     const axes = new Set(natal.flatMap(p => p.plan.relationshipAxes ?? []))
     const internalOnly = isRelationship && chapter.semanticReadiness === 'deferred'
     const sections = isRelationship ? [
-      { id: 'natal_relationship' as const, title: '관계에서 드러나는 나의 방식', paragraphs: natal, visibility: 'customer' as const },
-      { id: 'relationship_outcome' as const, title: '관계의 흐름이 움직이는 시기', paragraphs: outcomes,
+      { id: 'natal_relationship' as const, title: title('relationship_style'), paragraphs: natal, visibility: 'customer' as const },
+      { id: 'relationship_outcome' as const, title: locale === 'ko' ? '관계의 흐름이 움직이는 시기'
+        : locale === 'ja' ? '関係が動きやすい時期' : 'When relationships may shift', paragraphs: outcomes,
         visibility: internalOnly ? 'internal' as const : 'customer' as const },
     ].filter(section => section.paragraphs.length) : undefined
     const plannedOutcomeCount = chapter.paragraphPlans.filter(p => p.section === 'relationship_outcome').length
@@ -451,7 +547,7 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
         plan.expression.kind === 'personality' && (plan.expression.composite || plan.expression.traitFactIds.length > 1)).length,
       distinctLifeMechanismCount: distinct(paragraph => paragraph.lifeMechanismIds),
       paragraphRoleCoverage: [...new Set(paragraphs.map(item => item.plan.purpose))],
-      duplicateMeaningCount, unsupportedClaimCount,
+      duplicateMeaningCount, unsupportedClaimCount, excludedCandidateCount, rejectedPlannedClaimCount,
       reasonCoverage: { complete: paragraphs.filter(item => item.plan.reasonStatus === 'complete').length,
         partial: paragraphs.filter(item => item.plan.reasonStatus === 'partial').length },
     }
@@ -478,7 +574,7 @@ export function renderCustomerReadingKo(plan: ReturnType<typeof buildCustomerRea
       ...quality, semanticReadiness, publicationReadiness, densityGap,
     } satisfies CustomerChapterQuality
     return {
-      chapterId: chapter.chapterId, titleKey: chapter.titleKey, title: titles[chapter.titleKey],
+      chapterId: chapter.chapterId, titleKey: chapter.titleKey, title: title(chapter.titleKey),
       paragraphs: customerParagraphs, sections, timingCards: chapter.timingCards, quality: qualityWithReadiness,
       semanticReadiness, publicationReadiness,
       // Existing consumers use readiness as the publication state.

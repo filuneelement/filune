@@ -113,14 +113,21 @@ try {
   check('G — weakening ends when the SangShen stop ends', () => {
     const event = selection(oldStop, 'weakens_sangshen')
     projection(run(guarded, [stopper, child], previous), event, inheritedActive)
-    const later = run(guarded, [replacement], end, oldStop)
+    const later = run(guarded, [luck('replacement', '乙', '未', 'greatLuck', newPeriod)], end, oldStop)
     assert.equal(current(later, 'SangShen', 'guard').currentState, 'active')
     projection(later, event, inheritedExpired)
+    const attackedHelper = run(guarded, [replacement], end, oldStop)
+    assert.equal(current(attackedHelper, 'SangShen', 'guard').currentFunction, 'reduced')
+    assert.ok(current(attackedHelper, 'SangShen', 'guard').functionEffects.some(({ kind, sourceEntityId }) =>
+      kind === 'weaken' && sourceEntityId === 'replacement'))
+    projection(attackedHelper, event, inheritedExpired)
   })
   check('H — manifestation history survives but the effective mode is restored', () => {
     const pattern = { day: pillar('dm', '丙', '午'), month: pillar('month', '壬', '申') }
     const prior = run(pattern, [luck('manifestation', '庚', '亥')])
-    const later = run(pattern, [replacement], end, prior)
+    // A-8-1 I-02: isolate expiry from a new manifestation of 申's earth element.
+    const nonManifestingReplacement = luck('replacement', '乙', '未', 'greatLuck', newPeriod)
+    const later = run(pattern, [nonManifestingReplacement], end, prior)
     assert.equal(prior.patternContext.patternMode, 'combined')
     assert.equal(later.patternContext.patternMode, 'transformed')
     const natal = run(pattern, [], end, prior)

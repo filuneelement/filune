@@ -5,6 +5,51 @@ import type { ExecutionScopeContext } from '../runtime/executionScopeContext'
 import { containsTime, effectEvidence, sameValue } from '../runtime/guEungEffectEvidence'
 import { detach, PROJECTION_EVIDENCE, recordId, RELATION_EVIDENCE, sortedUnique } from './shared'
 import type { FactEntity, JudgmentProducerOutput } from './types'
+import { generationCanReach } from '../core/structuralEffect'
+import type { RootState } from '../core/types'
+import type { LuckScopeState } from '../core/luckScope'
+import type { ProducerReference } from './types'
+
+/** Project the incoming daily applications from the existing Judgment snapshot. */
+export function projectDailyEffectFacts(snapshot: LuckScopeState, executionId: string, referenceTime: string,
+  producerRef: ProducerReference) {
+  const period = snapshot.validity
+  if (snapshot.scope !== 'dailyLuck' || snapshot.patternContext.scope !== 'dailyLuck' || snapshot.runtimeStatus !== 'resolved'
+    || period.from.kind !== 'exact' || period.to.kind !== 'exact' || !containsTime(period, referenceTime)) return null
+  const relations = snapshot.stemFacts.filter(({ source, target }) => source.scope === 'dailyLuck' || target.scope === 'dailyLuck')
+  const byId = new Map(relations.map((relation) => [relation.id, relation]))
+  const effects: FunctionEffects['effects'] = []
+  for (const effect of snapshot.stemFunctionEffects) {
+    const relation = byId.get(effect.relationFactId)
+    if (!relation || effect.kind === 'weaken' && !effect.reducesFunction) continue
+    const target = relation.source.id === effect.targetEntityId ? relation.source : relation.target
+    const targetFunctionId = recordId('target-function', [target.id, 'ten-god', target.tenGod])
+    const runtimeStateRefs = [relation.source.id, relation.target.id].map((id) => recordId('daily-runtime-state', [snapshot.id, id]))
+    effects.push(effectFactSchema.parse({ contractVersion: '1',
+      effectId: recordId('effect', [snapshot.id, relation.id, targetFunctionId, effect.kind]), scopeId: snapshot.id,
+      sourceEntityId: effect.sourceEntityId, targetEntityId: target.id, targetFunctionId, relationFactId: relation.id,
+      effectType: effect.kind, ...(effect.kind === 'drain' ? { reducesFunction: effect.reducesFunction } : {}),
+      runtimeStateRefs, roleStateRefs: [], ruleIds: ['OP-L01', 'OP-L02', 'OP-P06'], evidenceIds: [RELATION_EVIDENCE],
+      provenance: { producerRef: { ...producerRef, producerId: 'filune-judgment-core', sourceRef: 'effectFactProducer/projectDailyEffectFacts',
+        inputFactIds: [snapshot.id, relation.id, ...runtimeStateRefs, ...(effect.sourceRoot?.factIds ?? []),
+          ...(effect.sourceRoot?.formationIds ?? [])] }, ruleRevision: 181 },
+      coverage: 'complete', effectivePeriod: period, reasonCodes: [], status: 'confirmed',
+    }))
+  }
+  const referencedStates = new Set(effects.flatMap(({ runtimeStateRefs }) => runtimeStateRefs))
+  const runtimeStates = snapshot.runtime.flatMap(({ entityId, state }) => {
+    const stateId = recordId('daily-runtime-state', [snapshot.id, entityId])
+    if (!referencedStates.has(stateId) || state === 'stopped') return []
+    const ruleId = state === 'weakened' ? 'EX-053' : 'OP-L02'
+    return [runtimeStateSchema.parse({ contractVersion: '1', stateId, targetEntityId: entityId, scopeId: snapshot.id,
+      functionalState: state, originMode: 'local', transition: 'established', validity: period,
+      causingApplicationRefs: [{ applicationId: recordId('daily-state-application', [snapshot.id, entityId]),
+        executionId, scopeId: snapshot.id, ruleId, ruleVersion: 'A181' }], evidenceIds: [RELATION_EVIDENCE], uncertaintyIds: [],
+      ...(state === 'weakened' ? { weakeningDescription: { ruleId, wording: 'Luck combination weakens the existing stem function' } } : {}),
+    })]
+  })
+  return { effects, diagnostics: [], runtimeStates, relationRefs: [...new Set(effects.map(({ relationFactId }) => relationFactId))] }
+}
 
 export type TargetFunction = {
   targetEntityId: string
@@ -19,16 +64,30 @@ export type TargetFunction = {
   currentRole?: { status: 'active' | 'inactive' | 'unknown'; evidenceIds: string[] }
 }
 
+export type ValidatedRoleAssignment = {
+  roleStateRef: string
+  entityId: string
+  role: '용신' | '상신'
+  scopeId: string
+  executionId: string
+  judgmentId: string
+  producerRef: JudgmentProducerOutput['producerRef']
+  evidenceIds: string[]
+}
+
 type Input = {
   producer: JudgmentProducerOutput
   context: ExecutionScopeContext
   states: RuntimeStateContract[]
   roles: RoleStateContract[]
+  /** Exact handoff from the confirmed upstream role judgment that issued each RoleState. */
+  validatedRoleAssignments?: ValidatedRoleAssignment[]
   natalScopeId?: string
   /** Prior luck stops retained by the validated carry evaluator for this scope. */
   priorLuckStops?: { scopeId: string; states: RuntimeStateContract[] }
   functions: TargetFunction[]
   evidence: EvidenceRecord[]
+  rootStates?: readonly { entityId: string; state: RootState; factIds: readonly string[]; formationIds: readonly string[] }[]
   /** The scoped, post-combination priority assessment. Absence means it was not resolved. */
   priority?: { scopeId: string; status: 'clear' | 'blocked'; evidenceIds: string[] }
 }
@@ -98,6 +157,12 @@ export function produceEffectFacts(input: Input): FunctionEffects {
     if (previous && !sameValue(previous, role)) throw new TypeError('Conflicting effect role state')
     roles.set(role.roleStateId, role)
   }
+  const validatedAssignments = new Map<string, ValidatedRoleAssignment>()
+  for (const assignment of input.validatedRoleAssignments ?? []) {
+    const prior = validatedAssignments.get(assignment.roleStateRef)
+    if (prior && !sameValue(prior, assignment)) throw new TypeError('Conflicting validated role assignment')
+    validatedAssignments.set(assignment.roleStateRef, assignment)
+  }
   const states = new Map<string, RuntimeStateContract[]>()
   function addState(state: RuntimeStateContract) {
     const candidates = states.get(state.targetEntityId) ?? []
@@ -147,7 +212,7 @@ export function produceEffectFacts(input: Input): FunctionEffects {
   const diagnostics: FunctionEffectDiagnostic[] = []
   const seen = new Set<string>()
   for (const candidate of relations) {
-    if (candidate.kind !== 'stem-controls') continue
+    if (candidate.kind !== 'stem-controls' && candidate.kind !== 'stem-generates') continue
     const relation = relationFactSchema.parse(candidate)
     const source = entities.get(relation.sourceEntityId!)
     const target = entities.get(relation.targetEntityId!)
@@ -159,17 +224,31 @@ export function produceEffectFacts(input: Input): FunctionEffects {
       && supported(relation.evidenceIds)
     const sourceState = currentState(source.entityId)
     const targetState = currentState(target.entityId)
-    for (const [targetFunctionId, fn] of functions.get(target.entityId) ?? []) {
+    const sourceRoot = input.rootStates?.find(({ entityId }) => entityId === source.entityId)
+    const affected = candidate.kind === 'stem-controls'
+      ? [{ entity: target, effectType: 'weaken' as const }]
+      : [{ entity: target, effectType: 'strengthen' as const }, { entity: source, effectType: 'drain' as const }]
+    for (const { entity: functionEntity, effectType } of affected) for (const [targetFunctionId, fn] of functions.get(functionEntity.entityId) ?? []) {
+      // Source 설기 changes a structural role function only when that source role is owned and active.
+      if (effectType === 'drain' && fn.kind === 'ten-god') continue
       const role = fn.roleStateRef ? roles.get(fn.roleStateRef) : undefined
       const tenGod = fn.ownershipFactRef ? facts.get(fn.ownershipFactRef) : undefined
-      const pillar = facts.get(target.canonicalFactRef)
-      const tenGodPointer = stemTenGodPointer(target, pillar?.canonicalPointer)
+      const functionState = functionEntity.entityId === source.entityId ? sourceState : targetState
+      const pillar = facts.get(functionEntity.canonicalFactRef)
+      const tenGodPointer = stemTenGodPointer(functionEntity, pillar?.canonicalPointer)
       const expectedRole = fn.kind === 'yongshen' ? '용신' : '상신'
-      const roleOwned = fn.kind !== 'ten-god' && fn.name === expectedRole && role?.subjectKind === 'entity' && role.entityId === target.entityId
+      const assignment = fn.roleStateRef ? validatedAssignments.get(fn.roleStateRef) : undefined
+      const upstreamRoleConfirmed = !!assignment && !!role && assignment.entityId === functionEntity.entityId
+        && assignment.role === expectedRole && assignment.scopeId === role.validScopeId
+        && assignment.executionId === context.executionId && assignment.evidenceIds.length > 0
+        && !!assignment.judgmentId && sameValue(assignment.producerRef, producer.producerRef)
+        && sameValue(sortedUnique(assignment.evidenceIds), sortedUnique(role.evidenceIds))
+      const roleOwned = fn.kind !== 'ten-god' && fn.name === expectedRole && role?.subjectKind === 'entity' && role.entityId === functionEntity.entityId
         && role.role === expectedRole && role.status === 'evaluated'
-        && role.usage === 'runtime-result' && !role.provisional && !role.uncertaintyIds.length && role.evidenceIds.length > 0 && role.evidenceIds.every((ref) => roleBasis.eligible(ref))
+        && role.usage === 'runtime-result' && !role.provisional && !role.uncertaintyIds.length && role.evidenceIds.length > 0
+        && (upstreamRoleConfirmed || role.evidenceIds.every((ref) => roleBasis.eligible(ref)))
         && role.applicationRef?.executionId === context.executionId
-        && (role.validScopeId === context.scopeId || (target.origin === 'natal' && role.validScopeId === input.natalScopeId))
+        && (role.validScopeId === context.scopeId || (functionEntity.origin === 'natal' && role.validScopeId === input.natalScopeId))
       const ownership = fn.kind === 'ten-god'
         ? !!tenGod && tenGod.canonicalPointer === tenGodPointer && tenGod.value === fn.name
           && tenGod.assessment === 'confirmed' && !tenGod.uncertaintyIds.length && supported(tenGod.evidenceIds)
@@ -179,13 +258,16 @@ export function produceEffectFacts(input: Input): FunctionEffects {
         && fn.currentRole.evidenceIds.every((ref) => basis.eligible(ref))
       const pre = fn.preRoleFunction
       const usablePre = pre?.functionId === targetFunctionId && containsTime(pre.effectivePeriod, context.referenceTime)
-        && pre.evidenceIds.every((id) => eligible(id) || roleBasis.eligible(id) || supplied.has(id) && sameValue(supplied.get(id), basis.byId.get(id)))
-      const roleActivity = pre ? !usablePre || pre.status === 'deferred' ? 'unknown'
+        && (pre.evidenceIds.every((id) => eligible(id) || roleBasis.eligible(id) || supplied.has(id) && sameValue(supplied.get(id), basis.byId.get(id)))
+          || upstreamRoleConfirmed && pre.status !== 'deferred')
+      const roleActivity = fn.kind === 'yongshen' && upstreamRoleConfirmed && functionState?.functionalState !== 'stopped'
+        ? 'active'
+        : pre ? !usablePre || pre.status === 'deferred' ? 'unknown'
         : pre.status === 'stopped' ? 'inactive' : 'active'
         : fn.currentRole ? (currentRoleVerified ? fn.currentRole.status : 'unknown')
         : role?.validScopeId === context.scopeId ? 'active' : 'unknown'
-      const functionActive = targetState?.functionalState === 'stopped' || (ownership && fn.kind !== 'ten-god' && roleActivity === 'inactive')
-        ? 'inactive' : ownership && !!targetState && targetState.functionalState !== 'unknown'
+      const functionActive = functionState?.functionalState === 'stopped' || (ownership && fn.kind !== 'ten-god' && roleActivity === 'inactive')
+        ? 'inactive' : ownership && !!functionState && functionState.functionalState !== 'unknown'
           && (fn.kind === 'ten-god' || roleActivity === 'active') && containsTime(fn.effectivePeriod, context.referenceTime)
           ? 'active' : 'unknown'
       const periods = [context.effectivePeriod, fn.effectivePeriod, ...(usablePre ? [pre.effectivePeriod] : []), ...[sourceState, targetState].flatMap((state) => state ? [state.validity] : []),
@@ -202,12 +284,15 @@ export function produceEffectFacts(input: Input): FunctionEffects {
       if (!priorityKnown) reasons.push('REACH_PRIORITY_UNRESOLVED')
       if (sourceState?.functionalState === 'stopped') reasons.push('SOURCE_STOPPED')
       if (targetState?.functionalState === 'stopped') reasons.push('TARGET_STOPPED')
-      if (functionActive === 'inactive' && targetState?.functionalState !== 'stopped') reasons.push('FUNCTION_INACTIVE')
+      if (functionActive === 'inactive' && functionState?.functionalState !== 'stopped') reasons.push('FUNCTION_INACTIVE')
+      if (effectType === 'drain' && !usablePre) reasons.push('SOURCE_DRAIN_NOT_ESTABLISHED')
+      if (candidate.kind === 'stem-generates' && sourceState?.functionalState === 'weakened'
+        && !generationCanReach('weakened', 'active', sourceRoot?.state)) reasons.push('GENERATION_REACH_UNCONFIRMED')
       if (priorityKnown && priority.status === 'blocked') reasons.push('REACH_BLOCKED_BY_PRIORITY')
       const blocked = reasons.some((reason) => ['SOURCE_STOPPED', 'TARGET_STOPPED', 'FUNCTION_INACTIVE', 'REACH_BLOCKED_BY_PRIORITY'].includes(reason))
       const status = blocked ? 'blocked' : reasons.length ? 'deferred' : 'confirmed'
       const effectivePeriod = period && containsTime(period, context.referenceTime) ? period : context.effectivePeriod
-      const effectId = recordId('effect', [context.scopeId, relation.relationFactId, targetFunctionId, 'weaken',
+      const effectId = recordId('effect', [context.scopeId, relation.relationFactId, targetFunctionId, effectType,
         JSON.stringify(effectivePeriod.from), JSON.stringify(effectivePeriod.to)])
       if (seen.has(effectId)) continue
       seen.add(effectId)
@@ -224,10 +309,13 @@ export function produceEffectFacts(input: Input): FunctionEffects {
         ...(ownership ? (fn.kind === 'ten-god' ? tenGod!.evidenceIds : role!.evidenceIds) : []),
         ...(priorityKnown ? priority.evidenceIds : []), ...(usablePre ? pre.evidenceIds : []), ...(fn.currentRole?.evidenceIds.filter((ref) => eligible(ref)) ?? [])])
       effects.push(effectFactSchema.parse({ contractVersion: '1', effectId, scopeId: context.scopeId,
-        sourceEntityId: source.entityId, targetEntityId: target.entityId, targetFunctionId, relationFactId: relation.relationFactId,
-        effectType: 'weaken', runtimeStateRefs, roleStateRefs, ruleIds: ['OP-L01', 'OP-L02', 'OP-P06'], evidenceIds,
+        sourceEntityId: source.entityId, targetEntityId: functionEntity.entityId, targetFunctionId, relationFactId: relation.relationFactId,
+        effectType, ...(effectType === 'drain' ? { reducesFunction: sourceRoot?.state === 'weakened' } : {}),
+        runtimeStateRefs, roleStateRefs, ruleIds: ['OP-L01', 'OP-L02', 'OP-P06'], evidenceIds,
         provenance: { producerRef: { producerId: 'filune-function-effects', version: '1', sourceRef: 'effectFactProducer',
-          inputFactIds: sortedUnique([relation.relationFactId, ...runtimeStateRefs, ...roleStateRefs, ...(usablePre ? [pre.roleFunctionStateId] : []), ...(ownership && tenGod ? [tenGod.id] : [])]) },
+          inputFactIds: sortedUnique([relation.relationFactId, ...runtimeStateRefs, ...roleStateRefs,
+            ...(candidate.kind === 'stem-generates' && sourceRoot ? [...sourceRoot.factIds, ...sourceRoot.formationIds] : []),
+            ...(usablePre ? [pre.roleFunctionStateId] : []), ...(ownership && tenGod ? [tenGod.id] : [])]) },
           ruleRevision: 181 },
         coverage: status === 'confirmed' ? 'complete' : 'partial', effectivePeriod, reasonCodes: reasons, status }))
     }

@@ -1,8 +1,9 @@
-import type { Messages } from '../../i18n'
+import type { Messages, Locale } from '../../i18n'
+import type { LocalizedCustomerReading } from '../../lib/product/readBirthChart'
 import ResultTestimonials, { type ResultTestimonial } from './ResultTestimonials'
 import type { PaidPreview } from './singleResultCopy'
 
-export default function PremiumResultPreview({ copy, selectedTopic, selectedStatus, selectedTopicPreview, currentFlow, testimonials = [], priceLabel }: {
+export default function PremiumResultPreview({ copy, selectedTopic, selectedStatus, selectedTopicPreview, currentFlow, testimonials = [], priceLabel, authorizedReading }: {
   copy: Messages['resultPreview']
   selectedTopic?: string
   selectedStatus?: string
@@ -10,7 +11,28 @@ export default function PremiumResultPreview({ copy, selectedTopic, selectedStat
   currentFlow?: PaidPreview
   testimonials?: readonly ResultTestimonial[]
   priceLabel?: string
+  authorizedReading?: { locale: Locale; chapters: LocalizedCustomerReading[string] }
 }) {
+  if (authorizedReading?.chapters.length === 7) {
+    const { locale, chapters } = authorizedReading
+    const empty = {
+      ko: '이 장에서 구체적으로 설명할 수 있는 판단이 아직 확인되지 않았습니다.',
+      ja: 'この章で具体的にお伝えできる判断は、まだ確認できていません。',
+      en: 'There is not yet enough evidence for a specific reading in this chapter.',
+    }[locale]
+    return <div className="result-chapters" lang={locale}>
+      {chapters.map(chapter => {
+        const content = chapter.sections.filter(section => section.paragraphs.length > 0)
+        return <section key={chapter.number} className="result-chapter" aria-labelledby={`premium-chapter-${chapter.number}`}>
+          <h2 id={`premium-chapter-${chapter.number}`}>{chapter.number}. {chapter.title}</h2>
+          {content.length ? content.map((section, index) => <div key={index}>
+            {content.length > 1 && <h3>{section.title}</h3>}
+            {section.paragraphs.map(paragraph => <p key={paragraph.id}>{paragraph.text}</p>)}
+          </div>) : <p>{empty}</p>}
+        </section>
+      })}
+    </div>
+  }
   return (
     <div className="result-preview">
       <section className="result-preview__section" aria-labelledby="result-preview-title">

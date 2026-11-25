@@ -152,6 +152,8 @@ function structural(snapshot: LuckScopeState, temporalStatus: HealthOutcomeFact[
   const effects = snapshot.luckEffectStates.filter(state => state.currentlyEffective && !state.expired)
   const relationIds = new Set(relations.map(item => item.id))
   const facts: HealthOutcomeFact[] = []
+  const representedAttacks = new Set<string>()
+  const standaloneAttacks = new Map<string, string>()
   for (const relation of relations) {
     const { id, source, target, action } = relation
     const actual = functions.get(id)
@@ -244,10 +246,15 @@ function structural(snapshot: LuckScopeState, temporalStatus: HealthOutcomeFact[
     }
     const burdenAreas = actual.direction === 'unfavorable' ? traditionalBodyAreas : undefined
     if (burdenAreas) lifeMeanings.push({ type: 'body_area_burden', areas: burdenAreas })
+    const attack = attackRelationId ? functions.get(attackRelationId) : undefined
     const evidence = [...reactivationRefs, ...(actual.conditionEvidence ?? []), ...(actual.resolutionEvidence ?? []),
+      ...(attack?.conditionEvidence ?? []), ...(attack?.resolutionEvidence ?? []),
       ...damage.flatMap(item => item.evidenceRefs), ...conditional.map(item => item.supportingRelationFactId)]
+    const outcomeId = 'health:' + JSON.stringify([semanticType, stableSourceId(snapshot.id, executionId, natalId), conditionId])
+    if (attackRelationId) representedAttacks.add(attackRelationId)
+    else if (path === 'harmful_killing') standaloneAttacks.set(outcomeId, id)
     facts.push({
-      id: 'health:' + JSON.stringify([semanticType, stableSourceId(snapshot.id, executionId, natalId), conditionId]),
+      id: outcomeId,
       domain: 'health', semanticType, scope, scopeId: snapshot.id, conditionId, lifeMeanings,
       originRelationId: relationOriginFactId, originScope: originScope === 'dailyLuck' ? scope : scopes[originScope],
       path, targetEntityId: pressureTargetId, scopeHistory: [],
@@ -270,7 +277,9 @@ function structural(snapshot: LuckScopeState, temporalStatus: HealthOutcomeFact[
         ...actual.rootEvidence.flatMap(root => root.factIds), ...actual.formationEvidence]),
     })
   }
-  return facts
+  // Feeding a killing and its linked attack describe one health burden. Keep
+  // the feed's provenance and timing when the exact attack is already included.
+  return facts.filter(fact => !representedAttacks.has(standaloneAttacks.get(fact.id) ?? ''))
 }
 
 export function buildHealthOutcome(input: {
